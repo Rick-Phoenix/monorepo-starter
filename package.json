@@ -8,6 +8,7 @@
     "apps/*"
   ],
   "scripts": {
+    "newpackage": "bun ./scripts/create-package.ts",
     "init-repo": "bun install && bun initialize-repo.ts"
   },
   "dependencies": {

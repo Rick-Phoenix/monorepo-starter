@@ -25,11 +25,6 @@ try {
     process.exit(1);
   }
 
-  if (packageType === "app") {
-    const appsDirPath = path.resolve(import.meta.dirname, "apps");
-    if (!fs.existsSync(appsDirPath)) fs.mkdirSync(appsDirPath);
-  }
-
   const packageDir = path.resolve(`./${packageType}s`, packageName);
   if (fs.existsSync(packageDir)) {
     console.error("This folder already exists.");
@@ -62,15 +57,15 @@ try {
     },
     devDependencies: {
       [`@${projectName}/eslint-prettier-config`]: "workspace:*",
-      "@eslint/config-inspector": "^0.6.0",
-      "@eslint/js": "^9.17.0",
-      "@types/node": "^22.10.2",
-      eslint: "^9.17.0",
-      "eslint-config-prettier": "^9.1.0",
-      globals: "^15.14.0",
-      prettier: "^3.5.3",
+      "@eslint/config-inspector": "latest",
+      "@eslint/js": "latest",
+      "@types/node": "latest",
+      eslint: "^9.23.0",
+      "eslint-config-prettier": "latest",
+      globals: "latest",
+      prettier: "latest",
+      "typescript-eslint": "latest",
       typescript: "^5.8.2",
-      "typescript-eslint": "^8.18.2",
     },
   };
 

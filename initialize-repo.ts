@@ -17,13 +17,13 @@ try {
       newpackage: "bun ./scripts/create-package.ts",
     },
     dependencies: {
-      "@types/bun": "^1.2.6",
-      "@types/node": "^22.13.13",
+      "@types/bun": "latest",
+      "@types/node": "latest",
     },
     devDependencies: {
-      "@inquirer/prompts": "^7.4.0",
+      "@inquirer/prompts": "latest",
       "@moonrepo/cli": "^1.33.3",
-      radashi: "^12.4.0",
+      radashi: "latest",
       typescript: "^5.8.2",
     },
     trustedDependencies: ["@moonrepo/cli", "esbuild"],
@@ -46,14 +46,14 @@ try {
       },
     },
     devDependencies: {
-      "@eslint/config-inspector": "^0.6.0",
-      "@eslint/js": "^9.17.0",
-      "@types/node": "^22.10.2",
-      eslint: "^9.17.0",
-      "eslint-config-prettier": "^9.1.0",
-      globals: "^15.14.0",
-      prettier: "^3.5.3",
-      "typescript-eslint": "^8.18.2",
+      "@eslint/config-inspector": "latest",
+      "@eslint/js": "latest",
+      "@types/node": "latest",
+      eslint: "^9.23.0",
+      "eslint-config-prettier": "latest",
+      globals: "latest",
+      prettier: "latest",
+      "typescript-eslint": "latest",
     },
   };
 
@@ -125,6 +125,7 @@ lcov-report/
 .nyc_output/`;
 
   fs.writeFileSync(path.resolve(import.meta.dirname, ".gitignore"), gitignore);
+  fs.mkdirSync(path.resolve(import.meta.dirname, "apps"));
 
   const syncAndInstall = await confirm({
     message: `Do you want to run 'bun install' and 'moon sync projects'?`,
