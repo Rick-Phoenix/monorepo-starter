@@ -137,6 +137,7 @@ lcov-report/
   }
 
   console.log(`Project successfully initiated. ✅`);
+  console.log(`Run the following to start a new git repo:\nrm -ri .git\ngit init`);
   process.exit(0);
 } catch (error) {
   console.log(`Error while initializing the project:`);
