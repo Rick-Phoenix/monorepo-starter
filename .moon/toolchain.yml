@@ -1,0 +1,8 @@
+bun:
+  inferTasksFromScripts: true
+  syncProjectWorkspaceDependencies: true
+  version: latest
+
+typescript:
+  syncProjectReferences: true
+  syncProjectReferencesToPaths: true
