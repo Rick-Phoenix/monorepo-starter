@@ -1,0 +1,21 @@
+{
+  "name": "@monorepo-starter/eslint-prettier-config",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js"
+  },
+  "devDependencies": {
+    "@eslint/config-inspector": "^0.6.0",
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.5.3",
+    "typescript-eslint": "^8.18.2"
+  }
+}
