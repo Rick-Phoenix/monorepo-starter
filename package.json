@@ -1,0 +1,28 @@
+{
+  "name": "monorepo-starter",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "init-repo": "bun install && bun initialize-repo.ts"
+  },
+  "dependencies": {
+    "@types/bun": "^1.2.6",
+    "@types/node": "^22.13.13"
+  },
+  "devDependencies": {
+    "@inquirer/prompts": "^7.4.0",
+    "@moonrepo/cli": "^1.33.3",
+    "radashi": "^12.4.0",
+    "typescript": "^5.8.2"
+  },
+  "trustedDependencies": [
+    "@moonrepo/cli",
+    "esbuild"
+  ],
+  "packageManager": "bun@1.2.6"
+}

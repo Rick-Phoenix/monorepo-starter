@@ -1,7 +1,6 @@
 .moon/cache
 .moon/docker
 
-package.json
 node_modules
 *.code-workspace
 *.env.*

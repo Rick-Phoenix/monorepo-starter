@@ -15,7 +15,6 @@ try {
     workspaces: ["packages/*", "apps/*"],
     scripts: {
       newpackage: "bun ./scripts/create-package.ts",
-      "init-repo": "bun ./scripts/initialize-repo.ts",
     },
     dependencies: {
       "@types/bun": "^1.2.6",
@@ -31,7 +30,7 @@ try {
     packageManager: packageManager,
   };
 
-  fs.writeFileSync(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON), { flag: "wx+" });
+  fs.writeFileSync(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON));
 
   const eslintPackageJsonContent = {
     name: `@${projectName}/eslint-prettier-config`,
@@ -138,6 +137,7 @@ lcov-report/
   }
 
   console.log(`Project successfully initiated. ✅`);
+  console.log(`Run the following to start a new git repo:\nrm -ri .git\ngit init`);
   process.exit(0);
 } catch (error) {
   console.log(`Error while initializing the project:`);
