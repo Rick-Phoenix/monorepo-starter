@@ -8,7 +8,7 @@
     "apps/*"
   ],
   "scripts": {
-    "init-repo": "bun ./scripts/initialize-repo.ts"
+    "init-repo": "bun install && bun initialize-repo.ts"
   },
   "dependencies": {
     "@types/bun": "^1.2.6",
