@@ -25,6 +25,11 @@ try {
     process.exit(1);
   }
 
+  if (packageType === "app") {
+    const appsDirPath = path.resolve(import.meta.dirname, "apps");
+    if (!fs.existsSync(appsDirPath)) fs.mkdirSync(appsDirPath);
+  }
+
   const packageDir = path.resolve(`./${packageType}s`, packageName);
   if (fs.existsSync(packageDir)) {
     console.error("This folder already exists.");
