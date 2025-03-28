@@ -8,6 +8,10 @@ try {
   const packageManager = await input({ message: "What is the package manager?", required: true, default: "bun@1.2.7" });
   const withHusky = await confirm({ message: "Do you want to include Husky?", default: false });
 
+  const addInfisicalScan = withHusky
+    ? await confirm({ message: "Do you want to add the infisical scan to the pre-commit hook?", default: false })
+    : false;
+
   const packageJSON = {
     name: projectName,
     version: "1.0.0",
@@ -16,7 +20,6 @@ try {
     workspaces: ["packages/*", "apps/*"],
     scripts: {
       newpackage: "bun ./scripts/create-package.ts",
-      prepare: "husky",
     },
     dependencies: {
       "@types/bun": "latest",
@@ -140,9 +143,26 @@ lcov-report/
     if (error) console.warn(`Error with bun install or moon sync command:\n${error}`);
   }
 
-  exec("bun husky init");
+  fs.rmSync(path.resolve(import.meta.dirname, ".git"), { recursive: true });
+  if (withHusky) {
+    exec("git init && bun husky init");
+    if (addInfisicalScan) {
+      fs.writeFileSync(
+        path.resolve(import.meta.dirname, ".husky/pre-commit"),
+        `
+      if ! [[ $(command -v infisical) ]]; then
+        echo "Infisical binary not found."
+        exit 1
+      fi
+      
+      infisical scan git-changes --staged --verbose
+      `
+      );
+    }
+  }
+
   console.log(`Project successfully initiated. ✅`);
-  console.log(`Run the following to start a new git repo:\nrm -ri .git\ngit init`);
+  if (addInfisicalScan) console.log("Remember to launch 'infisical init' to complete the infisical setup.");
   process.exit(0);
 } catch (error) {
   console.log(`Error while initializing the project:`);

@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "newpackage": "bun ./scripts/create-package.ts",
-    "init-repo": "bun install && bun initialize-repo.ts",
+    "init": "bun install && bun initialize-repo.ts",
     "prepare": "husky"
   },
   "dependencies": {
