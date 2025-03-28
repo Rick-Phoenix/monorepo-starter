@@ -5,7 +5,35 @@ import prettierConfig from "./prettier.config.js";
 function createEslintConfig(options, ...overrides) {
   return antfu(
     {
-      typescript: true,
+      typescript: {
+        tsconfigPath: "tsconfig.json",
+        overrides: {
+          "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+              args: "all",
+              argsIgnorePattern: "^[_ce(evt)f(ws)]",
+              caughtErrors: "all",
+              caughtErrorsIgnorePattern: "^_",
+              destructuredArrayIgnorePattern: "^_",
+              varsIgnorePattern: "^[_k(key)]",
+              ignoreRestSiblings: true,
+            },
+          ],
+        },
+        overridesTypeAware: {
+          "ts/prefer-nullish-coalescing": [
+            "warn",
+            {
+              ignorePrimitives: {
+                string: true,
+                boolean: true,
+              },
+            },
+          ],
+          "ts/consistent-type-definitions": "off",
+        },
+      },
       javascript: true,
       imports: true,
       disables: true,
@@ -22,31 +50,9 @@ function createEslintConfig(options, ...overrides) {
     },
     {
       rules: {
-        "@typescript-eslint/no-unused-vars": [
-          "warn",
-          {
-            args: "all",
-            argsIgnorePattern: "^[_ce(evt)f(ws)]",
-            caughtErrors: "all",
-            caughtErrorsIgnorePattern: "^_",
-            destructuredArrayIgnorePattern: "^_",
-            varsIgnorePattern: "^[_k(key)]",
-            ignoreRestSiblings: true,
-          },
-        ],
         "no-console": "warn",
         "node/no-process-env": "error",
-        "ts/consistent-type-definitions": "off",
         "antfu/no-top-level-await": "off",
-        "ts/prefer-nullish-coalescing": [
-          "warn",
-          {
-            ignorePrimitives: {
-              string: true,
-              boolean: true,
-            },
-          },
-        ],
         "unicorn/filename-case": ["error", { case: "kebabCase" }],
         "unicorn/prefer-json-parse-buffer": "error",
         "unicorn/prefer-negative-index": "warn",
@@ -59,18 +65,16 @@ function createEslintConfig(options, ...overrides) {
   );
 }
 
-const eslintConfigReact = createEslintConfig(
-  { react: true },
-  {
-    rules: {
-      "react/no-children-prop": "off",
-      "react/prop-types": "off",
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/only-throw-error": "off",
-    },
-  }
-);
+//const eslintConfigReact = createEslintConfig(
+//  { react: true },
+//  {
+//    rules: {
+//      "react/no-children-prop": "off",
+//      "react/prop-types": "off",
+//      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+//      "@typescript-eslint/only-throw-error": "off",
+//    },
+//  }
+//);
 
-const eslintConfig = createEslintConfig();
-
-export { createEslintConfig, eslintConfig, eslintConfigReact, prettierConfig };
+export { createEslintConfig, prettierConfig };

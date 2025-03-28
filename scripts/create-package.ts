@@ -75,7 +75,7 @@ try {
 
   fs.writeFileSync(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
 
-  const eslintConfig = `import {eslintConfig} from '@${projectName}/eslint-prettier-config' \n export default eslintConfig`;
+  const eslintConfig = `import { createEslintConfig } from '@${projectName}/eslint-prettier-config' \n export default createEslintConfig()`;
 
   fs.writeFileSync(path.join(packageDir, "eslint.config.js"), eslintConfig);
 
