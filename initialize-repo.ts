@@ -15,6 +15,7 @@ try {
     workspaces: ["packages/*", "apps/*"],
     scripts: {
       newpackage: "bun ./scripts/create-package.ts",
+      prepare: "husky",
     },
     dependencies: {
       "@types/bun": "latest",
