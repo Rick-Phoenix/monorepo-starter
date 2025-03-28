@@ -1,11 +1,12 @@
 import { confirm, input } from "@inquirer/prompts";
-import { spawnSync } from "node:child_process";
+import { exec, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
 try {
   const projectName = await input({ message: "Enter the project's name:", required: true });
   const packageManager = await input({ message: "What is the package manager?", required: true, default: "bun@1.2.7" });
+  const withHusky = await confirm({ message: "Do you want to include Husky?", default: false });
 
   const packageJSON = {
     name: projectName,
@@ -26,6 +27,7 @@ try {
       "@moonrepo/cli": "^1.33.3",
       radashi: "latest",
       typescript: "^5.8.2",
+      ...(withHusky && { husky: "^9.1.7" }),
     },
     trustedDependencies: ["@moonrepo/cli", "esbuild"],
     packageManager: packageManager,
@@ -138,6 +140,7 @@ lcov-report/
     if (error) console.warn(`Error with bun install or moon sync command:\n${error}`);
   }
 
+  exec("bun husky init");
   console.log(`Project successfully initiated. ✅`);
   console.log(`Run the following to start a new git repo:\nrm -ri .git\ngit init`);
   process.exit(0);
