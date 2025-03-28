@@ -5,7 +5,7 @@ import path from "node:path";
 
 try {
   const projectName = await input({ message: "Enter the project's name:", required: true });
-  const packageManager = await input({ message: "What is the package manager?", required: true, default: "bun@1.2.6" });
+  const packageManager = await input({ message: "What is the package manager?", required: true, default: "bun@1.2.7" });
 
   const packageJSON = {
     name: projectName,
