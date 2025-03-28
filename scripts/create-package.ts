@@ -84,7 +84,7 @@ try {
   fs.writeFileSync(path.join(packageDir, "prettier.config.js"), prettierConfig);
 
   fs.mkdirSync(path.join(packageDir, "src"));
-  fs.writeFileSync(path.join(packageDir, "src/main.ts"), "");
+  fs.writeFileSync(path.join(packageDir, "src/index.ts"), "");
 
   const syncAndInstall = await confirm({
     message: `Do you want to run 'bun install' and 'moon sync projects'?`,
