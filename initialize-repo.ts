@@ -33,6 +33,11 @@ try {
       newpackage: "bun ./scripts/create-package.ts",
       prepare: "moon sync projects",
     },
+    ...(withHusky && {
+      "lint-staged": {
+        "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint",
+      },
+    }),
     dependencies: {
       "@types/bun": "latest",
       "@types/node": "latest",
@@ -43,7 +48,7 @@ try {
       radashi: "latest",
       typescript,
       oxlint,
-      ...(withHusky && { husky }),
+      ...(withHusky && { husky, "lint-staged": "latest" }),
     },
     trustedDependencies: ["@moonrepo/cli", "esbuild"],
     packageManager: packageManager,
@@ -171,6 +176,7 @@ lcov-report/
       fi
       
       infisical scan git-changes --staged --verbose
+      lint-staged
       `
       );
     }

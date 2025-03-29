@@ -11,6 +11,9 @@
     "newpackage": "bun ./scripts/create-package.ts",
     "init-repo": "bun install && bun initialize-repo.ts"
   },
+  "lint-staged": {
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
+  },
   "dependencies": {
     "@types/bun": "^1.2.6",
     "@types/node": "^22.13.13"
@@ -22,7 +25,8 @@
     "inquirer-select-pro": "^1.0.0-alpha.9",
     "oxlint": "^0.16.3",
     "radashi": "^12.4.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "lint-staged": "^15.5.0"
   },
   "trustedDependencies": [
     "@moonrepo/cli",
