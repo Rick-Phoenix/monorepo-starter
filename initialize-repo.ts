@@ -176,13 +176,14 @@ lcov-report/
         echo "Infisical binary not found."
         exit 1
       fi
-      
+
       infisical scan git-changes --staged --verbose`
           : ""
       }
       
       lint-staged
-      `
+      `,
+      "utf-8"
     );
   }
 

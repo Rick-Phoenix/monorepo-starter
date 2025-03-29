@@ -6,7 +6,7 @@ import prettierConfig from "./prettier.config.js";
 function createEslintConfig(options, ...overrides) {
   return antfu(
     {
-      ignores: ["**/dist/**", "**/node_modules/**"],
+      ignores: ["**/dist/**", "**/node_modules/**", "**/.moon/cache"],
       typescript: {
         tsconfigPath: "tsconfig.json",
         overridesTypeAware: {
