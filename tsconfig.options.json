@@ -2,9 +2,9 @@
   "compilerOptions": {
     // Module Resolution
     "lib": ["ESNext", "DOM"],
-    "moduleResolution": "bundler",
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
     "target": "ESNext",
-    "module": "ESNext",
     "moduleDetection": "force",
     "verbatimModuleSyntax": true,
     "esModuleInterop": true,

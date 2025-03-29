@@ -9,8 +9,7 @@
   ],
   "scripts": {
     "newpackage": "bun ./scripts/create-package.ts",
-    "init-repo": "bun install && bun initialize-repo.ts",
-    "prepare": "husky"
+    "init-repo": "bun install && bun initialize-repo.ts"
   },
   "dependencies": {
     "@types/bun": "^1.2.6",
@@ -20,6 +19,8 @@
     "@inquirer/prompts": "^7.4.0",
     "@moonrepo/cli": "^1.33.3",
     "husky": "^9.1.7",
+    "inquirer-select-pro": "^1.0.0-alpha.9",
+    "oxlint": "^0.16.3",
     "radashi": "^12.4.0",
     "typescript": "^5.8.2"
   },

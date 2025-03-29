@@ -1,7 +1,18 @@
+// eslint-disable no-console
 import { confirm, input } from "@inquirer/prompts";
 import { exec, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+
+const packagesWithPinnedVersions = {
+  oxlint: "^0.16.3",
+  typescript: "^5.8.2",
+  husky: "^9.1.7",
+  "@moonrepo/cli": "^1.33.3",
+  eslint: "^9.23.0",
+};
+
+const { eslint, husky, oxlint, typescript } = packagesWithPinnedVersions;
 
 try {
   const projectName = await input({ message: "Enter the project's name:", required: true });
@@ -20,6 +31,7 @@ try {
     workspaces: ["packages/*", "apps/*"],
     scripts: {
       newpackage: "bun ./scripts/create-package.ts",
+      prepare: "moon sync projects",
     },
     dependencies: {
       "@types/bun": "latest",
@@ -27,10 +39,11 @@ try {
     },
     devDependencies: {
       "@inquirer/prompts": "latest",
-      "@moonrepo/cli": "^1.33.3",
+      "@moonrepo/cli": packagesWithPinnedVersions["@moonrepo/cli"],
       radashi: "latest",
-      typescript: "^5.8.2",
-      ...(withHusky && { husky: "^9.1.7" }),
+      typescript,
+      oxlint,
+      ...(withHusky && { husky }),
     },
     trustedDependencies: ["@moonrepo/cli", "esbuild"],
     packageManager: packageManager,
@@ -39,7 +52,7 @@ try {
   fs.writeFileSync(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON));
 
   const eslintPackageJsonContent = {
-    name: `@${projectName}/eslint-prettier-config`,
+    name: `@${projectName}/linting-config`,
     version: "1.0.0",
     type: "module",
     private: true,
@@ -55,15 +68,17 @@ try {
       "@eslint/config-inspector": "latest",
       "@eslint/js": "latest",
       "@types/node": "latest",
-      eslint: "^9.23.0",
+      eslint,
       "eslint-config-prettier": "latest",
       globals: "latest",
       prettier: "latest",
       "typescript-eslint": "latest",
+      oxlint,
+      "eslint-plugin-oxlint": "latest",
     },
   };
 
-  const eslintPackageJson = path.resolve(import.meta.dirname, "packages/eslint-prettier-config/package.json");
+  const eslintPackageJson = path.resolve(import.meta.dirname, "packages/linting-config/package.json");
   fs.writeFileSync(eslintPackageJson, JSON.stringify(eslintPackageJsonContent));
 
   const vsCodeWorkSpaceSettings = {
@@ -145,7 +160,7 @@ lcov-report/
 
   fs.rmSync(path.resolve(import.meta.dirname, ".git"), { recursive: true });
   if (withHusky) {
-    exec("git init && bun husky init");
+    exec("git init && bun husky");
     if (addInfisicalScan) {
       fs.writeFileSync(
         path.resolve(import.meta.dirname, ".husky/pre-commit"),

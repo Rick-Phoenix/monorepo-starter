@@ -1,22 +1,27 @@
 {
-  "name": "@monorepo-starter/eslint-prettier-config",
+  "name": "@monorepo-starter/linting-config",
   "version": "1.0.0",
   "type": "module",
   "private": true,
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
-    ".": "./index.js"
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^4.11.0",
     "@eslint/config-inspector": "latest",
     "@eslint/js": "latest",
     "@types/node": "latest",
     "eslint": "^9.23.0",
     "eslint-config-prettier": "latest",
+    "eslint-plugin-oxlint": "latest",
     "globals": "latest",
+    "oxlint": "^0.16.3",
     "prettier": "latest",
-    "typescript-eslint": "latest",
-    "@antfu/eslint-config": "^4.11.0"
+    "typescript-eslint": "latest"
   }
 }

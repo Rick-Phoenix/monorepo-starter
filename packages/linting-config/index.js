@@ -1,26 +1,14 @@
 import antfu from "@antfu/eslint-config";
 import eslintConfigPrettier from "eslint-config-prettier";
+import oxlint from "eslint-plugin-oxlint";
 import prettierConfig from "./prettier.config.js";
 
 function createEslintConfig(options, ...overrides) {
   return antfu(
     {
+      ignores: ["**/dist/**", "**/node_modules/**"],
       typescript: {
         tsconfigPath: "tsconfig.json",
-        overrides: {
-          "@typescript-eslint/no-unused-vars": [
-            "warn",
-            {
-              args: "all",
-              argsIgnorePattern: "^[_ce(evt)f(ws)]",
-              caughtErrors: "all",
-              caughtErrorsIgnorePattern: "^_",
-              destructuredArrayIgnorePattern: "^_",
-              varsIgnorePattern: "^[_k(key)]",
-              ignoreRestSiblings: true,
-            },
-          ],
-        },
         overridesTypeAware: {
           "ts/prefer-nullish-coalescing": [
             "warn",
@@ -34,34 +22,36 @@ function createEslintConfig(options, ...overrides) {
           "ts/consistent-type-definitions": "off",
         },
       },
-      javascript: true,
       imports: true,
       disables: true,
       regexp: true,
       test: true,
       jsx: options?.jsx || options?.react || false,
-      perfectionist: false,
       stylistic: false,
       jsonc: false,
       yaml: false,
       markdown: false,
       toml: false,
+
       ...options,
     },
     {
       rules: {
-        "no-console": "warn",
         "node/no-process-env": "error",
+        "node/prefer-global/process": "off",
         "antfu/no-top-level-await": "off",
-        "unicorn/filename-case": ["error", { case: "kebabCase" }],
         "unicorn/prefer-json-parse-buffer": "error",
-        "unicorn/prefer-negative-index": "warn",
         "unicorn/better-regex": "warn",
-        "import/no-mutable-exports": "warn",
+        "perfectionist/sort-named-exports": "off",
+        "perfectionist/sort-named-imports": "off",
+        "perfectionist/sort-exports": "off",
+        "perfectionist/sort-imports": "off",
       },
     },
     ...overrides,
-    eslintConfigPrettier
+    eslintConfigPrettier,
+    ...oxlint.configs["flat/recommended"],
+    ...oxlint.buildFromOxlintConfigFile("../../.oxlintrc.json")
   );
 }
 
