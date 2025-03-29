@@ -38,6 +38,7 @@ function createEslintConfig(options, ...overrides) {
     {
       rules: {
         "node/no-process-env": "error",
+        "node/prefer-promises/fs": "error",
         "node/prefer-global/process": "off",
         "antfu/no-top-level-await": "off",
         "unicorn/prefer-json-parse-buffer": "error",

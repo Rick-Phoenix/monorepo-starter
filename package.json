@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@types/bun": "^1.2.6",
-    "@types/node": "^22.13.13"
+    "@types/node": "^22.13.13",
+    "dedent": "^1.5.3"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.4.0",

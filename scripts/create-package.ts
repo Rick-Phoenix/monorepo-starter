@@ -1,6 +1,7 @@
 // eslint-disable no-useless-spread
 // eslint-disable no-console
 import { confirm, input, select } from "@inquirer/prompts";
+import dedent from "dedent";
 import { select as selectMultiple } from "inquirer-select-pro";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -162,23 +163,23 @@ try {
   fs.writeFileSync(path.join(packageDir, "src/index.ts"), "");
 
   if (withEnvSchema) {
-    const envParsingModule = `// eslint-disable no-console
-/* eslint-disable node/no-process-env */
-import { type } from "arktype";
+    const envParsingModule = dedent(`// eslint-disable no-console
+      /* eslint-disable node/no-process-env */
+      import { type } from "arktype";
 
-const envSchema = type({
-  "+": "delete",
-});
+      const envSchema = type({
+        "+": "delete",
+      });
 
-const env = envSchema(process.env);
+      const env = envSchema(process.env);
 
-if (env instanceof type.errors) {
-  console.log("❌ Error while parsing envs: ❌");
-  console.log(env.flatProblemsByPath);
-  process.exit(1);
-}
+      if (env instanceof type.errors) {
+        console.log("❌ Error while parsing envs: ❌");
+        console.log(env.flatProblemsByPath);
+        process.exit(1);
+      }
 
-export { env };`;
+      export { env };`);
     fs.mkdirSync(path.join(packageDir, "src/lib"));
     fs.writeFileSync(path.join(packageDir, "src/lib/env.ts"), envParsingModule, { flag: "a" });
   }
