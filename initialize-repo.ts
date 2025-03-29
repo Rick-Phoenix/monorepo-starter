@@ -17,7 +17,7 @@ const { eslint, husky, oxlint, typescript } = packagesWithPinnedVersions;
 try {
   const projectName = await input({ message: "Enter the project's name:", required: true });
   const packageManager = await input({ message: "What is the package manager?", required: true, default: "bun@1.2.7" });
-  const withHusky = await confirm({ message: "Do you want to include Husky?", default: false });
+  const withHusky = await confirm({ message: "Do you want to include Husky?", default: true });
 
   const addInfisicalScan = withHusky
     ? await confirm({ message: "Do you want to add the infisical scan to the pre-commit hook?", default: false })
@@ -153,6 +153,8 @@ lcov-report/
   fs.writeFileSync(path.resolve(import.meta.dirname, ".gitignore"), gitignore);
   fs.mkdirSync(path.resolve(import.meta.dirname, "apps"));
 
+  fs.rmSync(path.resolve(import.meta.dirname, ".git"), { recursive: true });
+
   const syncAndInstall = await confirm({
     message: `Do you want to run 'bun install' and 'moon sync projects'?`,
     default: true,
@@ -163,23 +165,25 @@ lcov-report/
     if (error) console.warn(`Error with bun install or moon sync command:\n${error}`);
   }
 
-  fs.rmSync(path.resolve(import.meta.dirname, ".git"), { recursive: true });
   if (withHusky) {
     exec("git init && bun husky");
-    if (addInfisicalScan) {
-      fs.writeFileSync(
-        path.resolve(import.meta.dirname, ".husky/pre-commit"),
-        `
-      if ! [[ $(command -v infisical) ]]; then
+    fs.writeFileSync(
+      path.resolve(import.meta.dirname, ".husky/pre-commit"),
+      `
+      ${
+        addInfisicalScan
+          ? `if ! [[ $(command -v infisical) ]]; then
         echo "Infisical binary not found."
         exit 1
       fi
       
-      infisical scan git-changes --staged --verbose
+      infisical scan git-changes --staged --verbose`
+          : ""
+      }
+      
       lint-staged
       `
-      );
-    }
+    );
   }
 
   console.log(`Project successfully initiated. ✅`);
