@@ -10,16 +10,22 @@ const execAsync = promisify(exec);
 // Section - Constants
 
 const packagesWithPinnedVersions = {
-  oxlint: "^0.16.3",
-  typescript: "^5.8.2",
+  devDependencies: {
+    oxlint: "^0.16.3",
+    typescript: "^5.8.2",
+    "@moonrepo/cli": "^1.34.0",
+    eslint: "^9.23.0",
+    "@clack/prompts": "^0.10.0",
+  },
   husky: "^9.1.7",
-  "@moonrepo/cli": "^1.34.0",
-  eslint: "^9.23.0",
+  dependencies: { dedent: "^1.5.3" },
 };
 
 const bunVer = "bun@1.2.8";
 
-const { eslint, husky, oxlint, typescript } = packagesWithPinnedVersions;
+const {
+  devDependencies: { eslint, oxlint, typescript },
+} = packagesWithPinnedVersions;
 
 intro("✨ Monorepo Initialization ✨");
 
@@ -79,17 +85,14 @@ try {
     dependencies: {
       "@types/bun": "latest",
       "@types/node": "latest",
-      dedent: "^1.5.3",
       "jsonc-parser": "latest",
       "@monorepo-starter/utils": "workspace:*",
+      ...packagesWithPinnedVersions.dependencies,
     },
     devDependencies: {
-      "@inquirer/prompts": "latest",
-      "@moonrepo/cli": packagesWithPinnedVersions["@moonrepo/cli"],
       radashi: "latest",
-      typescript,
-      oxlint,
-      ...(withHusky && { husky, "lint-staged": "latest" }),
+      ...packagesWithPinnedVersions.devDependencies,
+      ...(withHusky && { husky: packagesWithPinnedVersions.husky, "lint-staged": "latest" }),
     },
     trustedDependencies: ["@moonrepo/cli", "esbuild"],
     packageManager: packageManager,
@@ -113,13 +116,13 @@ try {
       "@eslint/config-inspector": "latest",
       "@eslint/js": "latest",
       "@types/node": "latest",
-      eslint,
       "eslint-config-prettier": "latest",
       globals: "latest",
       prettier: "latest",
       "typescript-eslint": "latest",
-      oxlint,
       "eslint-plugin-oxlint": "latest",
+      eslint,
+      oxlint,
     },
   };
 
