@@ -13,6 +13,7 @@
     // Declaration Emitting
     "declaration": true,
     "declarationMap": true,
+    "noEmitOnError": true,
     "composite": true,
     // Compiler Behavior
     "strict": true,

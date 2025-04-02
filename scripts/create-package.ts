@@ -163,7 +163,12 @@ try {
 
   const tsconfig = {
     extends: "../../tsconfig.options.json",
-    compilerOptions: { outDir: "dist", rootDir: "src", tsBuildInfoFile: "dist/.tsbuildinfo" },
+    compilerOptions: {
+      outDir: "dist",
+      rootDir: "src",
+      tsBuildInfoFile: "dist/.tsbuildinfo",
+      ...(packageType === "app" && { noEmit: true, composite: false }),
+    },
   };
 
   await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
