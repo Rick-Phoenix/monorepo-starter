@@ -4,6 +4,14 @@ const config = {
   semi: true,
   singleQuote: false,
   printWidth: 100,
+  overrides: [
+    {
+      files: ["*.jsonc", ".eslintrc", "tsconfig*.json", "*.code-workspace"],
+      options: {
+        trailingComma: "none",
+      },
+    },
+  ],
 };
 
 export default config;

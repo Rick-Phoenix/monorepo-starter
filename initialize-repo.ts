@@ -15,15 +15,28 @@ const packagesWithPinnedVersions = {
   eslint: "^9.23.0",
 };
 
+const bunVer = "bun@1.2.8";
+
 const { eslint, husky, oxlint, typescript } = packagesWithPinnedVersions;
 
 try {
-  const projectName = await input({ message: "Enter the project's name:", required: true, default: "playground" });
-  const packageManager = await input({ message: "What is the package manager?", required: true, default: "bun@1.2.7" });
+  const projectName = await input({
+    message: "Enter the project's name:",
+    required: true,
+    default: "playground",
+  });
+  const packageManager = await input({
+    message: "What is the package manager?",
+    required: true,
+    default: bunVer,
+  });
   const withHusky = await confirm({ message: "Do you want to include Husky?", default: true });
 
   const addInfisicalScan = withHusky
-    ? await confirm({ message: "Do you want to add the infisical scan to the pre-commit hook?", default: false })
+    ? await confirm({
+        message: "Do you want to add the infisical scan to the pre-commit hook?",
+        default: false,
+      })
     : false;
 
   const packageJSON = {
@@ -44,6 +57,7 @@ try {
       "@types/bun": "latest",
       "@types/node": "latest",
       dedent: "^1.5.3",
+      "jsonc-parser": "latest",
     },
     devDependencies: {
       "@inquirer/prompts": "latest",
@@ -86,7 +100,10 @@ try {
     },
   };
 
-  const eslintPackageJson = path.resolve(import.meta.dirname, "packages/linting-config/package.json");
+  const eslintPackageJson = path.resolve(
+    import.meta.dirname,
+    "packages/linting-config/package.json"
+  );
   await writeFile(eslintPackageJson, JSON.stringify(eslintPackageJsonContent));
 
   const vsCodeWorkSpaceSettings = {
@@ -192,7 +209,8 @@ try {
   }
 
   console.log(`Project successfully initiated. ✅`);
-  if (addInfisicalScan) console.warn("Remember to launch 'infisical init' to complete the infisical setup.");
+  if (addInfisicalScan)
+    console.warn("Remember to launch 'infisical init' to complete the infisical setup.");
   process.exit(0);
 } catch (error) {
   console.log(`Error while initializing the project:`);

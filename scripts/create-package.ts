@@ -9,6 +9,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { title } from "radashi";
 import packageJSON from "../package.json" with { type: "json" };
+import { addFolderToWorkspace } from "./update-workspace";
 
 const pinnedVerPackages = {
   eslint: "^9.23.0",
@@ -94,7 +95,10 @@ try {
     ],
   });
 
-  const withEnvSchema = await confirm({ message: "Do you want to include an env parsing module?", default: false });
+  const withEnvSchema = await confirm({
+    message: "Do you want to include an env parsing module?",
+    default: false,
+  });
   if (withEnvSchema) additionalPackages.push("arktype");
 
   const selectedPackages = {
@@ -156,7 +160,10 @@ try {
 
   await writeFile(path.join(packageDir, "package.json"), JSON.stringify(packageJson, null, 2));
 
-  const tsconfig = { extends: "../../tsconfig.options.json", compilerOptions: { outDir: "dist", rootDir: "src" } };
+  const tsconfig = {
+    extends: "../../tsconfig.options.json",
+    compilerOptions: { outDir: "dist", rootDir: "src" },
+  };
 
   await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
 
@@ -222,9 +229,18 @@ try {
   });
 
   if (syncAndInstall) {
-    const { error } = spawnSync("bun install && bun moon sync projects", { stdio: "inherit", shell: true });
+    const { error } = spawnSync("bun install && bun moon sync projects", {
+      stdio: "inherit",
+      shell: true,
+    });
     if (error) console.warn(`Error while installing the package: ${error}`);
   }
+
+  await addFolderToWorkspace(
+    path.resolve(import.meta.dirname, `../${projectName}.code-workspace`),
+    `${packageType}s/${packageName}`
+  );
+
   console.log(`${title(packageType)} '${packageName}' has been successfully initiated. ✅`);
   process.exit(0);
 } catch (error) {
