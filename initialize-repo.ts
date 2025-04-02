@@ -1,11 +1,13 @@
 // eslint-disable no-console
-import { confirm, input } from "@inquirer/prompts";
+import { confirm, intro, outro, text } from "@clack/prompts";
 import dedent from "dedent";
 import { exec, spawnSync } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 const execAsync = promisify(exec);
+
+// Section - Constants
 
 const packagesWithPinnedVersions = {
   oxlint: "^0.16.3",
@@ -19,26 +21,47 @@ const bunVer = "bun@1.2.8";
 
 const { eslint, husky, oxlint, typescript } = packagesWithPinnedVersions;
 
-try {
-  const projectName = await input({
-    message: "Enter the project's name:",
-    required: true,
-    default: "playground",
-  });
-  const packageManager = await input({
-    message: "What is the package manager?",
-    required: true,
-    default: bunVer,
-  });
-  const withHusky = await confirm({ message: "Do you want to include Husky?", default: true });
+intro("✨ Monorepo Initialization ✨");
 
+try {
+  // Block - User Inputs
+
+  // Section - Project name
+  const projectName = (await text({
+    message: "Enter the project's name:",
+    defaultValue: "playground",
+    placeholder: "playground",
+  })) as string;
+
+  // Section - Package manager
+  const packageManager = (await text({
+    message: "What is the package manager?",
+    defaultValue: bunVer,
+    placeholder: bunVer,
+  })) as string;
+
+  // Section - Husky
+  const withHusky = await confirm({ message: "Do you want to include Husky?", initialValue: true });
+
+  // Section - Infisical
   const addInfisicalScan = withHusky
     ? await confirm({
         message: "Do you want to add the infisical scan to the pre-commit hook?",
-        default: false,
+        initialValue: false,
       })
     : false;
 
+  // Section - Bun install
+  const syncAndInstall = await confirm({
+    message: `Do you want to run 'bun install'?`,
+    initialValue: true,
+  });
+
+  //!Block
+
+  // Block - File generation
+
+  // Section - Package.json
   const packageJSON = {
     name: projectName,
     version: "1.0.0",
@@ -72,8 +95,7 @@ try {
     packageManager: packageManager,
   };
 
-  await writeFile(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON));
-
+  // Section - Eslint config package
   const eslintPackageJsonContent = {
     name: `@${projectName}/linting-config`,
     version: "1.0.0",
@@ -105,8 +127,8 @@ try {
     import.meta.dirname,
     "packages/linting-config/package.json"
   );
-  await writeFile(eslintPackageJson, JSON.stringify(eslintPackageJsonContent));
 
+  // Section - .code-workspace file
   const vsCodeWorkSpaceSettings = {
     folders: [
       {
@@ -124,11 +146,7 @@ try {
     },
   };
 
-  await writeFile(
-    path.resolve(import.meta.dirname, `${projectName}.code-workspace`),
-    JSON.stringify(vsCodeWorkSpaceSettings)
-  );
-
+  // Section - .gitignore
   const gitignore = dedent(`# --- Dependencies ---
     node_modules/
 
@@ -171,17 +189,37 @@ try {
     *.lcov
     .nyc_output/`);
 
+  // Section - Pre-commit hook
+  const precommitHook = dedent(`${
+    addInfisicalScan
+      ? `if ! [[ $(command -v infisical) ]]; then
+    echo "Infisical binary not found."
+    exit 1
+  fi
+
+  infisical scan git-changes --staged --verbose`
+      : ""
+  }
+  
+  lint-staged
+  `);
+
+  //!Block
+
+  // Block - Writing to disk
+  await writeFile(eslintPackageJson, JSON.stringify(eslintPackageJsonContent));
+  await writeFile(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON));
+  await writeFile(
+    path.resolve(import.meta.dirname, `${projectName}.code-workspace`),
+    JSON.stringify(vsCodeWorkSpaceSettings)
+  );
   await writeFile(path.resolve(import.meta.dirname, ".gitignore"), gitignore);
   await mkdir(path.resolve(import.meta.dirname, "apps"));
-
   await rm(path.resolve(import.meta.dirname, ".git"), { recursive: true });
   await execAsync("git init && git add . && git commit -m 'Initial Commit' ");
+  //!Block
 
-  const syncAndInstall = await confirm({
-    message: `Do you want to run 'bun install'?`,
-    default: true,
-  });
-
+  // Block - Post install scripts
   if (syncAndInstall) {
     const { error } = spawnSync("bun install", { stdio: "inherit", shell: true });
     if (error) console.warn(`Error with bun install:\n${error}`);
@@ -189,29 +227,13 @@ try {
 
   if (withHusky) {
     await execAsync("bun husky");
-    await writeFile(
-      path.join(import.meta.dirname, ".husky/pre-commit"),
-      dedent(`
-        ${
-          addInfisicalScan
-            ? `if ! [[ $(command -v infisical) ]]; then
-          echo "Infisical binary not found."
-          exit 1
-        fi
-
-        infisical scan git-changes --staged --verbose`
-            : ""
-        }
-        
-        lint-staged
-        `),
-      "utf-8"
-    );
+    await writeFile(path.join(import.meta.dirname, ".husky/pre-commit"), precommitHook, "utf-8");
   }
+  //!Block
 
-  console.log(`Project successfully initiated. ✅`);
-  if (addInfisicalScan)
-    console.warn("Remember to launch 'infisical init' to complete the infisical setup.");
+  outro(
+    `Project successfully initiated. ✅ ${addInfisicalScan ? "\nRemember to launch 'infisical init' to complete the infisical setup." : ""}`
+  );
   process.exit(0);
 } catch (error) {
   console.log(`Error while initializing the project:`);

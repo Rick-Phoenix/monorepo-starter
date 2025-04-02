@@ -1,8 +1,7 @@
 // eslint-disable no-useless-spread
 // eslint-disable no-console
-import { confirm, input, select } from "@inquirer/prompts";
+import { cancel, confirm, intro, multiselect, outro, select, text } from "@clack/prompts";
 import dedent from "dedent";
-import { select as selectMultiple } from "inquirer-select-pro";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -71,144 +70,151 @@ const optionalPackages: Package[] = [
 
 // Block -- Input Start
 
-try {
-  // Section - Package name and type
-  const packageType = await select({
-    message: "Do you want to create an app or a package?",
-    choices: [
-      { name: "App 🚀", value: "app" },
-      { name: "Package 📦", value: "package" },
-    ],
-    default: "package",
-  });
+intro("-- Initializing new package --");
 
-  const packageName = await input({
-    message: `Enter the ${packageType}'s name:`,
-    required: true,
-  });
+// Section - Package name and type
+const packageType = (await select({
+  message: "Do you want to create an app or a package?",
+  options: [
+    { label: "App 🚀", value: "app" },
+    { label: "Package 📦", value: "package" },
+  ],
+  initialValue: "package",
+})) as string;
 
-  if (packageName.match(/[,./\\:]/)) {
-    console.error(`The name contains invalid characters.`);
-    process.exit(1);
-  }
-
-  const packageDir = path.resolve(`./${packageType}s`, packageName);
-  if (fs.existsSync(packageDir)) {
-    console.error("This folder already exists.");
-    process.exit(1);
-  }
-
-  const packageDescription = await input({
-    message: `Enter the ${packageType}'s description:`,
-    default: "",
-  });
-
-  // Section - Adding additional packages
-  const additionalPackages = await selectMultiple({
-    message: "Do you want to install additional packages?",
-    multiple: true,
-    options: [
-      { name: "Hono", value: "hono" },
-      { name: "Arktype", value: "arktype" },
-      { name: "Drizzle", value: "drizzle-orm" },
-    ],
-  });
-
-  const withEnvSchema = await confirm({
-    message: "Do you want to include an env parsing module?",
-    default: false,
-  });
-
-  if (withEnvSchema) additionalPackages.push("arktype");
-
-  const selectedPackages = {
-    dependencies: new Map<string, string>(),
-    devDependencies: new Map<string, string>(),
-  };
-
-  const addPackage = (pac: Package) => {
-    pac.isDev
-      ? selectedPackages.devDependencies.set(pac.name, pac.version)
-      : selectedPackages.dependencies.set(pac.name, pac.version);
-    if (pac.subdependencies) pac.subdependencies.forEach(addPackage);
-  };
-
-  additionalPackages.forEach((selection) => {
-    for (const pack of optionalPackages) {
-      if (pack.name === selection) {
-        addPackage(pack);
-      }
+const packageName = (await text({
+  message: `Enter the ${packageType}'s name:`,
+  validate: (input) => {
+    if (!input || !input.length) {
+      cancel("The package name cannot be empty.");
+      process.exit(1);
     }
-  });
 
-  // Section - Bun install
-  const syncAndInstall = await confirm({
-    message: `Do you want to run 'bun install' and 'moon sync projects'?`,
-    default: true,
-  });
+    if (input.match(/[,./\\:]/)) {
+      cancel(`The name contains invalid characters.`);
+      process.exit(1);
+    }
+    return undefined;
+  },
+})) as string;
 
-  //!Block
+const packageDir = path.resolve(`./${packageType}s`, packageName);
+if (fs.existsSync(packageDir)) {
+  console.error("This folder already exists.");
+  process.exit(1);
+}
 
-  // Block - File Generation
+const packageDescription = await text({
+  message: `Enter the ${packageType}'s description:`,
+  defaultValue: "",
+  placeholder: "",
+});
 
-  // Section - Package.json
-  const packageJsonContent = {
-    name: `@${projectName}/${packageName}`,
-    type: "module",
-    private: true,
-    author: "Rick-Phoenix",
-    description: packageDescription,
-    files: ["dist"],
-    main: "./dist/index.js", // Fallback for older Node/tools
-    types: "./dist/index.d.ts",
-    scripts: {
-      lint: "oxlint && eslint",
+// Section - Adding additional packages
+const additionalPackages = (await multiselect({
+  message: "Do you want to install additional packages? (Select with spacebar)",
+  options: [
+    { label: "Hono", value: "hono" },
+    { label: "Arktype", value: "arktype" },
+    { label: "Drizzle", value: "drizzle-orm" },
+  ],
+})) as string[];
+
+const withEnvSchema = await confirm({
+  message: "Do you want to include an env parsing module?",
+  initialValue: false,
+});
+
+if (withEnvSchema) additionalPackages.push("arktype");
+
+const selectedPackages = {
+  dependencies: new Map<string, string>(),
+  devDependencies: new Map<string, string>(),
+};
+
+const addPackage = (pac: Package) => {
+  pac.isDev
+    ? selectedPackages.devDependencies.set(pac.name, pac.version)
+    : selectedPackages.dependencies.set(pac.name, pac.version);
+  if (pac.subdependencies) pac.subdependencies.forEach(addPackage);
+};
+
+additionalPackages.forEach((selection) => {
+  for (const pack of optionalPackages) {
+    if (pack.name === selection) {
+      addPackage(pack);
+    }
+  }
+});
+
+// Section - Bun install
+const syncAndInstall = await confirm({
+  message: `Do you want to run 'bun install' and 'moon sync projects'?`,
+  initialValue: true,
+});
+
+//!Block
+
+// Block - File Generation
+
+// Section - Package.json
+const packageJsonContent = {
+  name: `@${projectName}/${packageName}`,
+  type: "module",
+  private: true,
+  author: "Rick-Phoenix",
+  description: packageDescription,
+  files: ["dist"],
+  main: "./dist/index.js", // Fallback for older Node/tools
+  types: "./dist/index.d.ts",
+  scripts: {
+    lint: "oxlint && eslint",
+  },
+  exports: {
+    ".": {
+      types: "./dist/index.d.ts",
+      default: "./dist/index.js",
     },
-    exports: {
-      ".": {
-        types: "./dist/index.d.ts",
-        default: "./dist/index.js",
-      },
-    },
-    dependencies: {
-      ...Object.fromEntries(selectedPackages.dependencies.entries()),
-      "@monorepo-starter/utils": "workspace:*",
-    },
-    devDependencies: {
-      [`@${projectName}/linting-config`]: "workspace:*",
-      "@eslint/config-inspector": "latest",
-      "@eslint/js": "latest",
-      "@types/node": "latest",
-      globals: "latest",
-      prettier: "latest",
-      //"typescript-eslint": "latest",
-      //"eslint-config-prettier": "latest",
-      ...pinnedVerPackages,
-      ...Object.fromEntries(selectedPackages.devDependencies.entries()),
-    },
-  };
+  },
+  dependencies: {
+    ...Object.fromEntries(selectedPackages.dependencies.entries()),
+    "@monorepo-starter/utils": "workspace:*",
+  },
+  devDependencies: {
+    [`@${projectName}/linting-config`]: "workspace:*",
+    "@eslint/config-inspector": "latest",
+    "@eslint/js": "latest",
+    "@types/node": "latest",
+    globals: "latest",
+    prettier: "latest",
+    //"typescript-eslint": "latest",
+    //"eslint-config-prettier": "latest",
+    ...pinnedVerPackages,
+    ...Object.fromEntries(selectedPackages.devDependencies.entries()),
+  },
+};
 
-  // Section - Ts Config
-  const tsconfig = {
-    extends: "../../tsconfig.options.json",
-    compilerOptions: {
-      outDir: "dist",
-      rootDir: "src",
-      tsBuildInfoFile: "dist/.tsbuildinfo",
-      ...(packageType === "app" && { noEmit: true, composite: false }),
-    },
-  };
+// Section - Ts Config
+const tsconfig = {
+  extends: "../../tsconfig.options.json",
+  compilerOptions: {
+    outDir: "dist",
+    rootDir: "src",
+    tsBuildInfoFile: "dist/.tsbuildinfo",
+    ...(packageType === "app" && { noEmit: true, composite: false }),
+  },
+};
 
-  // Section - Eslint Config
-  const eslintConfig = `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
+// Section - Eslint Config
+const eslintConfig = `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
 
-  // Section - Prettier Config
-  const prettierConfig = `import {prettierConfig} from '@${projectName}/linting-config' \n export default prettierConfig`;
+// Section - Prettier Config
+const prettierConfig = `import {prettierConfig} from '@${projectName}/linting-config' \n export default prettierConfig`;
 
-  // Section - Index File Content
-  const indexFileContent = additionalPackages.includes("hono")
-    ? dedent(
-        `import { arktypeValidator } from "@hono/arktype-validator";
+// Section - Index File Content
+const indexFileContent = additionalPackages.includes("hono")
+  ? dedent(
+      `import { arktypeValidator } from "@hono/arktype-validator";
         import { type } from "arktype";
         import { Hono } from "hono";
   
@@ -227,12 +233,12 @@ try {
         });
   
         export default app`
-      )
-    : "";
+    )
+  : "";
 
-  // Section - Env Parsing Module
-  const envParsingModule = withEnvSchema
-    ? dedent(`// eslint-disable no-console
+// Section - Env Parsing Module
+const envParsingModule = withEnvSchema
+  ? dedent(`// eslint-disable no-console
           /* eslint-disable node/no-process-env */
           import { type } from "arktype";
     
@@ -249,52 +255,48 @@ try {
           }
     
           export { env };`)
-    : "";
+  : "";
 
-  //!Block
+//!Block
 
-  // Block -- Writing to disk
+// Block -- Writing to disk
 
-  await mkdir(packageDir);
-  await writeFile(
-    path.join(packageDir, "package.json"),
-    JSON.stringify(packageJsonContent, null, 2)
-  );
+await mkdir(packageDir);
+await writeFile(path.join(packageDir, "package.json"), JSON.stringify(packageJsonContent, null, 2));
 
-  await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
+await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
 
-  await writeFile(path.join(packageDir, "eslint.config.js"), eslintConfig);
+await writeFile(path.join(packageDir, "eslint.config.js"), eslintConfig);
 
-  await writeFile(path.join(packageDir, "prettier.config.js"), prettierConfig);
+await writeFile(path.join(packageDir, "prettier.config.js"), prettierConfig);
 
-  await mkdir(path.join(packageDir, "src"));
+await mkdir(path.join(packageDir, "src"));
 
-  await writeFile(path.join(packageDir, "src/index.ts"), indexFileContent);
+await writeFile(path.join(packageDir, "src/index.ts"), indexFileContent);
 
-  if (withEnvSchema) {
-    await mkdir(path.join(packageDir, "src/lib"));
-    await writeFile(path.join(packageDir, "src/lib/env.ts"), envParsingModule, { flag: "a" });
-  }
+if (withEnvSchema) {
+  await mkdir(path.join(packageDir, "src/lib"));
+  await writeFile(path.join(packageDir, "src/lib/env.ts"), envParsingModule, { flag: "a" });
+}
 
-  // !Block
+// !Block
 
-  // Block - Post Install Scripts
+// Block - Post Install Scripts
 
-  if (syncAndInstall) {
-    const { error } = spawnSync("bun install && bun moon sync projects", {
-      stdio: "inherit",
-      shell: true,
-    });
-    if (error) console.warn(`Error while installing the package: ${error}`);
-  }
+if (syncAndInstall) {
+  const { error } = spawnSync("bun install && bun moon sync projects", {
+    stdio: "inherit",
+    shell: true,
+  });
+  if (error) console.warn(`Error while installing the package: ${error}`);
+}
 
-  await updateWorkspace(
-    path.resolve(import.meta.dirname, `../${projectName}.code-workspace`),
-    `${packageType}s/${packageName}`
-  );
+await updateWorkspace(
+  path.resolve(import.meta.dirname, `../${projectName}.code-workspace`),
+  `${packageType}s/${packageName}`
+);
 
-  //!Block
+//!Block
 
-  console.log(`${title(packageType)} '${packageName}' has been successfully initiated. ✅`);
-  process.exit(0);
-} catch (error) {}
+outro(`${title(packageType)} '${packageName}' has been successfully initiated. 🚀✅`);
+process.exit(0);
