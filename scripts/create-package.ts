@@ -9,7 +9,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { title } from "radashi";
 import packageJSON from "../package.json" with { type: "json" };
-import { addFolderToWorkspace } from "./update-workspace";
+import { updateWorkspace } from "./update-workspace";
 
 const pinnedVerPackages = {
   eslint: "^9.23.0",
@@ -163,7 +163,7 @@ try {
 
   const tsconfig = {
     extends: "../../tsconfig.options.json",
-    compilerOptions: { outDir: "dist", rootDir: "src" },
+    compilerOptions: { outDir: "dist", rootDir: "src", tsBuildInfoFile: "dist/.tsbuildinfo" },
   };
 
   await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
@@ -237,7 +237,7 @@ try {
     if (error) console.warn(`Error while installing the package: ${error}`);
   }
 
-  await addFolderToWorkspace(
+  await updateWorkspace(
     path.resolve(import.meta.dirname, `../${projectName}.code-workspace`),
     `${packageType}s/${packageName}`
   );

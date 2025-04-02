@@ -15,7 +15,7 @@ interface CodeWorkspace {
   extensions?: object;
 }
 
-export async function addFolderToWorkspace(
+export async function updateWorkspace(
   workspaceFilePath: string,
   newFolderRelativePath: string
 ): Promise<void> {
@@ -65,6 +65,7 @@ export async function addFolderToWorkspace(
   tsconfig.references = tsconfig.references.filter((folder) =>
     existsSync(path.resolve(import.meta.dirname, "..", folder.path))
   );
-  tsconfig.references.push({ path: newFolderRelativePath });
+  if (!tsconfig.references.some((folder) => folder.path === newFolderRelativePath))
+    tsconfig.references.push({ path: newFolderRelativePath });
   await writeFile(tsconfigPath, JSON.stringify(tsconfig, null, 2));
 }
