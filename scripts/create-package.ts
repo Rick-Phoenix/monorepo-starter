@@ -5,11 +5,10 @@ import dedent from "dedent";
 import { select as selectMultiple } from "inquirer-select-pro";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { title } from "radashi";
 import packageJSON from "../package.json" with { type: "json" };
-
-//TODO - Add ability to add common packages like validators and such
 
 const pinnedVerPackages = {
   eslint: "^9.23.0",
@@ -32,7 +31,17 @@ const optionalPackages: Package[] = [
     ],
   },
   { name: "arktype", version: "^2.1.15" },
-  { name: "hono", version: "^4.7.5" },
+  {
+    name: "hono",
+    version: "^4.7.5",
+    subdependencies: [
+      {
+        name: "@hono/arktype-validator",
+        version: "^2.0.0",
+      },
+      { name: "arktype", version: "^2.1.15" },
+    ],
+  },
 ];
 
 type Package = {
@@ -68,7 +77,7 @@ try {
     process.exit(1);
   }
 
-  fs.mkdirSync(packageDir);
+  await mkdir(packageDir);
 
   const packageDescription = await input({
     message: `Enter the ${packageType}'s description:`,
@@ -97,13 +106,13 @@ try {
     pac.isDev
       ? selectedPackages.devDependencies.set(pac.name, pac.version)
       : selectedPackages.dependencies.set(pac.name, pac.version);
+    if (pac.subdependencies) pac.subdependencies.forEach(addPackage);
   };
 
   additionalPackages.forEach((selection) => {
     for (const pack of optionalPackages) {
       if (pack.name === selection) {
         addPackage(pack);
-        if (pack.subdependencies) pack.subdependencies.forEach(addPackage);
       }
     }
   });
@@ -145,22 +154,45 @@ try {
     },
   };
 
-  fs.writeFileSync(path.join(packageDir, "package.json"), JSON.stringify(packageJson, null, 2));
+  await writeFile(path.join(packageDir, "package.json"), JSON.stringify(packageJson, null, 2));
 
   const tsconfig = { extends: "../../tsconfig.options.json", compilerOptions: { outDir: "dist", rootDir: "src" } };
 
-  fs.writeFileSync(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
+  await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
 
   const eslintConfig = `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
 
-  fs.writeFileSync(path.join(packageDir, "eslint.config.js"), eslintConfig);
+  await writeFile(path.join(packageDir, "eslint.config.js"), eslintConfig);
 
   const prettierConfig = `import {prettierConfig} from '@${projectName}/linting-config' \n export default prettierConfig`;
 
-  fs.writeFileSync(path.join(packageDir, "prettier.config.js"), prettierConfig);
+  await writeFile(path.join(packageDir, "prettier.config.js"), prettierConfig);
 
-  fs.mkdirSync(path.join(packageDir, "src"));
-  fs.writeFileSync(path.join(packageDir, "src/index.ts"), "");
+  await mkdir(path.join(packageDir, "src"));
+  const indexFileContent = additionalPackages.includes("hono")
+    ? dedent(
+        `import { arktypeValidator } from "@hono/arktype-validator";
+      import { type } from "arktype";
+      import { Hono } from "hono";
+
+      const schema = type({
+        name: "string",
+        age: "number",
+      });
+
+      const app = new Hono();
+
+      app.post("/author", arktypeValidator("json", schema), (c) => {
+        const data = c.req.valid("json");
+        return c.json({
+          success: true,
+        });
+      });
+
+      export default app`
+      )
+    : "";
+  await writeFile(path.join(packageDir, "src/index.ts"), indexFileContent);
 
   if (withEnvSchema) {
     const envParsingModule = dedent(`// eslint-disable no-console
@@ -180,8 +212,8 @@ try {
       }
 
       export { env };`);
-    fs.mkdirSync(path.join(packageDir, "src/lib"));
-    fs.writeFileSync(path.join(packageDir, "src/lib/env.ts"), envParsingModule, { flag: "a" });
+    await mkdir(path.join(packageDir, "src/lib"));
+    await writeFile(path.join(packageDir, "src/lib/env.ts"), envParsingModule, { flag: "a" });
   }
 
   const syncAndInstall = await confirm({

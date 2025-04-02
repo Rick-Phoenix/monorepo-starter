@@ -5,6 +5,7 @@ import { exec, spawnSync } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+const execAsync = promisify(exec);
 
 const packagesWithPinnedVersions = {
   oxlint: "^0.16.3",
@@ -157,20 +158,20 @@ try {
   await mkdir(path.resolve(import.meta.dirname, "apps"));
 
   await rm(path.resolve(import.meta.dirname, ".git"), { recursive: true });
+  await execAsync("git init");
 
   const syncAndInstall = await confirm({
-    message: `Do you want to run 'bun install' and 'moon sync projects'?`,
+    message: `Do you want to run 'bun install'?`,
     default: true,
   });
 
   if (syncAndInstall) {
-    const { error } = spawnSync("bun install && bun moon sync projects", { stdio: "inherit", shell: true });
+    const { error } = spawnSync("bun install", { stdio: "inherit", shell: true });
     if (error) console.warn(`Error with bun install or moon sync command:\n${error}`);
   }
 
   if (withHusky) {
-    const execAsync = promisify(exec);
-    await execAsync("git init && bun husky");
+    await execAsync("bun husky");
     await writeFile(
       path.join(import.meta.dirname, ".husky/pre-commit"),
       dedent(`
