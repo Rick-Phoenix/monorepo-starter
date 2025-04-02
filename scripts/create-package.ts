@@ -143,6 +143,7 @@ try {
     },
     dependencies: {
       ...Object.fromEntries(selectedPackages.dependencies.entries()),
+      "@monorepo-starter/utils": "workspace:*",
     },
     devDependencies: {
       [`@${projectName}/linting-config`]: "workspace:*",

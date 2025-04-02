@@ -58,6 +58,7 @@ try {
       "@types/node": "latest",
       dedent: "^1.5.3",
       "jsonc-parser": "latest",
+      "@monorepo-starter/utils": "workspace:*",
     },
     devDependencies: {
       "@inquirer/prompts": "latest",

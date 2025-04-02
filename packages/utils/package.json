@@ -1,0 +1,33 @@
+{
+  "name": "@monorepo-starter/utils",
+  "type": "module",
+  "private": true,
+  "author": "Rick-Phoenix",
+  "description": "General purpose utility functions.",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "lint": "oxlint && eslint"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@monorepo-starter/linting-config": "workspace:*",
+    "@eslint/config-inspector": "latest",
+    "@eslint/js": "latest",
+    "@types/node": "latest",
+    "globals": "latest",
+    "prettier": "latest",
+    "eslint": "^9.23.0",
+    "typescript": "^5.8.2",
+    "oxlint": "^0.16.3"
+  }
+}
