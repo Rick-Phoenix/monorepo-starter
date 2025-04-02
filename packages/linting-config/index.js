@@ -32,7 +32,7 @@ function createEslintConfig(options, ...overrides) {
       yaml: false,
       markdown: false,
       toml: false,
-
+      svelte: options?.svelte || false,
       ...options,
     },
     {

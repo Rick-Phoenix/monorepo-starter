@@ -11,12 +11,34 @@ import { title } from "radashi";
 import packageJSON from "../package.json" with { type: "json" };
 import { updateWorkspace } from "./update-workspace";
 
+// Section - Exit Handling
+process.on("SIGINT", () => {
+  console.warn("\nPackage initialization aborted.");
+  process.exit(0);
+});
+
+// Section - Types
+type Package = {
+  name: string;
+  subdependencies?: Package[];
+  version: string;
+  isDev?: boolean;
+};
+
+// Block - Constants
+
+const projectName = packageJSON.name;
+if (!projectName.length)
+  throw new Error("Could not find the project name. Is package.json set up correctly?");
+
+// Section - Packages with pinned version
 const pinnedVerPackages = {
   eslint: "^9.23.0",
   typescript: "^5.8.2",
   oxlint: "^0.16.3",
 };
 
+// Section - Optional packages list
 const optionalPackages: Package[] = [
   {
     name: "drizzle-orm",
@@ -45,23 +67,21 @@ const optionalPackages: Package[] = [
   },
 ];
 
-type Package = {
-  name: string;
-  subdependencies?: Package[];
-  version: string;
-  isDev?: boolean;
-};
+// !Block
 
-const packageType = await select({
-  message: "Do you want to create an app or a package?",
-  choices: [
-    { name: "App 🚀", value: "app" },
-    { name: "Package 📦", value: "package" },
-  ],
-  default: "package",
-});
+// Block -- Input Start
 
 try {
+  // Section - Package name and type
+  const packageType = await select({
+    message: "Do you want to create an app or a package?",
+    choices: [
+      { name: "App 🚀", value: "app" },
+      { name: "Package 📦", value: "package" },
+    ],
+    default: "package",
+  });
+
   const packageName = await input({
     message: `Enter the ${packageType}'s name:`,
     required: true,
@@ -78,13 +98,12 @@ try {
     process.exit(1);
   }
 
-  await mkdir(packageDir);
-
   const packageDescription = await input({
     message: `Enter the ${packageType}'s description:`,
     default: "",
   });
 
+  // Section - Adding additional packages
   const additionalPackages = await selectMultiple({
     message: "Do you want to install additional packages?",
     multiple: true,
@@ -99,6 +118,7 @@ try {
     message: "Do you want to include an env parsing module?",
     default: false,
   });
+
   if (withEnvSchema) additionalPackages.push("arktype");
 
   const selectedPackages = {
@@ -121,9 +141,18 @@ try {
     }
   });
 
-  const projectName = packageJSON.name;
+  // Section - Bun install
+  const syncAndInstall = await confirm({
+    message: `Do you want to run 'bun install' and 'moon sync projects'?`,
+    default: true,
+  });
 
-  const packageJson = {
+  //!Block
+
+  // Block - File Generation
+
+  // Section - Package.json
+  const packageJsonContent = {
     name: `@${projectName}/${packageName}`,
     type: "module",
     private: true,
@@ -159,8 +188,7 @@ try {
     },
   };
 
-  await writeFile(path.join(packageDir, "package.json"), JSON.stringify(packageJson, null, 2));
-
+  // Section - Ts Config
   const tsconfig = {
     extends: "../../tsconfig.options.json",
     compilerOptions: {
@@ -171,68 +199,86 @@ try {
     },
   };
 
-  await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
-
+  // Section - Eslint Config
   const eslintConfig = `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
 
-  await writeFile(path.join(packageDir, "eslint.config.js"), eslintConfig);
-
+  // Section - Prettier Config
   const prettierConfig = `import {prettierConfig} from '@${projectName}/linting-config' \n export default prettierConfig`;
+
+  // Section - Index File Content
+  const indexFileContent = additionalPackages.includes("hono")
+    ? dedent(
+        `import { arktypeValidator } from "@hono/arktype-validator";
+        import { type } from "arktype";
+        import { Hono } from "hono";
+  
+        const schema = type({
+          name: "string",
+          age: "number",
+        });
+  
+        const app = new Hono();
+  
+        app.post("/author", arktypeValidator("json", schema), (c) => {
+          const data = c.req.valid("json");
+          return c.json({
+            success: true,
+          });
+        });
+  
+        export default app`
+      )
+    : "";
+
+  // Section - Env Parsing Module
+  const envParsingModule = withEnvSchema
+    ? dedent(`// eslint-disable no-console
+          /* eslint-disable node/no-process-env */
+          import { type } from "arktype";
+    
+          const envSchema = type({
+            "+": "delete",
+          });
+    
+          const env = envSchema(process.env);
+    
+          if (env instanceof type.errors) {
+            console.log("❌ Error while parsing envs: ❌");
+            console.log(env.flatProblemsByPath);
+            process.exit(1);
+          }
+    
+          export { env };`)
+    : "";
+
+  //!Block
+
+  // Block -- Writing to disk
+
+  await mkdir(packageDir);
+  await writeFile(
+    path.join(packageDir, "package.json"),
+    JSON.stringify(packageJsonContent, null, 2)
+  );
+
+  await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
+
+  await writeFile(path.join(packageDir, "eslint.config.js"), eslintConfig);
 
   await writeFile(path.join(packageDir, "prettier.config.js"), prettierConfig);
 
   await mkdir(path.join(packageDir, "src"));
-  const indexFileContent = additionalPackages.includes("hono")
-    ? dedent(
-        `import { arktypeValidator } from "@hono/arktype-validator";
-      import { type } from "arktype";
-      import { Hono } from "hono";
 
-      const schema = type({
-        name: "string",
-        age: "number",
-      });
-
-      const app = new Hono();
-
-      app.post("/author", arktypeValidator("json", schema), (c) => {
-        const data = c.req.valid("json");
-        return c.json({
-          success: true,
-        });
-      });
-
-      export default app`
-      )
-    : "";
   await writeFile(path.join(packageDir, "src/index.ts"), indexFileContent);
 
   if (withEnvSchema) {
-    const envParsingModule = dedent(`// eslint-disable no-console
-      /* eslint-disable node/no-process-env */
-      import { type } from "arktype";
-
-      const envSchema = type({
-        "+": "delete",
-      });
-
-      const env = envSchema(process.env);
-
-      if (env instanceof type.errors) {
-        console.log("❌ Error while parsing envs: ❌");
-        console.log(env.flatProblemsByPath);
-        process.exit(1);
-      }
-
-      export { env };`);
     await mkdir(path.join(packageDir, "src/lib"));
     await writeFile(path.join(packageDir, "src/lib/env.ts"), envParsingModule, { flag: "a" });
   }
 
-  const syncAndInstall = await confirm({
-    message: `Do you want to run 'bun install' and 'moon sync projects'?`,
-    default: true,
-  });
+  // !Block
+
+  // Block - Post Install Scripts
 
   if (syncAndInstall) {
     const { error } = spawnSync("bun install && bun moon sync projects", {
@@ -247,9 +293,8 @@ try {
     `${packageType}s/${packageName}`
   );
 
+  //!Block
+
   console.log(`${title(packageType)} '${packageName}' has been successfully initiated. ✅`);
   process.exit(0);
-} catch (error) {
-  console.error("Error initializing the package:", error);
-  process.exit(1);
-}
+} catch (error) {}
