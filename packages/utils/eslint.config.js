@@ -1,2 +1,2 @@
-import { createEslintConfig } from '@monorepo-starter/linting-config' 
- export default createEslintConfig()
+import { createEslintConfig } from "@monorepo-starter/linting-config";
+export default createEslintConfig();
