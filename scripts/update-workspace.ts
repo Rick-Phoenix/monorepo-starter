@@ -58,4 +58,13 @@ export async function addFolderToWorkspace(
     console.error(`Error writing updated workspace file:`, writeError);
     throw writeError;
   }
+
+  const tsconfigPath = path.resolve(import.meta.dirname, "../tsconfig.json");
+  const tsconfigRaw = await readFile(tsconfigPath, "utf-8");
+  const tsconfig = JSON.parse(tsconfigRaw) as { references: { path: string }[] };
+  tsconfig.references = tsconfig.references.filter((folder) =>
+    existsSync(path.resolve(import.meta.dirname, "..", folder.path))
+  );
+  tsconfig.references.push({ path: newFolderRelativePath });
+  await writeFile(tsconfigPath, JSON.stringify(tsconfig, null, 2));
 }
