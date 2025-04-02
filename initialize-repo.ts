@@ -11,7 +11,7 @@ const packagesWithPinnedVersions = {
   oxlint: "^0.16.3",
   typescript: "^5.8.2",
   husky: "^9.1.7",
-  "@moonrepo/cli": "^1.33.3",
+  "@moonrepo/cli": "^1.34.0",
   eslint: "^9.23.0",
 };
 
@@ -34,7 +34,6 @@ try {
     workspaces: ["packages/*", "apps/*"],
     scripts: {
       newpackage: "bun ./scripts/create-package.ts",
-      prepare: "moon sync projects",
     },
     ...(withHusky && {
       "lint-staged": {
@@ -158,7 +157,7 @@ try {
   await mkdir(path.resolve(import.meta.dirname, "apps"));
 
   await rm(path.resolve(import.meta.dirname, ".git"), { recursive: true });
-  await execAsync("git init");
+  await execAsync("git init && git add . && git commit -m 'Initial Commit' ");
 
   const syncAndInstall = await confirm({
     message: `Do you want to run 'bun install'?`,
@@ -167,7 +166,7 @@ try {
 
   if (syncAndInstall) {
     const { error } = spawnSync("bun install", { stdio: "inherit", shell: true });
-    if (error) console.warn(`Error with bun install or moon sync command:\n${error}`);
+    if (error) console.warn(`Error with bun install:\n${error}`);
   }
 
   if (withHusky) {

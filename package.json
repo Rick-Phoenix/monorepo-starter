@@ -15,16 +15,16 @@
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
   },
   "dependencies": {
-    "@types/bun": "^1.2.6",
-    "@types/node": "^22.13.13",
+    "@types/bun": "^1.2.8",
+    "@types/node": "^22.13.17",
     "dedent": "^1.5.3"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.4.0",
-    "@moonrepo/cli": "^1.33.3",
+    "@moonrepo/cli": "^1.34.0",
     "husky": "^9.1.7",
     "inquirer-select-pro": "^1.0.0-alpha.9",
-    "oxlint": "^0.16.3",
+    "oxlint": "^0.16.4",
     "radashi": "^12.4.0",
     "typescript": "^5.8.2",
     "lint-staged": "^15.5.0"
