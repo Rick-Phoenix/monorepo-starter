@@ -1,8 +1,9 @@
 // eslint-disable no-console
 import { confirm, intro, outro, text } from "@clack/prompts";
-import { tryThrowPipeline } from "@monorepo-starter/utils";
+import { tryThrowPipeline, tryThrowSync } from "@monorepo-starter/utils";
 import dedent from "dedent";
 import { exec, spawnSync } from "node:child_process";
+import { mkdirSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -271,14 +272,17 @@ try {
   }
 
   if (withHusky) {
+    const huskyDir = path.resolve(import.meta.dirname, ".husky");
+    tryThrowSync(() => mkdirSync(huskyDir, { recursive: true }), "creating the .husky folder");
     await tryThrowPipeline([
-      [execAsync("bun husky"), "initializing husky"],
       [
-        writeFile(path.join(import.meta.dirname, ".husky/pre-commit"), precommitHook, "utf-8"),
+        writeFile(path.resolve(huskyDir, "pre-commit"), precommitHook, "utf-8"),
         "writing the pre-commit hook",
       ],
+      [execAsync("bun husky"), "initializing husky"],
     ] as const);
   }
+
   //!Block
 
   outro(
