@@ -5,6 +5,7 @@ import { exec, spawnSync } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import utilsPackageJSON from "./packages/utils/package.json" with { type: "json" };
 const execAsync = promisify(exec);
 
 // Section - Constants
@@ -24,7 +25,7 @@ const packagesWithPinnedVersions = {
 const bunVer = "bun@1.2.8";
 
 const {
-  devDependencies: { eslint, oxlint, typescript },
+  devDependencies: { eslint, oxlint },
 } = packagesWithPinnedVersions;
 
 intro("✨ Monorepo Initialization ✨");
@@ -86,7 +87,7 @@ try {
       "@types/bun": "latest",
       "@types/node": "latest",
       "jsonc-parser": "latest",
-      "@monorepo-starter/utils": "workspace:*",
+      [`@${projectName}/utils`]: "workspace:*",
       ...packagesWithPinnedVersions.dependencies,
     },
     devDependencies: {
@@ -130,6 +131,13 @@ try {
     import.meta.dirname,
     "packages/linting-config/package.json"
   );
+
+  // Section - Utils subpackage
+  const utilsPackageJsonCopy = { ...utilsPackageJSON };
+  utilsPackageJsonCopy.name = `@${projectName}/utils`;
+  //@ts-expect-error
+  utilsPackageJsonCopy.devDependencies["@monorepo-starter/linting-config"] = undefined;
+  utilsPackageJsonCopy.devDependencies[`@${projectName}/linting-config`] = "workspace:*";
 
   // Section - .code-workspace file
   const vsCodeWorkSpaceSettings = {
@@ -217,6 +225,10 @@ try {
 
   // Block - Writing to disk
   await writeFile(eslintPackageJson, JSON.stringify(eslintPackageJsonContent));
+  await writeFile(
+    path.resolve(import.meta.dirname, "packages/utils/package.json"),
+    JSON.stringify(utilsPackageJsonCopy, null, 2)
+  );
   await writeFile(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON));
   await writeFile(
     path.resolve(import.meta.dirname, `${projectName}.code-workspace`),
