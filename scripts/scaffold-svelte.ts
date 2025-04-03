@@ -71,7 +71,7 @@ async function scaffoldSvelte() {
   });
 
   const svelteTsConfig = {
-    extends: "./.svelte-kit/tsconfig.json",
+    extends: ["../../tsconfig.options.json", "./.svelte-kit/tsconfig.json"],
     compilerOptions: {
       moduleResolution: "bundler",
       module: "ESNext",
