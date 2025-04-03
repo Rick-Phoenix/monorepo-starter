@@ -75,6 +75,8 @@ async function scaffoldSvelte() {
     compilerOptions: {
       moduleResolution: "bundler",
       module: "ESNext",
+      allowJs: true,
+      checkJs: true,
     },
   };
 

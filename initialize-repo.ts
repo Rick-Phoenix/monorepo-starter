@@ -1,5 +1,6 @@
 // eslint-disable no-console
 import { confirm, intro, outro, text } from "@clack/prompts";
+import { tryThrowPipeline } from "@monorepo-starter/utils";
 import dedent from "dedent";
 import { exec, spawnSync } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
@@ -224,20 +225,43 @@ try {
   //!Block
 
   // Block - Writing to disk
-  await writeFile(eslintPackageJson, JSON.stringify(eslintPackageJsonContent));
-  await writeFile(
-    path.resolve(import.meta.dirname, "packages/utils/package.json"),
-    JSON.stringify(utilsPackageJsonCopy, null, 2)
-  );
-  await writeFile(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON));
-  await writeFile(
-    path.resolve(import.meta.dirname, `${projectName}.code-workspace`),
-    JSON.stringify(vsCodeWorkSpaceSettings)
-  );
-  await writeFile(path.resolve(import.meta.dirname, ".gitignore"), gitignore);
-  await mkdir(path.resolve(import.meta.dirname, "apps"));
-  await rm(path.resolve(import.meta.dirname, ".git"), { recursive: true });
-  await execAsync("git init && git add . && git commit -m 'Initial Commit' ");
+  await tryThrowPipeline([
+    [
+      writeFile(eslintPackageJson, JSON.stringify(eslintPackageJsonContent)),
+      "writing the eslint package.json file",
+    ],
+    [
+      writeFile(
+        path.resolve(import.meta.dirname, "packages/utils/package.json"),
+        JSON.stringify(utilsPackageJsonCopy, null, 2)
+      ),
+      "writing the utils package.json file",
+    ],
+    [
+      writeFile(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON)),
+      "writing the root package.json file",
+    ],
+    [
+      writeFile(
+        path.resolve(import.meta.dirname, `${projectName}.code-workspace`),
+        JSON.stringify(vsCodeWorkSpaceSettings)
+      ),
+      "writing the .code-workspace file",
+    ],
+    [
+      writeFile(path.resolve(import.meta.dirname, ".gitignore"), gitignore),
+      "writing the .gitignore file",
+    ],
+    [mkdir(path.resolve(import.meta.dirname, "apps")), "writing the apps folder"],
+    [
+      rm(path.resolve(import.meta.dirname, ".git"), { recursive: true }),
+      "removing the previous .git folder",
+    ],
+    [
+      execAsync("git init && git add . && git commit -m 'Initial Commit' "),
+      "initializing the new git repo",
+    ],
+  ] as const);
   //!Block
 
   // Block - Post install scripts
@@ -247,8 +271,13 @@ try {
   }
 
   if (withHusky) {
-    await execAsync("bun husky");
-    await writeFile(path.join(import.meta.dirname, ".husky/pre-commit"), precommitHook, "utf-8");
+    await tryThrowPipeline([
+      [execAsync("bun husky"), "initializing husky"],
+      [
+        writeFile(path.join(import.meta.dirname, ".husky/pre-commit"), precommitHook, "utf-8"),
+        "writing the pre-commit hook",
+      ],
+    ] as const);
   }
   //!Block
 
