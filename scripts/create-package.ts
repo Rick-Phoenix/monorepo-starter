@@ -183,13 +183,13 @@ const packageJsonContent = {
   devDependencies: {
     [`@${projectName}/linting-config`]: "workspace:*",
     "@eslint/config-inspector": "latest",
+    ...pinnedVerPackages,
     "@eslint/js": "latest",
     "@types/node": "latest",
     globals: "latest",
     prettier: "latest",
     //"typescript-eslint": "latest",
     //"eslint-config-prettier": "latest",
-    ...pinnedVerPackages,
     ...Object.fromEntries(selectedPackages.devDependencies.entries()),
   },
 };
@@ -300,3 +300,166 @@ await updateWorkspace(
 
 outro(`${title(packageType)} '${packageName}' has been successfully initiated. 🚀✅`);
 process.exit(0);
+
+async function scaffoldSvelte() {
+  const svelteTsConfig = {
+    extends: "./.svelte-kit/tsconfig.json",
+    compilerOptions: {
+      moduleResolution: "bundler",
+      module: "ESNext",
+    },
+  };
+
+  const viteConfig = dedent(
+    `import tailwindcss from '@tailwindcss/vite';
+  import { sveltekit } from '@sveltejs/kit/vite';
+  import { defineConfig } from 'vite';
+
+  export default defineConfig({
+    plugins: [tailwindcss(), sveltekit()]
+  });`
+  );
+
+  const svelteConfig = dedent(
+    `import adapter from '@sveltejs/adapter-static';
+  import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+  const config = {
+    preprocess: vitePreprocess(),
+    kit: { adapter: adapter() }
+  };
+
+  export default config;
+  `
+  );
+
+  const sveltePackageJSON = {
+    name: `${packageName}`,
+    private: true,
+    version: "0.0.1",
+    type: "module",
+    scripts: {
+      dev: "vite dev",
+      build: "vite build",
+      preview: "vite preview",
+      prepare: "svelte-kit sync || echo ''",
+      check: "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+      "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    },
+    dependencies: {
+      "@monorepo-starter/utils": "workspace:*",
+    },
+    devDependencies: {
+      [`@${projectName}/linting-config`]: "workspace:*",
+      "@eslint/config-inspector": "latest",
+      ...pinnedVerPackages,
+      "@eslint/js": "latest",
+      "@types/node": "latest",
+      globals: "latest",
+      prettier: "latest",
+      "@sveltejs/adapter-static": "^3.0.8",
+      "@sveltejs/kit": "^2.16.0",
+      "@sveltejs/vite-plugin-svelte": "^5.0.0",
+      "@tailwindcss/typography": "^0.5.15",
+      "@tailwindcss/vite": "^4.0.0",
+      svelte: "^5.0.0",
+      "svelte-check": "^4.0.0",
+      tailwindcss: "^4.0.0",
+      vite: "^6.0.0",
+    },
+  };
+
+  const gitignore = dedent(
+    `node_modules
+
+  # Output
+  .output
+  .vercel
+  .netlify
+  .wrangler
+  /.svelte-kit
+  /build
+
+  # OS
+  .DS_Store
+  Thumbs.db
+
+  # Env
+  .env
+  .env.*
+  !.env.example
+  !.env.test
+
+  # Vite
+  vite.config.js.timestamp-*
+  vite.config.ts.timestamp-*`
+  );
+
+  // Section - src/app.html
+  const apphtml = dedent(
+    `<!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      %sveltekit.head%
+    </head>
+    <body data-sveltekit-preload-data="hover">
+      <div style="display: contents">%sveltekit.body%</div>
+    </body>
+  </html>`
+  );
+
+  // Section - src/app.d.ts
+  const appdts = dedent(
+    `// See https://svelte.dev/docs/kit/types#app.d.ts
+  // for information about these interfaces
+  declare global {
+    namespace App {
+      // interface Error {}
+      // interface Locals {}
+      // interface PageData {}
+      // interface PageState {}
+      // interface Platform {}
+    }
+  }
+
+  export {};
+  `
+  );
+
+  // Section - src/routes/+layout.svelte
+  const layoutsvelte = dedent(
+    `<script lang="ts">
+  import '../styles/index.css';
+    
+  </script>`
+  );
+
+  // Section - src/routes/+page.svelte
+  const pagesvelte = dedent(`<h1>Welcome to SvelteKit</h1>`);
+
+  const appdir = path.resolve(import.meta.dirname, `../apps/${packageName}`);
+  await mkdir(path.resolve(appdir, "static"), { recursive: true });
+  await mkdir(path.resolve(appdir, "src/lib"), { recursive: true });
+  await mkdir(path.resolve(appdir, "src/routes"));
+  await mkdir(path.resolve(appdir, "src/styles"));
+
+  await writeFile(`${appdir}/package.json`, JSON.stringify(sveltePackageJSON, null, 2), "utf8");
+  await writeFile(`${appdir}/vite.config.ts`, viteConfig, "utf8");
+  await writeFile(`${appdir}/svelte.config.js`, svelteConfig, "utf8");
+  await writeFile(`${appdir}/tsconfig.json`, JSON.stringify(svelteTsConfig, null, 2), "utf8");
+  await writeFile(`${appdir}/.gitignore`, gitignore, "utf8");
+
+  await writeFile(`${appdir}/src/app.html`, apphtml, "utf8");
+  await writeFile(`${appdir}/src/app.d.ts`, appdts, "utf8");
+
+  await writeFile(`${appdir}/src/routes/+layout.svelte`, layoutsvelte, "utf8");
+  await writeFile(`${appdir}/src/routes/+page.svelte`, pagesvelte, "utf8");
+
+  spawnSync(
+    `curl -L https://raw.githubusercontent.com/Rick-Phoenix/tailwing-config/main/tailwind.css -o ${appdir}/src/styles `,
+    { shell: true }
+  );
+}

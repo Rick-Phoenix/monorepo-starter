@@ -10,6 +10,9 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    // JS Typechecking
+    "allowJs": true,
+    "checkJs": true,
     // Declaration Emitting
     "declaration": true,
     "declarationMap": true,
@@ -20,6 +23,7 @@
     "strictNullChecks": true,
     "skipLibCheck": true,
     "incremental": true,
+    "sourceMap": true,
     // Type Checking Strictness
     "forceConsistentCasingInFileNames": true,
     "noUncheckedSideEffectImports": true,

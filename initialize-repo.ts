@@ -136,6 +136,11 @@ try {
     folders: [
       {
         path: ".",
+        name: "root",
+      },
+      {
+        path: "packages/linting-config",
+        name: "linting-config",
       },
     ],
     settings: {
