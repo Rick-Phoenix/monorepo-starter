@@ -151,6 +151,7 @@ try {
         "./.moon/cache/schemas/toolchain.json": [".moon/toolchain.yml"],
         "./.moon/cache/schemas/workspace.json": [".moon/workspace.yml"],
       },
+      "oxc.enable": true,
     },
   };
 
