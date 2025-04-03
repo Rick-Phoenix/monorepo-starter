@@ -3,9 +3,6 @@
   "files": [],
   "references": [
     {
-      "path": "packages/ee"
-    },
-    {
       "path": "packages/utils"
     }
   ]
