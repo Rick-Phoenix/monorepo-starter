@@ -37,6 +37,7 @@ function createEslintConfig(options, ...overrides) {
     },
     {
       rules: {
+        "no-unused-vars": "off",
         "node/no-process-env": "error",
         "node/prefer-promises/fs": "error",
         "node/prefer-global/process": "off",
