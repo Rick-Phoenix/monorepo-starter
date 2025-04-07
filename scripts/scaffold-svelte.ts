@@ -32,6 +32,7 @@ const pinnedVerPackages = {
     tailwindcss: "^4.0.0",
     "prettier-plugin-svelte": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "typescript-svelte-plugin": "^0.3.46",
   },
 };
 
@@ -83,6 +84,12 @@ async function scaffoldSvelte() {
       module: "ESNext",
       allowJs: true,
       checkJs: true,
+      plugins: [
+        {
+          name: "typescript-svelte-plugin",
+          assumeIsSvelteProject: true,
+        },
+      ],
     },
   };
 
@@ -202,11 +209,33 @@ async function scaffoldSvelte() {
     `<script lang="ts">
   import '../styles/index.css';
     
-  </script>`
+  </script>
+	
+	<style>
+		:global(body) {
+			background-color: #0e1d2d;
+			display: flex;
+			width: 100vw;
+			height: 100vh;
+			align-items: center;
+			justify-content: center;
+		}
+
+		:global(h1) {
+			color: #db7f9a;
+		}
+	</style>
+	<slot/>
+	`
   );
 
   // Section - src/routes/+page.svelte
-  const pagesvelte = dedent("<h1>Welcome to SvelteKit</h1>");
+  const pagesvelte = dedent(`
+	<script>
+	  let value = $state("Awesome!");
+	</script>	
+
+	<h1>Svelte is {value}!</h1>`);
 
   // Section - Eslint Config
   const eslintConfig = `import { createEslintConfig } from '@${monorepoName}/linting-config' \n export default createEslintConfig({ svelte: true})`;
