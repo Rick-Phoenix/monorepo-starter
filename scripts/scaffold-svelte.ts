@@ -30,6 +30,8 @@ const pinnedVerPackages = {
     "svelte-check": "^4.0.0",
     vite: "^6.0.0",
     tailwindcss: "^4.0.0",
+    "prettier-plugin-svelte": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.11",
   },
 };
 
@@ -130,8 +132,6 @@ async function scaffoldSvelte() {
       "@types/node": "latest",
       globals: "latest",
       prettier: "latest",
-      "prettier-plugin-svelte": "^3.3.3",
-      "prettier-plugin-tailwindcss": "^0.6.11",
       "@sveltejs/vite-plugin-svelte": "latest",
     },
   };
@@ -208,10 +208,10 @@ async function scaffoldSvelte() {
   const pagesvelte = dedent("<h1>Welcome to SvelteKit</h1>");
 
   // Section - Eslint Config
-  const eslintConfig = `import { createEslintConfig } from '@${appName}/linting-config' \n export default createEslintConfig({ svelte: true})`;
+  const eslintConfig = `import { createEslintConfig } from '@${monorepoName}/linting-config' \n export default createEslintConfig({ svelte: true})`;
 
   // Section - Prettier Config
-  const prettierConfig = `import {prettierConfig} from '@${appName}/linting-config' \n export default {...prettierConfig, plugins: [
+  const prettierConfig = `import {prettierConfig} from '@${monorepoName}/linting-config' \n export default {...prettierConfig, plugins: [
 		"prettier-plugin-svelte",
 		"prettier-plugin-tailwindcss"
 	],}`;
