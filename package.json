@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "newpackage": "bun ./scripts/create-package.ts",
+    "newsvelte": "bun ./scripts/scaffold-svelte.ts",
     "init-repo": "bun install && bun initialize-repo.ts"
   },
   "lint-staged": {
@@ -28,6 +29,7 @@
     "lint-staged": "^15.5.0",
     "oxlint": "^0.16.4",
     "radashi": "^12.4.0",
+    "type-fest": "^4.39.1",
     "typescript": "^5.8.2"
   },
   "trustedDependencies": [

@@ -1,58 +1,65 @@
-// eslint-disable no-console
-import { confirm, intro, outro, text } from "@clack/prompts";
-import { tryThrowPipeline, tryThrowSync } from "@monorepo-starter/utils";
-import dedent from "dedent";
 import { exec, spawnSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import utilsPackageJSON from "./packages/utils/package.json" with { type: "json" };
+// eslint-disable no-console
+import { cancel, confirm, group, intro, outro, text } from "@clack/prompts";
+import { tryThrow, tryThrowPipeline, tryThrowSync } from "@monorepo-starter/utils";
+import dedent from "dedent";
+import type { PackageJson } from "type-fest";
 const execAsync = promisify(exec);
 
 // Section - Constants
 
 const packagesWithPinnedVersions = {
   devDependencies: {
-    oxlint: "^0.16.3",
-    typescript: "^5.8.2",
-    "@moonrepo/cli": "^1.34.0",
-    eslint: "^9.23.0",
-    "@clack/prompts": "^0.10.0",
+    husky: "^9.1.7",
   },
-  husky: "^9.1.7",
-  dependencies: { dedent: "^1.5.3" },
 };
 
 const bunVer = "bun@1.2.8";
-
-const {
-  devDependencies: { eslint, oxlint },
-} = packagesWithPinnedVersions;
 
 intro("✨ Monorepo Initialization ✨");
 
 try {
   // Block - User Inputs
 
-  // Section - Project name
-  const projectName = (await text({
-    message: "Enter the project's name:",
-    defaultValue: "playground",
-    placeholder: "playground",
-  })) as string;
+  const inputs = await group(
+    {
+      projectName: () =>
+        text({
+          message: "Enter the project's name:",
+          defaultValue: "playground",
+          placeholder: "playground",
+        }),
+      packageManager: () =>
+        text({
+          message: "What is the package manager?",
+          defaultValue: bunVer,
+          placeholder: bunVer,
+        }),
+      withHusky: () =>
+        confirm({
+          message: "Do you want to include Husky?",
+          initialValue: true,
+        }),
+      syncAndInstall: () =>
+        confirm({
+          message: `Do you want to run 'bun install' after initialization?`,
+          initialValue: true,
+        }),
+    },
+    {
+      onCancel: () => {
+        cancel("Operation cancelled.");
+        process.exit(0);
+      },
+    }
+  );
 
-  // Section - Package manager
-  const packageManager = (await text({
-    message: "What is the package manager?",
-    defaultValue: bunVer,
-    placeholder: bunVer,
-  })) as string;
+  const { projectName, syncAndInstall, withHusky, packageManager } = inputs;
 
-  // Section - Husky
-  const withHusky = await confirm({ message: "Do you want to include Husky?", initialValue: true });
-
-  // Section - Infisical
   const addInfisicalScan = withHusky
     ? await confirm({
         message: "Do you want to add the infisical scan to the pre-commit hook?",
@@ -60,86 +67,57 @@ try {
       })
     : false;
 
-  // Section - Bun install
-  const syncAndInstall = await confirm({
-    message: `Do you want to run 'bun install'?`,
-    initialValue: true,
-  });
-
   //!Block
 
   // Block - File generation
 
   // Section - Package.json
-  const packageJSON = {
-    name: projectName,
-    version: "1.0.0",
-    type: "module",
-    private: true,
-    workspaces: ["packages/*", "apps/*"],
-    scripts: {
-      newpackage: "bun ./scripts/create-package.ts",
-    },
-    ...(withHusky && {
-      "lint-staged": {
+  const packageJsonRaw = await readFile(path.resolve(import.meta.dirname, "package.json"), "utf-8");
+  const packageJsonParsed: PackageJson & {
+    "lint-staged": Record<string, string>;
+  } = JSON.parse(packageJsonRaw);
+
+  packageJsonParsed.name = projectName;
+  packageJsonParsed.scripts!["init-repo"] = undefined;
+
+  if (packageJsonParsed.dependencies && packageJsonParsed.devDependencies) {
+    packageJsonParsed.dependencies["@monorepo-starter/utils"] = undefined;
+    packageJsonParsed.dependencies[`@${projectName}/utils`] = "workspace:*";
+    if (withHusky) {
+      packageJsonParsed.devDependencies.husky = packagesWithPinnedVersions.devDependencies.husky;
+      packageJsonParsed.devDependencies["lint-staged"] = "latest";
+      packageJsonParsed["lint-staged"] = {
         "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint",
-      },
-    }),
-    dependencies: {
-      "@types/bun": "latest",
-      "@types/node": "latest",
-      "jsonc-parser": "latest",
-      [`@${projectName}/utils`]: "workspace:*",
-      ...packagesWithPinnedVersions.dependencies,
-    },
-    devDependencies: {
-      radashi: "latest",
-      ...packagesWithPinnedVersions.devDependencies,
-      ...(withHusky && { husky: packagesWithPinnedVersions.husky, "lint-staged": "latest" }),
-    },
-    trustedDependencies: ["@moonrepo/cli", "esbuild"],
-    packageManager: packageManager,
-  };
+      };
+    }
+  }
+  packageJsonParsed.packageManager = packageManager;
 
-  // Section - Eslint config package
-  const eslintPackageJsonContent = {
-    name: `@${projectName}/linting-config`,
-    version: "1.0.0",
-    type: "module",
-    private: true,
-    main: "./index.js",
-    types: "./index.d.ts",
-    exports: {
-      ".": {
-        types: "./index.d.ts",
-        default: "./index.js",
-      },
-    },
-    devDependencies: {
-      "@eslint/config-inspector": "latest",
-      "@eslint/js": "latest",
-      "@types/node": "latest",
-      "eslint-config-prettier": "latest",
-      globals: "latest",
-      prettier: "latest",
-      "typescript-eslint": "latest",
-      "eslint-plugin-oxlint": "latest",
-      eslint,
-      oxlint,
-    },
-  };
-
-  const eslintPackageJson = path.resolve(
+  // section - eslint config package
+  const lintconfigPackageJsonPath = path.resolve(
     import.meta.dirname,
     "packages/linting-config/package.json"
   );
 
+  const lintconfigPackageJsonRaw = await tryThrow(
+    readFile(lintconfigPackageJsonPath, "utf-8"),
+    "reading the lint-config package.json file"
+  );
+  const lintconfigPackageJsonParsed: PackageJson = JSON.parse(lintconfigPackageJsonRaw);
+
+  lintconfigPackageJsonParsed.name = `@${projectName}/linting-config`;
+
   // Section - Utils subpackage
-  const utilsPackageJsonCopy = { ...utilsPackageJSON };
-  utilsPackageJsonCopy.name = `@${projectName}/utils`;
-  //@ts-expect-error
-  utilsPackageJsonCopy.devDependencies["@monorepo-starter/linting-config"] = undefined;
-  utilsPackageJsonCopy.devDependencies[`@${projectName}/linting-config`] = "workspace:*";
+  const utilsPackageJsonPath = path.resolve(import.meta.dirname, "packages/utils/package.json");
+  const utilsPackageJsonRaw = await tryThrow(
+    readFile(utilsPackageJsonPath, "utf-8"),
+    "reading the utils package.json file"
+  );
+  const utilsPackageJson: PackageJson = JSON.parse(utilsPackageJsonRaw);
+
+  utilsPackageJson.name = `@${projectName}/utils`;
+  utilsPackageJson.devDependencies!["@monorepo-starter/linting-config"] = undefined;
+  utilsPackageJson.devDependencies![`@${projectName}/linting-config`] = "workspace:*";
 
   // Section - .code-workspace file
   const vsCodeWorkSpaceSettings = {
@@ -151,6 +129,10 @@ try {
       {
         path: "packages/linting-config",
         name: "linting-config",
+      },
+      {
+        path: "packages/utils",
+        name: "utils",
       },
     ],
     settings: {
@@ -228,24 +210,24 @@ try {
   // Block - Writing to disk
   await tryThrowPipeline([
     [
-      writeFile(eslintPackageJson, JSON.stringify(eslintPackageJsonContent)),
+      writeFile(lintconfigPackageJsonPath, JSON.stringify(lintconfigPackageJsonParsed, null, 2)),
       "writing the eslint package.json file",
     ],
     [
-      writeFile(
-        path.resolve(import.meta.dirname, "packages/utils/package.json"),
-        JSON.stringify(utilsPackageJsonCopy, null, 2)
-      ),
+      writeFile(utilsPackageJsonPath, JSON.stringify(utilsPackageJson, null, 2)),
       "writing the utils package.json file",
     ],
     [
-      writeFile(path.resolve(import.meta.dirname, "./package.json"), JSON.stringify(packageJSON)),
+      writeFile(
+        path.resolve(import.meta.dirname, "package.json"),
+        JSON.stringify(packageJsonParsed, null, 2)
+      ),
       "writing the root package.json file",
     ],
     [
       writeFile(
         path.resolve(import.meta.dirname, `${projectName}.code-workspace`),
-        JSON.stringify(vsCodeWorkSpaceSettings)
+        JSON.stringify(vsCodeWorkSpaceSettings, null, 2)
       ),
       "writing the .code-workspace file",
     ],
@@ -267,7 +249,10 @@ try {
 
   // Block - Post install scripts
   if (syncAndInstall) {
-    const { error } = spawnSync("bun install", { stdio: "inherit", shell: true });
+    const { error } = spawnSync("bun install", {
+      stdio: "inherit",
+      shell: true,
+    });
     if (error) console.warn(`Error with bun install:\n${error}`);
   }
 
@@ -286,11 +271,15 @@ try {
   //!Block
 
   outro(
-    `Project successfully initiated. ✅ ${addInfisicalScan ? "\nRemember to launch 'infisical init' to complete the infisical setup." : ""}`
+    `Project successfully initiated. ✅ ${
+      addInfisicalScan
+        ? "\nRemember to launch 'infisical init' to complete the infisical setup."
+        : ""
+    }`
   );
   process.exit(0);
 } catch (error) {
-  console.log(`Error while initializing the project:`);
+  console.log("Error while initializing the project:");
   console.error(error);
   process.exit(1);
 }
