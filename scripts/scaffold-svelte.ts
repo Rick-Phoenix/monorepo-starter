@@ -46,6 +46,8 @@ async function scaffoldSvelte() {
 
   const appName = (await text({
     message: `Enter the project's name:`,
+    defaultValue: "svelte-app",
+    placeholder: "svelte-app",
     validate: (input) => {
       if (!input || !input.length) {
         cancel("The project name cannot be empty.");
