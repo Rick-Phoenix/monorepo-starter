@@ -25,6 +25,7 @@
   "devDependencies": {
     "@clack/prompts": "^0.10.1",
     "@monorepo-starter/linting-config": "workspace:*",
+    "@types/bun": "^1.2.10",
     "@types/node": "latest",
     "@types/nunjucks": "^3.2.6",
     "dedent": "^1.5.3",

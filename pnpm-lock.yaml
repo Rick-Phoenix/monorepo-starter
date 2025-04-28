@@ -7,50 +7,19 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@monorepo-starter/linting-config':
-        specifier: workspace:*
-        version: link:packages/linting-config
-      '@monorepo-starter/utils':
-        specifier: workspace:*
-        version: link:packages/utils
-      '@types/bun':
-        specifier: ^1.2.10
-        version: 1.2.10
-      '@types/node':
-        specifier: ^22.15.2
-        version: 22.15.2
-      dedent:
-        specifier: ^1.5.3
-        version: 1.5.3
-      jsonc-parser:
-        specifier: ^3.3.1
-        version: 3.3.1
     devDependencies:
-      '@clack/prompts':
-        specifier: ^0.10.1
-        version: 0.10.1
       '@moonrepo/cli':
         specifier: ^1.35.1
         version: 1.35.1
       husky:
         specifier: ^9.1.7
         version: 9.1.7
-      jsonfile:
-        specifier: ^6.1.0
-        version: 6.1.0
       lint-staged:
         specifier: ^15.5.1
         version: 15.5.1
       oxlint:
         specifier: ^0.16.8
         version: 0.16.8
-      radashi:
-        specifier: ^12.4.0
-        version: 12.4.0
-      type-fest:
-        specifier: ^4.40.1
-        version: 4.40.1
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -143,6 +112,9 @@ importers:
       '@monorepo-starter/linting-config':
         specifier: workspace:*
         version: link:../linting-config
+      '@types/bun':
+        specifier: ^1.2.10
+        version: 1.2.10
       '@types/node':
         specifier: latest
         version: 22.15.3
@@ -983,9 +955,6 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
-
-  '@types/node@22.15.2':
-    resolution: {integrity: sha512-uKXqKN9beGoMdBfcaTY1ecwz6ctxuJAcUlwE55938g0ZJ8lRxwAZqRz2AJ4pzpt5dHdTPMB863UZ0ESiFUcP7A==}
 
   '@types/node@22.15.3':
     resolution: {integrity: sha512-lX7HFZeHf4QG/J7tBZqrCAXwz9J5RD56Y6MpP0eJkka8p+K0RY/yBTW7CYFJ4VGCclxqOLKmiGP5juQc6MKgcw==}
@@ -2465,10 +2434,6 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
-  radashi@12.4.0:
-    resolution: {integrity: sha512-kFJ5Q9B1svHamYfHRQ2EhfLOJRCr+0S9xvluGESadGAs3UvLSaYyxClL+fm/t2H4WPIwWJ0q0eRaZdghovsl2A==}
-    engines: {node: '>=16.0.0'}
-
   radix3@1.1.2:
     resolution: {integrity: sha512-b484I/7b8rDEdSDKckSSBA8knMpcdsXudlE/LNL639wFoHKwLbEkQFZHWEYwDC0wa0FKUcCY+GAF73Z7wxNVFA==}
 
@@ -3413,10 +3378,6 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/ms@2.1.0': {}
-
-  '@types/node@22.15.2':
-    dependencies:
-      undici-types: 6.21.0
 
   '@types/node@22.15.3':
     dependencies:
@@ -5063,8 +5024,6 @@ snapshots:
   quansync@0.2.10: {}
 
   queue-microtask@1.2.3: {}
-
-  radashi@12.4.0: {}
 
   radix3@1.1.2: {}
 

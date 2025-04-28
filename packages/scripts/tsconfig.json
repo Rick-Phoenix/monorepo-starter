@@ -17,5 +17,6 @@
     {
       "path": "../utils"
     }
-  ]
+  ],
+  "exclude": ["templates"]
 }
