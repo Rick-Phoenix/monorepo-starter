@@ -5,13 +5,6 @@ export type Package = {
   isDev?: boolean;
 };
 
-// Section - Packages with pinned version
-export const pinnedVerPackages = {
-  eslint: "^9.23.0",
-  typescript: "^5.8.2",
-  oxlint: "^0.16.3",
-};
-
 // Section - Optional packages list
 export const optionalPackages: Package[] = [
   {

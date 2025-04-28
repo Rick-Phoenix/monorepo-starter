@@ -1,0 +1,17 @@
+// eslint-disable no-console
+/* eslint-disable node/no-process-env */
+import { type } from "arktype";
+
+const envSchema = type({
+  "+": "delete",
+});
+
+const env = envSchema(process.env);
+
+if (env instanceof type.errors) {
+  console.log("❌ Error while parsing envs: ❌");
+  console.log(env.flatProblemsByPath);
+  process.exit(1);
+}
+
+export { env };

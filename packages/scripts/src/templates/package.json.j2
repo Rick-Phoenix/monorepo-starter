@@ -1,0 +1,38 @@
+{
+  "name": "@{{ projectName }}/{{ packageName }}",
+  "type": "module",
+  "private": true,
+  "author": "Rick-Phoenix",
+  "description": "{{ packageDescription }}",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "lint": "oxlint && eslint"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    {% for name, version in dependencies -%}
+    "{{ name }}": "{{ version }}",
+    {% endfor -%}
+    "@{{ projectName }}/utils": "workspace:*",
+  },
+  "devDependencies": {
+    "@{{ projectName }}/{{ lintPkgName }}": "workspace:*",
+    {% for name, version in devDependencies -%}
+    "{{ name }}": "{{ version }}",
+    {% endfor -%}    
+    "@types/node": "latest",
+    "eslint": "^9.23.0",
+    "typescript": "^5.8.2",
+    "oxlint": "^0.16.3"
+  }
+}
+

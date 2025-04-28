@@ -9,22 +9,17 @@ import {
   select,
   text,
 } from "@clack/prompts";
-import { tryThrowSync } from "@monorepo-starter/utils";
 import { type } from "arktype";
-import dedent from "dedent";
 import { findUpSync } from "find-up";
 import { spawnSync } from "node:child_process";
-import fs from "node:fs";
+import fs, { readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { render } from "nunjucks";
 import { title } from "radashi";
 import { readPackageSync } from "read-pkg";
 import { writeJsonFileSync } from "write-json-file";
-import {
-  optionalPackages,
-  type Package,
-  pinnedVerPackages,
-} from "./constants/packages.js";
+import { optionalPackages, type Package } from "./constants/packages.js";
 
 process.on("SIGINT", () => {
   console.warn("\nPackage initialization aborted.");
@@ -35,13 +30,11 @@ const curdir = import.meta.dirname;
 
 const string = type("string");
 
-const monorepoRoot = string.assert(
-  tryThrowSync(() =>
-    findUpSync(["pmpm-workspace.yaml"], {
-      type: "directory",
-      cwd: curdir,
-    }), "Getting the path to the monorepo root"),
-);
+const rootMarker = string.assert(findUpSync("pnpm-workspace.yaml", {
+  type: "file",
+}));
+
+const monorepoRoot = dirname(rootMarker);
 
 const rootPackageJson = readPackageSync({ cwd: monorepoRoot });
 
@@ -81,7 +74,7 @@ async function initializePackage() {
     },
   })) as string;
 
-  const packageDir = resolve(`./${packageType}s`, packageName);
+  const packageDir = resolve(monorepoRoot, `/${packageType}s`, packageName);
   if (fs.existsSync(packageDir)) {
     console.error("This folder already exists.");
     process.exit(1);
@@ -137,38 +130,21 @@ async function initializePackage() {
     initialValue: true,
   });
 
-  const packageJsonContent = {
-    name: `@${projectName}/${packageName}`,
-    type: "module",
-    private: true,
-    author: "Rick-Phoenix",
-    description: packageDescription,
-    files: ["dist"],
-    main: "./dist/index.js", // Fallback for older Node/tools
-    types: "./dist/index.d.ts",
-    scripts: {
-      lint: "oxlint && eslint",
-    },
-    exports: {
-      ".": {
-        types: "./dist/index.d.ts",
-        default: "./dist/index.js",
-      },
-    },
-    dependencies: {
-      ...Object.fromEntries(selectedPackages.dependencies.entries()),
-      "@monorepo-starter/utils": "workspace:*",
-    },
-    devDependencies: {
-      [`@${projectName}/linting-config`]: "workspace:*",
-      "@eslint/config-inspector": "latest",
-      ...pinnedVerPackages,
-      "@types/node": "latest",
-      ...Object.fromEntries(selectedPackages.devDependencies.entries()),
-    },
-  };
+  const scriptsDir = dirname(string.assert(findUpSync("package.json", {
+    cwd: curdir,
+    type: "file",
+  })));
 
-  // Section - Ts Config
+  const templatesDir = resolve(scriptsDir, "src/templates");
+
+  const packageJson = render(resolve(templatesDir, "package.json.j2"), {
+    projectName,
+    packageName,
+    packageDescription,
+    dependencies: selectedPackages.dependencies,
+    devDependencies: selectedPackages.devDependencies,
+  });
+
   const tsconfig = {
     extends: "../../tsconfig.options.json",
     compilerOptions: {
@@ -182,52 +158,8 @@ async function initializePackage() {
   const eslintConfig =
     `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
 
-  const indexFileContent = additionalPackages.includes("hono")
-    ? dedent(
-      `import { arktypeValidator } from "@hono/arktype-validator";
-        import { type } from "arktype";
-        import { Hono } from "hono";
-  
-        const schema = type({
-          name: "string",
-          age: "number",
-        });
-  
-        const app = new Hono();
-  
-        app.post("/author", arktypeValidator("json", schema), (c) => {
-          const data = c.req.valid("json");
-          return c.json({
-            success: true,
-          });
-        });
-  
-        export default app`,
-    )
-    : "";
-
-  const envParsingModule = withEnvSchema
-    ? dedent(`// eslint-disable no-console
-          /* eslint-disable node/no-process-env */
-          import { type } from "arktype";
-    
-          const envSchema = type({
-            "+": "delete",
-          });
-    
-          const env = envSchema(process.env);
-    
-          if (env instanceof type.errors) {
-            console.log("❌ Error while parsing envs: ❌");
-            console.log(env.flatProblemsByPath);
-            process.exit(1);
-          }
-    
-          export { env };`)
-    : "";
-
   await mkdir(packageDir);
-  writeJsonFileSync(resolve(packageDir, "package.json"), packageJsonContent);
+  writeJsonFileSync(resolve(packageDir, "package.json"), packageJson);
 
   writeJsonFileSync(
     resolve(packageDir, "tsconfig.json"),
@@ -238,12 +170,20 @@ async function initializePackage() {
 
   await mkdir(resolve(packageDir, "src"));
 
-  if (indexFileContent.length) {
+  if (selectedPackages.dependencies.has("hono")) {
+    const indexFileContent = readFileSync(
+      resolve(templatesDir, "hono_index.ts.j2"),
+      "utf8",
+    );
     await writeFile(resolve(packageDir, "src/index.ts"), indexFileContent);
   }
 
   if (withEnvSchema) {
     await mkdir(resolve(packageDir, "src/lib"));
+    const envParsingModule = readFileSync(
+      resolve(templatesDir, "env_parsing.ts.j2"),
+      "utf8",
+    );
     await writeFile(resolve(packageDir, "src/lib/env.ts"), envParsingModule, {
       flag: "a",
     });
@@ -254,7 +194,11 @@ async function initializePackage() {
       stdio: "inherit",
       shell: true,
     });
-    if (error) console.warn(`Error while installing the package: ${error}`);
+    if (error) {
+      console.warn(
+        `An error occurred with pnpm install or moon sync projects: ${error}`,
+      );
+    }
   }
 
   outro(
