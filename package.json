@@ -6,6 +6,9 @@
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
   },
+  "scripts": {
+    "newpkg": "moon run scripts:create_package"
+  },
   "dependencies": {
   },
   "devDependencies": {

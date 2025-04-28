@@ -199,7 +199,7 @@
     "unicorn/filename-case": [
       "error",
       {
-        "case": "kebabCase"
+        "cases": { "kebabCase": true, "snakeCase": true }
       }
     ],
     "unicorn/prefer-negative-index": "warn"
@@ -257,7 +257,10 @@
       }
     },
     {
-      "files": ["**/*.config.?([cm])[jt]s?(x)", "**/*.config.*.?([cm])[jt]s?(x)"],
+      "files": [
+        "**/*.config.?([cm])[jt]s?(x)",
+        "**/*.config.*.?([cm])[jt]s?(x)"
+      ],
       "rules": {
         "no-console": "off"
       }

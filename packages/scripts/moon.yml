@@ -1,8 +1,21 @@
 $schema: "https://moonrepo.dev/schemas/project.json"
 
 tasks:
-  init-repo:
+  init_repo:
     description: "Initializing a new monorepo"
-    command: "bun ./src/init-repo.ts"
+    script: "bun ./src/init_repo.ts"
     options:
       cache: false
+      interactive: true
+  create_package:
+    description: "Creating a new package"
+    script: "bun ./src/create_package.ts"
+    options:
+      cache: false
+      interactive: true
+  create_svelte_app:
+    description: "Creating a new svelte app"
+    script: "bun ./src/init_svelte.ts"
+    options:
+      cache: false
+      interactive: true

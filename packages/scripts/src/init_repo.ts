@@ -73,9 +73,7 @@ try {
 
   delete rootPackageJson.scripts!["init-repo"];
 
-  if (rootPackageJson.dependencies && rootPackageJson.devDependencies) {
-    delete rootPackageJson.dependencies["@monorepo-starter/utils"];
-    rootPackageJson.dependencies[`@${projectName}/utils`] = "workspace:*";
+  if (rootPackageJson.devDependencies) {
     if (withHusky) {
       rootPackageJson.devDependencies.husky = "^9.0.0";
       rootPackageJson.devDependencies["lint-staged"] = "latest";

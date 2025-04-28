@@ -16,7 +16,6 @@ import fs, { readFileSync, writeFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { render } from "nunjucks";
-import { title } from "radashi";
 import { readPackageSync } from "read-pkg";
 import { writeJsonFileSync } from "write-json-file";
 import { optionalPackages, type Package } from "./constants/packages.js";
@@ -205,9 +204,7 @@ async function initializePackage() {
   }
 
   outro(
-    `${
-      title(packageType)
-    } '${packageName}' has been successfully initiated. 🚀✅`,
+    `'${packageName}' has been successfully initiated. 🚀✅`,
   );
   process.exit(0);
 }
