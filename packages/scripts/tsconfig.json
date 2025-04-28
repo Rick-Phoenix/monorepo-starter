@@ -3,6 +3,19 @@
   "compilerOptions": {
     "rootDir": "src",
     "composite": false,
-    "noEmit": true
-  }
+    "noEmit": true,
+    "paths": {
+      "@monorepo-starter/utils": [
+        "../utils/src/index.ts"
+      ],
+      "@monorepo-starter/utils/*": [
+        "../utils/src/*"
+      ]
+    }
+  },
+  "references": [
+    {
+      "path": "../utils"
+    }
+  ]
 }

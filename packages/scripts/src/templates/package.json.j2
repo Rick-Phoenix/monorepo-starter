@@ -22,7 +22,7 @@
     {% for name, version in dependencies -%}
     "{{ name }}": "{{ version }}",
     {% endfor -%}
-    "@{{ projectName }}/utils": "workspace:*",
+    "@{{ projectName }}/utils": "workspace:*"
   },
   "devDependencies": {
     "@{{ projectName }}/{{ lintPkgName }}": "workspace:*",

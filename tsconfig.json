@@ -3,10 +3,13 @@
   "files": [],
   "references": [
     {
-      "path": "packages/utils"
+      "path": "packages/aa"
     },
     {
       "path": "packages/scripts"
+    },
+    {
+      "path": "packages/utils"
     }
   ]
 }

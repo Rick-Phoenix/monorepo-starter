@@ -12,8 +12,8 @@ import {
 import { type } from "arktype";
 import { findUpSync } from "find-up";
 import { spawnSync } from "node:child_process";
-import fs, { readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import fs, { readFileSync, writeFileSync } from "node:fs";
+import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { render } from "nunjucks";
 import { title } from "radashi";
@@ -74,7 +74,7 @@ async function initializePackage() {
     },
   })) as string;
 
-  const packageDir = resolve(monorepoRoot, `/${packageType}s`, packageName);
+  const packageDir = resolve(monorepoRoot, `${packageType}s`, packageName);
   if (fs.existsSync(packageDir)) {
     console.error("This folder already exists.");
     process.exit(1);
@@ -137,14 +137,6 @@ async function initializePackage() {
 
   const templatesDir = resolve(scriptsDir, "src/templates");
 
-  const packageJson = render(resolve(templatesDir, "package.json.j2"), {
-    projectName,
-    packageName,
-    packageDescription,
-    dependencies: selectedPackages.dependencies,
-    devDependencies: selectedPackages.devDependencies,
-  });
-
   const tsconfig = {
     extends: "../../tsconfig.options.json",
     compilerOptions: {
@@ -155,18 +147,29 @@ async function initializePackage() {
     },
   };
 
+  const lintPkgName = "linting-config";
+
   const eslintConfig =
-    `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
+    `import { createEslintConfig } from '@${projectName}/${lintPkgName}' \n export default createEslintConfig()`;
+
+  const packageJson = render(resolve(templatesDir, "package.json.j2"), {
+    projectName,
+    packageName,
+    packageDescription,
+    lintPkgName,
+    dependencies: selectedPackages.dependencies,
+    devDependencies: selectedPackages.devDependencies,
+  });
 
   await mkdir(packageDir);
-  writeJsonFileSync(resolve(packageDir, "package.json"), packageJson);
+  writeFileSync(resolve(packageDir, "package.json"), packageJson);
 
   writeJsonFileSync(
     resolve(packageDir, "tsconfig.json"),
     tsconfig,
   );
 
-  await writeFile(resolve(packageDir, "eslint.config.js"), eslintConfig);
+  writeFileSync(resolve(packageDir, "eslint.config.js"), eslintConfig);
 
   await mkdir(resolve(packageDir, "src"));
 
@@ -175,7 +178,7 @@ async function initializePackage() {
       resolve(templatesDir, "hono_index.ts.j2"),
       "utf8",
     );
-    await writeFile(resolve(packageDir, "src/index.ts"), indexFileContent);
+    writeFileSync(resolve(packageDir, "src/index.ts"), indexFileContent);
   }
 
   if (withEnvSchema) {
@@ -184,7 +187,7 @@ async function initializePackage() {
       resolve(templatesDir, "env_parsing.ts.j2"),
       "utf8",
     );
-    await writeFile(resolve(packageDir, "src/lib/env.ts"), envParsingModule, {
+    writeFileSync(resolve(packageDir, "src/lib/env.ts"), envParsingModule, {
       flag: "a",
     });
   }

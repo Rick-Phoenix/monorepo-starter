@@ -12,22 +12,12 @@
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
   },
   "dependencies": {
-    "@monorepo-starter/linting-config": "workspace:*",
-    "@monorepo-starter/utils": "workspace:*",
-    "@types/bun": "^1.2.10",
-    "@types/node": "^22.15.2",
-    "dedent": "^1.5.3",
-    "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
-    "@clack/prompts": "^0.10.1",
     "@moonrepo/cli": "^1.35.1",
     "husky": "^9.1.7",
-    "jsonfile": "^6.1.0",
     "lint-staged": "^15.5.1",
     "oxlint": "^0.16.8",
-    "radashi": "^12.4.0",
-    "type-fest": "^4.40.1",
     "typescript": "^5.8.3"
   }
 }
