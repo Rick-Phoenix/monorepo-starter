@@ -12,21 +12,23 @@ type Result<T, E = Error> = Success<T> | Failure<E>;
  * @returns [result, null] if the action is successful. Otherwise, it returns [null, error].
  */
 export async function tryCatch<T>(
-	action: Promise<T>,
-	description?: string,
+  action: Promise<T>,
+  description?: string,
 ): Promise<Result<T, Error>> {
-	try {
-		const result = await action;
-		return [result, null];
-	} catch (rawError: unknown) {
-		const processedError =
-			rawError instanceof Error ? rawError : new Error(String(rawError));
-		if (description) {
-			processedError.message = `(while ${description})\n ${processedError.message}`;
-		}
-		Error.captureStackTrace(processedError, tryCatch);
-		return [null, processedError];
-	}
+  try {
+    const result = await action;
+    return [result, null];
+  } catch (rawError: unknown) {
+    const processedError = rawError instanceof Error
+      ? rawError
+      : new Error(String(rawError));
+    if (description) {
+      processedError.message =
+        `(while ${description})\n ${processedError.message}`;
+    }
+    Error.captureStackTrace(processedError, tryCatch);
+    return [null, processedError];
+  }
 }
 
 /**
@@ -37,21 +39,23 @@ export async function tryCatch<T>(
  * @returns [result, null] if the action is successful. Otherwise, it returns [null, error].
  */
 export function tryCatchSync<T>(
-	action: () => T,
-	description?: string,
+  action: () => T,
+  description?: string,
 ): Result<T, Error> {
-	try {
-		const result = action();
-		return [result, null];
-	} catch (rawError: unknown) {
-		const processedError =
-			rawError instanceof Error ? rawError : new Error(String(rawError));
-		if (description) {
-			processedError.message = `(while ${description})\n ${processedError.message}`;
-		}
-		Error.captureStackTrace(processedError, tryCatchSync);
-		return [null, processedError];
-	}
+  try {
+    const result = action();
+    return [result, null];
+  } catch (rawError: unknown) {
+    const processedError = rawError instanceof Error
+      ? rawError
+      : new Error(String(rawError));
+    if (description) {
+      processedError.message =
+        `(while ${description})\n ${processedError.message}`;
+    }
+    Error.captureStackTrace(processedError, tryCatchSync);
+    return [null, processedError];
+  }
 }
 
 /**
@@ -63,13 +67,13 @@ export function tryCatchSync<T>(
  * Otherwise, it throws an error with the description attached to it.
  */
 export function tryThrowSync<T>(action: () => T, description?: string): T {
-	const [result, error] = tryCatchSync(action, description);
-	if (error) {
-		Error.captureStackTrace(error, tryThrowSync);
-		throw error;
-	}
+  const [result, error] = tryCatchSync(action, description);
+  if (error) {
+    Error.captureStackTrace(error, tryThrowSync);
+    throw error;
+  }
 
-	return result;
+  return result;
 }
 
 /**
@@ -81,24 +85,24 @@ export function tryThrowSync<T>(action: () => T, description?: string): T {
  * Otherwise, it throws an error with the description attached to it.
  */
 export async function tryThrow<T>(
-	action: Promise<T>,
-	description?: string,
+  action: Promise<T>,
+  description?: string,
 ): Promise<T> {
-	const [result, error] = await tryCatch(action, description);
+  const [result, error] = await tryCatch(action, description);
 
-	if (error) {
-		Error.captureStackTrace(error, tryThrow);
-		throw error;
-	}
-	return result;
+  if (error) {
+    Error.captureStackTrace(error, tryThrow);
+    throw error;
+  }
+  return result;
 }
 
 type AsyncProcedure<T> = readonly [Promise<T>, description: string];
 
 type AsyncTryThrowPipelineResults<
-	P extends ReadonlyArray<AsyncProcedure<unknown>>,
+  P extends ReadonlyArray<AsyncProcedure<unknown>>,
 > = {
-	[K in keyof P]: P[K] extends AsyncProcedure<infer R> ? R : never;
+  [K in keyof P]: P[K] extends AsyncProcedure<infer R> ? R : never;
 };
 
 /**
@@ -110,23 +114,23 @@ type AsyncTryThrowPipelineResults<
  * @returns An array of all results if successful, otherwise it throws an error.
  */
 export async function tryThrowPipeline<
-	// P captures the specific readonly tuple type passed in
-	P extends ReadonlyArray<AsyncProcedure<unknown>>,
+  // P captures the specific readonly tuple type passed in
+  P extends ReadonlyArray<AsyncProcedure<unknown>>,
 >(procedures: P): Promise<AsyncTryThrowPipelineResults<P>> {
-	const results: unknown[] = [];
+  const results: unknown[] = [];
 
-	for (const [action, description] of procedures) {
-		// oxlint-disable-next-line no-await-in-loop
-		const [result, error] = await tryCatch(action, description);
-		if (error) {
-			Error.captureStackTrace(error, tryThrowPipeline);
-			throw error;
-		}
-		results.push(result);
-	}
+  for (const [action, description] of procedures) {
+    // oxlint-disable-next-line no-await-in-loop
+    const [result, error] = await tryCatch(action, description);
+    if (error) {
+      Error.captureStackTrace(error, tryThrowPipeline);
+      throw error;
+    }
+    results.push(result);
+  }
 
-	// Cast the collected results
-	return results as AsyncTryThrowPipelineResults<P>;
+  // Cast the collected results
+  return results as AsyncTryThrowPipelineResults<P>;
 }
 
 // Define the type for a procedure tuple as READONLY
@@ -134,9 +138,9 @@ type SyncProcedure<T> = readonly [action: () => T, description: string];
 
 // Helper type to extract results from a tuple of readonly procedures
 type SyncTryThrowPipelineResults<
-	P extends ReadonlyArray<SyncProcedure<unknown>>,
+  P extends ReadonlyArray<SyncProcedure<unknown>>,
 > = {
-	[K in keyof P]: P[K] extends SyncProcedure<infer R> ? R : never;
+  [K in keyof P]: P[K] extends SyncProcedure<infer R> ? R : never;
 };
 
 /**
@@ -148,29 +152,29 @@ type SyncTryThrowPipelineResults<
  * @returns An array of all results if successful, otherwise it throws an error.
  */
 export function tryThrowPipelineSync<
-	// P captures the specific readonly tuple type passed in
-	P extends ReadonlyArray<SyncProcedure<unknown>>,
+  // P captures the specific readonly tuple type passed in
+  P extends ReadonlyArray<SyncProcedure<unknown>>,
 >(procedures: P): SyncTryThrowPipelineResults<P> {
-	const results: unknown[] = [];
+  const results: unknown[] = [];
 
-	for (const [action, description] of procedures) {
-		// oxlint-disable-next-line no-await-in-loop
-		const [result, error] = tryCatchSync(action, description);
-		if (error) {
-			Error.captureStackTrace(error, tryThrowPipelineSync);
-			throw error;
-		}
-		results.push(result);
-	}
+  for (const [action, description] of procedures) {
+    // oxlint-disable-next-line no-await-in-loop
+    const [result, error] = tryCatchSync(action, description);
+    if (error) {
+      Error.captureStackTrace(error, tryThrowPipelineSync);
+      throw error;
+    }
+    results.push(result);
+  }
 
-	return results as SyncTryThrowPipelineResults<P>;
+  return results as SyncTryThrowPipelineResults<P>;
 }
 
 type SyncTryCatchPipelineResults<
-	P extends ReadonlyArray<SyncProcedure<unknown>>,
-	E = Error, // Allow overriding the error type if needed, defaults to Error
+  P extends ReadonlyArray<SyncProcedure<unknown>>,
+  E = Error, // Allow overriding the error type if needed, defaults to Error
 > = {
-	[K in keyof P]: P[K] extends SyncProcedure<infer R> ? Result<R, E> : never;
+  [K in keyof P]: P[K] extends SyncProcedure<infer R> ? Result<R, E> : never;
 };
 
 /**
@@ -183,23 +187,23 @@ type SyncTryCatchPipelineResults<
  * @returns A tuple containing the Result<T, Error> of each action in order.
  */
 export function tryCatchPipelineSync<
-	P extends ReadonlyArray<SyncProcedure<unknown>>,
+  P extends ReadonlyArray<SyncProcedure<unknown>>,
 >(procedures: P): SyncTryCatchPipelineResults<P> {
-	const results: Result<unknown, Error>[] = [];
+  const results: Result<unknown, Error>[] = [];
 
-	for (const [action, description] of procedures) {
-		const resultTuple = tryCatchSync(action, description);
-		results.push(resultTuple);
-	}
+  for (const [action, description] of procedures) {
+    const resultTuple = tryCatchSync(action, description);
+    results.push(resultTuple);
+  }
 
-	return results as SyncTryCatchPipelineResults<P>;
+  return results as SyncTryCatchPipelineResults<P>;
 }
 
 type AsyncTryCatchPipelineResults<
-	P extends ReadonlyArray<AsyncProcedure<unknown>>,
-	E = Error, // Allow overriding the error type if needed, defaults to Error
+  P extends ReadonlyArray<AsyncProcedure<unknown>>,
+  E = Error, // Allow overriding the error type if needed, defaults to Error
 > = {
-	[K in keyof P]: P[K] extends AsyncProcedure<infer R> ? Result<R, E> : never;
+  [K in keyof P]: P[K] extends AsyncProcedure<infer R> ? Result<R, E> : never;
 };
 
 /**
@@ -212,15 +216,15 @@ type AsyncTryCatchPipelineResults<
  * @returns A tuple containing the Result<T, Error> of each action in order.
  */
 export async function tryCatchPipeline<
-	P extends ReadonlyArray<AsyncProcedure<unknown>>,
+  P extends ReadonlyArray<AsyncProcedure<unknown>>,
 >(procedures: P): Promise<AsyncTryCatchPipelineResults<P>> {
-	const results: Result<unknown, Error>[] = [];
+  const results: Result<unknown, Error>[] = [];
 
-	for (const [action, description] of procedures) {
-		// oxlint-disable-next-line no-await-in-loop
-		const resultTuple = await tryCatch(action, description);
-		results.push(resultTuple);
-	}
+  for (const [action, description] of procedures) {
+    // oxlint-disable-next-line no-await-in-loop
+    const resultTuple = await tryCatch(action, description);
+    results.push(resultTuple);
+  }
 
-	return results as AsyncTryCatchPipelineResults<P>;
+  return results as AsyncTryCatchPipelineResults<P>;
 }

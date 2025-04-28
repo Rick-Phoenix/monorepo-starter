@@ -4,6 +4,9 @@
   "references": [
     {
       "path": "packages/utils"
+    },
+    {
+      "path": "packages/scripts"
     }
   ]
 }

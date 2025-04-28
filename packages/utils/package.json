@@ -20,15 +20,9 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@eslint/config-inspector": "latest",
-    "@eslint/js": "latest",
     "@monorepo-starter/linting-config": "workspace:*",
     "@types/node": "latest",
-    "@typescript-eslint/eslint-plugin": "^8.29.0",
-    "eslint": "^9.23.0",
-    "globals": "latest",
-    "oxlint": "^0.16.3",
-    "prettier": "latest",
     "typescript": "^5.8.2"
   }
 }
+

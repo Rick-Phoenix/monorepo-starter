@@ -1,7 +1,6 @@
-import antfu from "@antfu/eslint-config";
+import { antfu } from "@antfu/eslint-config";
 import eslintConfigPrettier from "eslint-config-prettier";
 import oxlint from "eslint-plugin-oxlint";
-import prettierConfig from "./prettier.config.js";
 
 function createEslintConfig(options, ...overrides) {
   return antfu(
@@ -53,7 +52,7 @@ function createEslintConfig(options, ...overrides) {
     ...overrides,
     eslintConfigPrettier,
     ...oxlint.configs["flat/recommended"],
-    ...oxlint.buildFromOxlintConfigFile("../../.oxlintrc.json")
+    ...oxlint.buildFromOxlintConfigFile("../../.oxlintrc.json"),
   );
 }
 
@@ -69,4 +68,4 @@ function createEslintConfig(options, ...overrides) {
 //  }
 //);
 
-export { createEslintConfig, prettierConfig };
+export { createEslintConfig };

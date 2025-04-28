@@ -1,75 +1,56 @@
 // eslint-disable no-useless-spread
 // eslint-disable no-console
-import { cancel, confirm, intro, multiselect, outro, select, text } from "@clack/prompts";
+import {
+  cancel,
+  confirm,
+  intro,
+  multiselect,
+  outro,
+  select,
+  text,
+} from "@clack/prompts";
+import { tryThrowSync } from "@monorepo-starter/utils";
+import { type } from "arktype";
 import dedent from "dedent";
+import { findUpSync } from "find-up";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { resolve } from "node:path";
 import { title } from "radashi";
-import packageJSON from "../package.json" with { type: "json" };
-import { updateWorkspace } from "./update-workspace";
+import { readPackageSync } from "read-pkg";
+import { writeJsonFileSync } from "write-json-file";
+import {
+  optionalPackages,
+  type Package,
+  pinnedVerPackages,
+} from "./constants/packages.js";
 
-// Section - Exit Handling
 process.on("SIGINT", () => {
   console.warn("\nPackage initialization aborted.");
   process.exit(0);
 });
 
-// Section - Types
-type Package = {
-  name: string;
-  subdependencies?: Package[];
-  version: string;
-  isDev?: boolean;
-};
+const curdir = import.meta.dirname;
 
-// Block - Constants
+const string = type("string");
 
-// Section - Project name
-const projectName = packageJSON.name;
-if (!projectName.length)
-  throw new Error("Could not find the project name. Is package.json set up correctly?");
+const monorepoRoot = string.assert(
+  tryThrowSync(() =>
+    findUpSync(["pmpm-workspace.yaml"], {
+      type: "directory",
+      cwd: curdir,
+    }), "Getting the path to the monorepo root"),
+);
 
-// Section - Packages with pinned version
-const pinnedVerPackages = {
-  eslint: "^9.23.0",
-  typescript: "^5.8.2",
-  oxlint: "^0.16.3",
-};
+const rootPackageJson = readPackageSync({ cwd: monorepoRoot });
 
-// Section - Optional packages list
-const optionalPackages: Package[] = [
-  {
-    name: "drizzle-orm",
-    version: "^0.41.0",
-    subdependencies: [
-      { name: "drizzle-arktype", version: "^0.1.2" },
-      {
-        name: "drizzle-kit",
-        version: "^0.30.6",
-        isDev: true,
-        subdependencies: [{ name: "arktype", version: "^2.1.15" }],
-      },
-    ],
-  },
-  { name: "arktype", version: "^2.1.15" },
-  {
-    name: "hono",
-    version: "^4.7.5",
-    subdependencies: [
-      {
-        name: "@hono/arktype-validator",
-        version: "^2.0.0",
-      },
-      { name: "arktype", version: "^2.1.15" },
-    ],
-  },
-];
-
-// !Block
-
-// Block -- Input Start
+const projectName: string = rootPackageJson.name;
+if (!projectName.length) {
+  throw new Error(
+    "Could not find the project name. Is package.json set up correctly?",
+  );
+}
 
 async function initializePackage() {
   intro("-- Initializing new package --");
@@ -100,7 +81,7 @@ async function initializePackage() {
     },
   })) as string;
 
-  const packageDir = path.resolve(`./${packageType}s`, packageName);
+  const packageDir = resolve(`./${packageType}s`, packageName);
   if (fs.existsSync(packageDir)) {
     console.error("This folder already exists.");
     process.exit(1);
@@ -114,12 +95,14 @@ async function initializePackage() {
 
   // Section - Adding additional packages
   const additionalPackages = (await multiselect({
-    message: "Do you want to install additional packages? (Select with spacebar)",
+    message:
+      "Do you want to install additional packages? (Select with spacebar)",
     options: [
       { label: "Hono", value: "hono" },
       { label: "Arktype", value: "arktype" },
       { label: "Drizzle", value: "drizzle-orm" },
     ],
+    required: false,
   })) as string[];
 
   const withEnvSchema = await confirm({
@@ -149,17 +132,11 @@ async function initializePackage() {
     }
   });
 
-  // Section - Bun install
   const syncAndInstall = await confirm({
-    message: `Do you want to run 'bun install' and 'moon sync projects'?`,
+    message: `Do you want to run 'pnpm install' and 'moon sync projects'?`,
     initialValue: true,
   });
 
-  //!Block
-
-  // Block - File Generation
-
-  // Section - Package.json
   const packageJsonContent = {
     name: `@${projectName}/${packageName}`,
     type: "module",
@@ -186,12 +163,7 @@ async function initializePackage() {
       [`@${projectName}/linting-config`]: "workspace:*",
       "@eslint/config-inspector": "latest",
       ...pinnedVerPackages,
-      "@eslint/js": "latest",
       "@types/node": "latest",
-      globals: "latest",
-      prettier: "latest",
-      //"typescript-eslint": "latest",
-      //"eslint-config-prettier": "latest",
       ...Object.fromEntries(selectedPackages.devDependencies.entries()),
     },
   };
@@ -207,16 +179,12 @@ async function initializePackage() {
     },
   };
 
-  // Section - Eslint Config
-  const eslintConfig = `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
+  const eslintConfig =
+    `import { createEslintConfig } from '@${projectName}/linting-config' \n export default createEslintConfig()`;
 
-  // Section - Prettier Config
-  const prettierConfig = `import {prettierConfig} from '@${projectName}/linting-config' \n export default prettierConfig`;
-
-  // Section - Index File Content
   const indexFileContent = additionalPackages.includes("hono")
     ? dedent(
-        `import { arktypeValidator } from "@hono/arktype-validator";
+      `import { arktypeValidator } from "@hono/arktype-validator";
         import { type } from "arktype";
         import { Hono } from "hono";
   
@@ -234,11 +202,10 @@ async function initializePackage() {
           });
         });
   
-        export default app`
-      )
+        export default app`,
+    )
     : "";
 
-  // Section - Env Parsing Module
   const envParsingModule = withEnvSchema
     ? dedent(`// eslint-disable no-console
           /* eslint-disable node/no-process-env */
@@ -259,51 +226,42 @@ async function initializePackage() {
           export { env };`)
     : "";
 
-  //!Block
-
-  // Block -- Writing to disk
-
   await mkdir(packageDir);
-  await writeFile(
-    path.join(packageDir, "package.json"),
-    JSON.stringify(packageJsonContent, null, 2)
+  writeJsonFileSync(resolve(packageDir, "package.json"), packageJsonContent);
+
+  writeJsonFileSync(
+    resolve(packageDir, "tsconfig.json"),
+    tsconfig,
   );
 
-  await writeFile(path.join(packageDir, "tsconfig.json"), JSON.stringify(tsconfig));
+  await writeFile(resolve(packageDir, "eslint.config.js"), eslintConfig);
 
-  await writeFile(path.join(packageDir, "eslint.config.js"), eslintConfig);
+  await mkdir(resolve(packageDir, "src"));
 
-  await writeFile(path.join(packageDir, "prettier.config.js"), prettierConfig);
-
-  await mkdir(path.join(packageDir, "src"));
-
-  await writeFile(path.join(packageDir, "src/index.ts"), indexFileContent);
-
-  if (withEnvSchema) {
-    await mkdir(path.join(packageDir, "src/lib"));
-    await writeFile(path.join(packageDir, "src/lib/env.ts"), envParsingModule, { flag: "a" });
+  if (indexFileContent.length) {
+    await writeFile(resolve(packageDir, "src/index.ts"), indexFileContent);
   }
 
-  // !Block
-
-  // Block - Post Install Scripts
+  if (withEnvSchema) {
+    await mkdir(resolve(packageDir, "src/lib"));
+    await writeFile(resolve(packageDir, "src/lib/env.ts"), envParsingModule, {
+      flag: "a",
+    });
+  }
 
   if (syncAndInstall) {
-    const { error } = spawnSync("bun install && bun moon sync projects", {
+    const { error } = spawnSync("pnpm install && bun moon sync projects", {
       stdio: "inherit",
       shell: true,
     });
     if (error) console.warn(`Error while installing the package: ${error}`);
   }
 
-  await updateWorkspace(
-    path.resolve(import.meta.dirname, `../${projectName}.code-workspace`),
-    `${packageType}s/${packageName}`
+  outro(
+    `${
+      title(packageType)
+    } '${packageName}' has been successfully initiated. 🚀✅`,
   );
-
-  //!Block
-
-  outro(`${title(packageType)} '${packageName}' has been successfully initiated. 🚀✅`);
   process.exit(0);
 }
 

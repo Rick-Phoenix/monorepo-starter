@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@moonrepo/cli'
+  - esbuild
+  - unrs-resolver

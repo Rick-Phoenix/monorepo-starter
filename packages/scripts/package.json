@@ -1,0 +1,41 @@
+{
+  "name": "@monorepo-starter/scripts",
+  "type": "module",
+  "private": true,
+  "author": "Rick-Phoenix",
+  "description": "",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "lint": "oxlint && eslint"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@monorepo-starter/utils": "workspace:*",
+    "arktype": "^2.1.20"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^0.10.1",
+    "@monorepo-starter/linting-config": "workspace:*",
+    "@types/node": "latest",
+    "dedent": "^1.5.3",
+    "eslint": "^9.23.0",
+    "find-up": "^7.0.0",
+    "fs-extra": "^11.3.0",
+    "latest-version": "^9.0.0",
+    "oxlint": "^0.16.3",
+    "package-up": "^5.0.0",
+    "read-package-up": "^11.0.0",
+    "read-pkg": "^9.0.1",
+    "typescript": "^5.8.2",
+    "write-json-file": "^6.0.0"
+  }
+}
