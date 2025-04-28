@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "scripts": {
-    "newpackage": "bun ./scripts/create-package.ts",
-    "newsvelte": "bun ./scripts/scaffold-svelte.ts",
-    "init-repo": "bun initialize-repo.ts"
-  },
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
   },

@@ -1,0 +1,8 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+tasks:
+  init-repo:
+    description: "Initializing a new monorepo"
+    command: "bun ./src/init-repo.ts"
+    options:
+      cache: false
