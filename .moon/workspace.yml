@@ -6,3 +6,6 @@ projects:
 
 vcs:
   defaultBranch: main
+
+pipeline:
+  installDependencies: false
