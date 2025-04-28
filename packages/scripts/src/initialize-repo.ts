@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import { writeJsonFile } from "write-json-file";
@@ -6,25 +6,25 @@ import { writeJsonFile } from "write-json-file";
 import { cancel, confirm, group, intro, outro, text } from "@clack/prompts";
 import { tryThrowPipeline, tryThrowSync } from "@monorepo-starter/utils";
 import { type } from "arktype";
-import dedent from "dedent";
 import { findUpSync } from "find-up";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { type PackageJson, readPackageSync } from "read-pkg";
 
 import { exec, spawnSync } from "node:child_process";
+import { render } from "nunjucks";
 const execAsync = promisify(exec);
 
 const curdir = import.meta.dirname;
 
 const string = type("string");
 
-const monorepoRoot = string.assert(
+const monorepoRoot = dirname(string.assert(
   tryThrowSync(() =>
-    findUpSync(["pmpm-workspace.yaml"], {
-      type: "directory",
+    findUpSync(["pnpm-workspace.yaml"], {
+      type: "file",
       cwd: curdir,
     }), "Getting the path to the monorepo root"),
-);
+));
 
 intro("✨ Monorepo Initialization ✨");
 
@@ -42,7 +42,7 @@ try {
           message: "Do you want to include Husky?",
           initialValue: true,
         }),
-      syncAndInstall: () =>
+      runInstall: () =>
         confirm({
           message: `Do you want to run 'pnpm install' after initialization?`,
           initialValue: true,
@@ -56,7 +56,7 @@ try {
     },
   );
 
-  const { projectName, syncAndInstall, withHusky } = inputs;
+  const { projectName, runInstall, withHusky } = inputs;
 
   const addInfisicalScan = withHusky
     ? await confirm({
@@ -104,74 +104,19 @@ try {
   });
 
   utilsPackageJson.name = `@${projectName}/utils`;
-  utilsPackageJson
-    .devDependencies![`@monorepo-starter/${lintConfigPackageName}`] = undefined;
+  delete utilsPackageJson
+    .devDependencies![`@monorepo-starter/${lintConfigPackageName}`];
   utilsPackageJson
     .devDependencies![`@${projectName}/${lintConfigPackageName}`] =
       "workspace:*";
 
-  // To move to a tera template
-  const gitignore = dedent(`# --- Dependencies ---
-    node_modules/
+  const templatesDir = resolve(import.meta.dirname, "templates");
 
-    # --- Build Output ---
-    dist/
-    out/
-    build/
-    *.js.map
-    *.d.ts 
-    *.tsbuildInfo
-
-    # --- Logs ---
-    # Log files generated during runtime or debugging
-    logs/
-    *.log
-    npm-debug.log*
-    yarn-debug.log*
-    yarn-error.log*
-    pnpm-debug.log*
-
-    # --- Environment Variables ---
-    # Files containing sensitive information like API keys, passwords, etc.
-    .env
-    .env.* # Covers .env.local, .env.development, etc.
-    !.env.example # Often useful to commit an example env file
-
-    # --- Operating System Generated Files ---
-    .DS_Store
-    Thumbs.db
-    desktop.ini
-
-    # --- Temporary Files ---
-    *.tmp
-    *.swp
-    *.swo
-
-    # --- Test Reports & Coverage ---
-    coverage/
-    lcov-report/
-    *.lcov
-    .nyc_output/`);
-
-  const precommitHook = dedent(
-    `${
-      addInfisicalScan
-        ? `if ! [[ $(command -v infisical) ]]; then
-    echo "Infisical binary not found."
-    exit 1
-  fi
-
-  infisical scan git-changes --staged --verbose`
-        : ""
-    }
-  
-  lint-staged
-  `,
+  const gitignore = readFileSync(
+    resolve(templatesDir, ".gitignore.j2"),
+    "utf8",
   );
 
-  //!Block
-
-  // Block - Writing to disk
   await tryThrowPipeline(
     [
       [
@@ -179,7 +124,7 @@ try {
           resolve(lintConfigPackageDir, "package.json"),
           lintPackageJson,
         ),
-        "writing the eslint package.json file",
+        "writing the linting package package.json file",
       ],
       [
         writeJsonFile(
@@ -211,8 +156,7 @@ try {
     ] as const,
   );
 
-  // Test moon sync again
-  if (syncAndInstall) {
+  if (runInstall) {
     const { error } = spawnSync("pnpm install", {
       stdio: "inherit",
       shell: true,
@@ -222,6 +166,10 @@ try {
 
   if (withHusky) {
     const huskyDir = resolve(monorepoRoot, ".husky");
+    const preCommitHook = render(
+      resolve(templatesDir, "pre_commit_hook.sh.j2"),
+      { infisical: addInfisicalScan === true },
+    );
     tryThrowSync(
       () => mkdirSync(huskyDir, { recursive: true }),
       "creating the .husky folder",
@@ -231,7 +179,7 @@ try {
         [
           writeFile(
             resolve(huskyDir, "pre-commit"),
-            precommitHook,
+            preCommitHook,
             "utf-8",
           ),
           "writing the pre-commit hook",

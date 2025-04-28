@@ -1,0 +1,10 @@
+{% if infisical -%}
+if ! [[ $(command -v infisical) ]]; then
+echo "Infisical binary not found."
+exit 1
+fi
+
+infisical scan git-changes --staged --verbose
+{% endif -%}
+
+lint-staged
