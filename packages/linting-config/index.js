@@ -47,6 +47,7 @@ function createEslintConfig(options, ...overrides) {
         "perfectionist/sort-named-imports": "off",
         "perfectionist/sort-exports": "off",
         "perfectionist/sort-imports": "off",
+        "import/consistent-type-specifier-style": "off",
       },
     },
     ...overrides,

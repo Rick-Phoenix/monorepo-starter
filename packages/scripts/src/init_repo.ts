@@ -1,3 +1,4 @@
+/* eslint-disable ts/promise-function-async */
 import { mkdirSync, readFileSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
@@ -184,7 +185,7 @@ try {
 
   outro(
     `Project successfully initiated. ✅ ${
-      addInfisicalScan
+      addInfisicalScan === true
         ? "\nRemember to launch 'infisical init' to complete the infisical setup."
         : ""
     }`,

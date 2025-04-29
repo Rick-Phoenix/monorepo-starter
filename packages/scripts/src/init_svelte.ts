@@ -55,7 +55,7 @@ async function scaffoldSvelte() {
         process.exit(1);
       }
 
-      if (input.match(/[,./\\:]/)) {
+      if (input.match(/[,./:\\]/)) {
         cancel("The name contains invalid characters.");
         process.exit(1);
       }
@@ -159,7 +159,7 @@ async function scaffoldSvelte() {
     { shell: true, stdio: "inherit" },
   );
 
-  if (withInstall) {
+  if (withInstall === true) {
     spawnSync(`cd ${appDir} && pnpm install`, {
       shell: true,
       stdio: "inherit",

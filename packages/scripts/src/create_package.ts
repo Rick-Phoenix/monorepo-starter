@@ -1,3 +1,4 @@
+/* eslint-disable ts/strict-boolean-expressions */
 // eslint-disable no-useless-spread
 // eslint-disable no-console
 import {
@@ -65,7 +66,7 @@ async function initializePackage() {
         process.exit(1);
       }
 
-      if (input.match(/[,./\\:]/)) {
+      if (input.match(/[,./:\\]/)) {
         cancel(`The name contains invalid characters.`);
         process.exit(1);
       }
@@ -102,7 +103,7 @@ async function initializePackage() {
     initialValue: false,
   });
 
-  if (withEnvSchema) additionalPackages.push("arktype");
+  if (withEnvSchema === true) additionalPackages.push("arktype");
 
   const selectedPackages = {
     dependencies: new Map<string, string>(),
