@@ -15,7 +15,6 @@ import { spawnSync } from "node:child_process";
 import fs, { readFileSync, writeFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import process from "node:process";
 import { render } from "nunjucks";
 import { readPackageSync } from "read-pkg";
 import { writeJsonFileSync } from "write-json-file";
