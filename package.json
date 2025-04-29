@@ -10,7 +10,6 @@
   "dependencies": {
   },
   "devDependencies": {
-    "@moonrepo/cli": "^1.35.1",
     "husky": "^9.1.7",
     "typescript": "^5.8.3"
   }
