@@ -10,7 +10,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "lint": "oxlint && eslint"
+    "lint": "oxlint && eslint",
+    "lint-staged": "lint-staged"
+  },
+  "lint-staged": {
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
   },
   "exports": {
     ".": {
@@ -22,7 +26,9 @@
   "devDependencies": {
     "@monorepo-starter/linting-config": "workspace:*",
     "@types/node": "latest",
-    "typescript": "^5.8.2"
+    "lint-staged": "latest",
+    "typescript": "^5.8.2",
+    "oxlint": "^0.16.3",
+    "eslint": "^9.23.0"
   }
 }
-

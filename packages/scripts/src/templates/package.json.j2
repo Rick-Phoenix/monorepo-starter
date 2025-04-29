@@ -10,7 +10,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "lint": "oxlint && eslint"
+    "lint": "oxlint && eslint",
+    "lint-staged": "lint-staged"
+  },
+  "lint-staged": {
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
   },
   "exports": {
     ".": {
@@ -30,9 +34,10 @@
     "{{ name }}": "{{ version }}",
     {% endfor -%}    
     "@types/node": "latest",
-    "eslint": "^9.23.0",
     "typescript": "^5.8.2",
-    "oxlint": "^0.16.3"
+    "eslint": "^9.23.0",
+    "oxlint": "^0.16.3",
+    "lint-staged": "latest"
   }
 }
 

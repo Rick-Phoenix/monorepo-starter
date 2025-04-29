@@ -3,19 +3,15 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
-  },
   "scripts": {
-    "newpkg": "moon run scripts:create_package"
+    "newpkg": "moon run scripts:create_package",
+    "lint-staged": "pnpm -r lint-staged"
   },
   "dependencies": {
   },
   "devDependencies": {
     "@moonrepo/cli": "^1.35.1",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.1",
-    "oxlint": "^0.16.8",
     "typescript": "^5.8.3"
   }
 }

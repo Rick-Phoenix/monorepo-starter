@@ -14,12 +14,6 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
-      lint-staged:
-        specifier: ^15.5.1
-        version: 15.5.1
-      oxlint:
-        specifier: ^0.16.8
-        version: 0.16.8
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -50,6 +44,9 @@ importers:
       globals:
         specifier: latest
         version: 16.0.0
+      lint-staged:
+        specifier: latest
+        version: 15.5.1
       oxlint:
         specifier: ^0.16.3
         version: 0.16.8
@@ -96,6 +93,9 @@ importers:
       latest-version:
         specifier: ^9.0.0
         version: 9.0.0
+      lint-staged:
+        specifier: latest
+        version: 15.5.1
       nunjucks:
         specifier: ^3.2.4
         version: 3.2.4
@@ -126,6 +126,15 @@ importers:
       '@types/node':
         specifier: latest
         version: 22.15.3
+      eslint:
+        specifier: ^9.23.0
+        version: 9.25.1
+      lint-staged:
+        specifier: latest
+        version: 15.5.1
+      oxlint:
+        specifier: ^0.16.3
+        version: 0.16.8
       typescript:
         specifier: ^5.8.2
         version: 5.8.3

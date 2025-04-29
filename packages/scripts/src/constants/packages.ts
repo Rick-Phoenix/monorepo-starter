@@ -4,8 +4,8 @@ export type Package = {
   version: string;
   isDev?: boolean;
 };
-
 // Section - Optional packages list
+
 export const optionalPackages: Package[] = [
   {
     name: "drizzle-orm",

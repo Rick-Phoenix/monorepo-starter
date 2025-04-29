@@ -76,11 +76,6 @@ try {
   if (rootPackageJson.devDependencies) {
     if (withHusky) {
       rootPackageJson.devDependencies.husky = "^9.0.0";
-      rootPackageJson.devDependencies["lint-staged"] = "latest";
-      rootPackageJson["lint-staged"] = {
-        "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}":
-          "oxlint && eslint",
-      };
     }
   }
 

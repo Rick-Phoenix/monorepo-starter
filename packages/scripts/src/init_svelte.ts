@@ -1,13 +1,13 @@
+// eslint-disable no-console
+import { cancel, confirm, intro, outro, text } from "@clack/prompts";
 import { tryThrowSync } from "@monorepo-starter/utils";
+import { type } from "arktype";
+import { file } from "bun";
+import { findUpSync } from "find-up";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve as res } from "node:path";
-// eslint-disable no-console
-import { cancel, confirm, intro, outro, text } from "@clack/prompts";
-import { type } from "arktype";
-import { file } from "bun";
-import { findUpSync } from "find-up";
 import { render } from "nunjucks";
 import { readPackageSync } from "read-pkg";
 

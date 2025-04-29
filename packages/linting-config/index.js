@@ -5,7 +5,7 @@ import oxlint from "eslint-plugin-oxlint";
 function createEslintConfig(options, ...overrides) {
   return antfu(
     {
-      ignores: ["**/dist/**", "**/node_modules/**", "**/.moon/cache"],
+      ignores: ["**/dist/**", "**/node_modules/**", "**/.moon/**"],
       typescript: {
         tsconfigPath: "tsconfig.json",
         overridesTypeAware: {

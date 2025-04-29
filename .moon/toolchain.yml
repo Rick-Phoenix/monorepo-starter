@@ -1,12 +1,12 @@
 $schema: "https://moonrepo.dev/schemas/toolchain.json"
 
 bun:
-  inferTasksFromScripts: false
   syncProjectWorkspaceDependencies: false
   version: latest
 
 node:
   packageManager: "pnpm"
+  inferTasksFromScripts: false
 
 typescript:
   syncProjectReferences: true

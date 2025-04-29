@@ -11,9 +11,16 @@
       "default": "./index.js"
     }
   },
+  "scripts": {
+    "lint-staged": "lint-staged"
+  },
+  "lint-staged": {
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
+  },
   "dependencies": {
     "@antfu/eslint-config": "^4.11.0",
     "@eslint/config-inspector": "latest",
+    "lint-staged": "latest",
     "@eslint/js": "latest",
     "@types/node": "latest",
     "eslint": "^9.23.0",
