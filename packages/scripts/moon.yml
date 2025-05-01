@@ -13,7 +13,7 @@ tasks:
     options:
       cache: false
       interactive: true
-  create_svelte_app:
+  init_svelte:
     description: "Creating a new svelte app"
     script: "bun ./src/init_svelte.ts"
     options:

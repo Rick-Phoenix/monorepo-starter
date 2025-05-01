@@ -1,6 +1,6 @@
 /* eslint-disable ts/promise-function-async */
-import { mkdirSync, readFileSync } from "node:fs";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdirSync, readFileSync, rmdirSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import { writeJsonFile } from "write-json-file";
 // eslint-disable no-console
@@ -68,11 +68,10 @@ try {
 
   const rootPackageJson = readPackageSync({
     cwd: monorepoRoot,
+    normalize: false,
   });
 
   rootPackageJson.name = projectName;
-
-  delete rootPackageJson.scripts!["init-repo"];
 
   if (rootPackageJson.devDependencies) {
     if (withHusky) {
@@ -88,19 +87,43 @@ try {
   );
   const lintPackageJson = readPackageSync({
     cwd: lintConfigPackageDir,
+    normalize: false,
   });
 
   lintPackageJson.name = `@${projectName}/${lintConfigPackageName}`;
 
+  const eslintConfig =
+    `import { createEslintConfig } from '@${projectName}/${lintConfigPackageName}' 
+ export default createEslintConfig()`;
+
   const utilsPackageDir = resolve(monorepoRoot, "packages/utils");
   const utilsPackageJson: PackageJson = readPackageSync({
     cwd: utilsPackageDir,
+    normalize: false,
   });
 
   utilsPackageJson.name = `@${projectName}/utils`;
   delete utilsPackageJson
     .devDependencies![`@monorepo-starter/${lintConfigPackageName}`];
   utilsPackageJson
+    .devDependencies![`@${projectName}/${lintConfigPackageName}`] =
+      "workspace:*";
+
+  const scriptsPackageDir = resolve(import.meta.dirname, "..");
+  console.log(scriptsPackageDir);
+  const scriptsPackageJson = readPackageSync({
+    cwd: scriptsPackageDir,
+    normalize: false,
+  });
+
+  scriptsPackageJson.name = `@${projectName}/scripts`;
+
+  delete scriptsPackageJson
+    .devDependencies!["@monorepo-starter/linting-config"];
+  delete scriptsPackageJson.dependencies!["@monorepo-starter/utils"];
+
+  scriptsPackageJson.dependencies![`@${projectName}/utils`] = "workspace:*";
+  scriptsPackageJson
     .devDependencies![`@${projectName}/${lintConfigPackageName}`] =
       "workspace:*";
 
@@ -128,6 +151,27 @@ try {
         "writing the utils package.json file",
       ],
       [
+        writeFile(
+          resolve(utilsPackageDir, "eslint.config.js"),
+          eslintConfig,
+        ),
+        "writing the utils eslint.config.js file",
+      ],
+      [
+        writeJsonFile(
+          resolve(scriptsPackageDir, "package.json"),
+          scriptsPackageJson,
+        ),
+        "writing the scripts package.json file",
+      ],
+      [
+        writeFile(
+          resolve(scriptsPackageDir, "eslint.config.js"),
+          eslintConfig,
+        ),
+        "writing the scripts eslint.config.js file",
+      ],
+      [
         writeJsonFile(resolve(monorepoRoot, "package.json"), rootPackageJson),
         "writing the root package.json file",
       ],
@@ -139,15 +183,20 @@ try {
         mkdir(resolve(monorepoRoot, "apps")),
         "writing the apps folder",
       ],
-      [
-        rm(resolve(monorepoRoot, ".git"), { recursive: true }),
-        "removing the previous .git folder",
-      ],
-      [
-        execAsync("git init && git add . && git commit -m 'Initial Commit' "),
-        "initializing the new git repo",
-      ],
     ] as const,
+  );
+
+  tryThrowSync(
+    () => rmdirSync(resolve(monorepoRoot, ".git"), { recursive: true }),
+    "removing the previous .git folder",
+  );
+
+  tryThrowSync(
+    () =>
+      exec("git init && git add . && git commit -m 'Initial Commit' ", {
+        cwd: monorepoRoot,
+      }),
+    "initializing the new git repo",
   );
 
   if (runInstall) {

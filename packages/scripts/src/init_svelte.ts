@@ -63,7 +63,7 @@ async function scaffoldSvelte() {
     },
   })) as string;
 
-  const appDir = res(monorepoRoot, "apps");
+  const appDir = res(monorepoRoot, "apps", appName);
   if (existsSync(appDir)) {
     cancel("A folder with this name already exists.");
     process.exit(1);
@@ -105,11 +105,14 @@ async function scaffoldSvelte() {
   )
     .text();
 
+  const lintPkgName = "linting-config";
+
   const sveltePackageJSON = render(
     join(svelteTemplatesDir, "package.json.j2"),
     {
       monorepoName,
       appName,
+      lintPkgName,
     },
   );
 
@@ -122,8 +125,6 @@ async function scaffoldSvelte() {
 
   const pageSvelte = await file(join(svelteTemplatesDir, "page.svelte.j2"))
     .text();
-
-  const lintPkgName = "linting-config";
 
   const eslintConfig =
     `import { createEslintConfig } from '@${monorepoName}/${lintPkgName}' \n export default createEslintConfig({ svelte: true})`;
