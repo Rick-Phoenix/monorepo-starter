@@ -2,6 +2,9 @@ packages:
   - apps/*
   - packages/*
 
+catalog:
+  oxlint: "^0.16.9"
+
 onlyBuiltDependencies:
   - esbuild
   - unrs-resolver

@@ -1,10 +1,19 @@
+import latestVersion from "latest-version";
+
 export type Package = {
   name: string;
   subdependencies?: Package[];
   version: string;
   isDev?: boolean;
 };
-// Section - Optional packages list
+
+const latestRange = async (pkgName: string) => {
+  const version = await latestVersion(pkgName);
+  if (!version.length) {
+    console.warn(`⚠️ Could not get a valid version for ${pkgName}`);
+  }
+  return `^${version}`;
+};
 
 export const optionalPackages: Package[] = [
   {
@@ -21,15 +30,6 @@ export const optionalPackages: Package[] = [
     ],
   },
   { name: "arktype", version: "^2.1.15" },
-  {
-    name: "hono",
-    version: "^4.7.5",
-    subdependencies: [
-      {
-        name: "@hono/arktype-validator",
-        version: "^2.0.0",
-      },
-      { name: "arktype", version: "^2.1.15" },
-    ],
-  },
+  { name: "dotenv", version: await latestRange("dotenv") },
+  { name: "dotenv-expand", version: await latestRange("dotenv-expand") },
 ];

@@ -3,6 +3,9 @@
   "files": [],
   "references": [
     {
+      "path": "packages/hono-starter"
+    },
+    {
       "path": "packages/scripts"
     },
     {

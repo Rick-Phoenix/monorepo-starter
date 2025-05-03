@@ -7,8 +7,6 @@
     "newpkg": "moon run scripts:create_package",
     "lint-staged": "pnpm -r lint-staged"
   },
-  "dependencies": {
-  },
   "devDependencies": {
     "husky": "^9.1.7",
     "typescript": "^5.8.3"

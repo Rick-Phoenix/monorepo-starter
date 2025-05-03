@@ -13,8 +13,7 @@ import { findUpSync } from "find-up";
 import { spawnSync } from "node:child_process";
 import fs, { readFileSync, writeFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { render } from "nunjucks";
+import { dirname, join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
 import { optionalPackages, type Package } from "./constants/packages.js";
 import { writeRender } from "./lib/rendering.js";
@@ -90,7 +89,9 @@ async function initializePackage() {
     initialValue: false,
   });
 
-  if (withEnvSchema === true) additionalPackages.push("arktype");
+  if (withEnvSchema === true) {
+    additionalPackages.push(...["arktype", "dotenv", "dotenv-expand"]);
+  }
 
   const selectedPackages = {
     dependencies: new Map<string, string>(),
@@ -129,38 +130,29 @@ async function initializePackage() {
   const eslintConfig =
     `import { createEslintConfig } from '@${projectName}/${lintPkgName}' \n export default createEslintConfig()`;
 
-  const packageJson = render(resolve(templatesDir, "package.json.j2"), {
-    projectName,
-    packageName,
-    packageDescription,
-    lintPkgName,
-    dependencies: selectedPackages.dependencies,
-    devDependencies: selectedPackages.devDependencies,
-  });
-
-  await mkdir(packageDir);
+  await mkdir(join(packageDir, "src", "lib"), { recursive: true });
 
   writeRender(
     resolve(templatesDir, "tsconfig.json.j2"),
     resolve(packageDir, "tsconfig.json"),
   );
 
-  writeFileSync(resolve(packageDir, "package.json"), packageJson);
+  writeRender(
+    resolve(templatesDir, "package.json.j2"),
+    join(packageDir, "package.json"),
+    {
+      projectName,
+      packageName,
+      packageDescription,
+      lintPkgName,
+      dependencies: selectedPackages.dependencies,
+      devDependencies: selectedPackages.devDependencies,
+    },
+  );
 
   writeFileSync(resolve(packageDir, "eslint.config.js"), eslintConfig);
 
-  await mkdir(resolve(packageDir, "src"));
-
-  if (selectedPackages.dependencies.has("hono")) {
-    const indexFileContent = readFileSync(
-      resolve(templatesDir, "hono_index.ts.j2"),
-      "utf8",
-    );
-    writeFileSync(resolve(packageDir, "src/index.ts"), indexFileContent);
-  }
-
   if (withEnvSchema) {
-    await mkdir(resolve(packageDir, "src/lib"));
     const envParsingModule = readFileSync(
       resolve(templatesDir, "env_parsing.ts.j2"),
       "utf8",
