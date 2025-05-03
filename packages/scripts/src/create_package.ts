@@ -1,4 +1,3 @@
-/* eslint-disable ts/strict-boolean-expressions */
 // eslint-disable no-useless-spread
 // eslint-disable no-console
 import {
@@ -7,7 +6,6 @@ import {
   intro,
   multiselect,
   outro,
-  select,
   text,
 } from "@clack/prompts";
 import { type } from "arktype";
@@ -18,8 +16,8 @@ import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { render } from "nunjucks";
 import { readPackageSync } from "read-pkg";
-import { writeJsonFileSync } from "write-json-file";
 import { optionalPackages, type Package } from "./constants/packages.js";
+import { writeRender } from "./lib/rendering.js";
 
 process.on("SIGINT", () => {
   console.warn("\nPackage initialization aborted.");
@@ -48,18 +46,8 @@ if (!projectName.length) {
 async function initializePackage() {
   intro("-- Initializing new package --");
 
-  // Section - Package name and type
-  const packageType = (await select({
-    message: "Do you want to create an app or a package?",
-    options: [
-      { label: "App 🚀", value: "app" },
-      { label: "Package 📦", value: "package" },
-    ],
-    initialValue: "package",
-  })) as string;
-
   const packageName = (await text({
-    message: `Enter the ${packageType}'s name:`,
+    message: `Enter the package's name:`,
     validate: (input) => {
       if (!input || !input.length) {
         cancel("The package name cannot be empty.");
@@ -74,14 +62,14 @@ async function initializePackage() {
     },
   })) as string;
 
-  const packageDir = resolve(monorepoRoot, `${packageType}s`, packageName);
+  const packageDir = resolve(monorepoRoot, `packages`, packageName);
   if (fs.existsSync(packageDir)) {
     console.error("This folder already exists.");
     process.exit(1);
   }
 
   const packageDescription = await text({
-    message: `Enter the ${packageType}'s description:`,
+    message: `Enter the package's description:`,
     defaultValue: "",
     placeholder: "",
   });
@@ -91,7 +79,6 @@ async function initializePackage() {
     message:
       "Do you want to install additional packages? (Select with spacebar)",
     options: [
-      { label: "Hono", value: "hono" },
       { label: "Arktype", value: "arktype" },
       { label: "Drizzle", value: "drizzle-orm" },
     ],
@@ -137,16 +124,6 @@ async function initializePackage() {
 
   const templatesDir = resolve(scriptsDir, "src/templates");
 
-  const tsconfig = {
-    extends: "../../tsconfig.options.json",
-    compilerOptions: {
-      outDir: "dist",
-      rootDir: "src",
-      tsBuildInfoFile: "dist/.tsbuildinfo",
-      ...(packageType === "app" && { noEmit: true, composite: false }),
-    },
-  };
-
   const lintPkgName = "linting-config";
 
   const eslintConfig =
@@ -162,12 +139,13 @@ async function initializePackage() {
   });
 
   await mkdir(packageDir);
-  writeFileSync(resolve(packageDir, "package.json"), packageJson);
 
-  writeJsonFileSync(
+  writeRender(
+    resolve(templatesDir, "tsconfig.json.j2"),
     resolve(packageDir, "tsconfig.json"),
-    tsconfig,
   );
+
+  writeFileSync(resolve(packageDir, "package.json"), packageJson);
 
   writeFileSync(resolve(packageDir, "eslint.config.js"), eslintConfig);
 
@@ -193,7 +171,7 @@ async function initializePackage() {
   }
 
   if (syncAndInstall) {
-    const { error } = spawnSync("pnpm install && bun moon sync projects", {
+    const { error } = spawnSync("pnpm install && moon sync projects", {
       stdio: "inherit",
       shell: true,
     });
