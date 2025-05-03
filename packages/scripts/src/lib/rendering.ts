@@ -1,4 +1,3 @@
-// eslint-disable no-console
 import { tryThrowSync } from "@monorepo-starter/utils";
 import { type } from "arktype";
 import { writeFileSync } from "node:fs";
@@ -19,7 +18,7 @@ export function writeRender(
   const renderedText = render(renderPath, ctx);
 
   if (!renderedText.length) {
-    console.warn("⚠️ The output of the render was empty");
+    console.warn("⚠️ The output of the render was empty ⚠️");
   }
 
   tryThrowSync(
