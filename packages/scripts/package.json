@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "author": "Rick-Phoenix",
-  "description": "",
+  "description": "A collection of scripts for various uses",
   "files": [
     "dist"
   ],
