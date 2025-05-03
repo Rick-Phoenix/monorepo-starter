@@ -12,12 +12,12 @@
   "scripts": {
     "dev": "bun --watch ./src/index.ts",
     "build": "tsc --project ./tsconfig.build.json && tsc-alias -p ./tsconfig.build.json",
-    "lint": "oxlint && eslint",
+    "lint": "oxlint --config '../../.oxlintrc.json' && eslint",
     "test": "vitest --config ./src/tests/vitest.config.ts run",
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint --config '../../.oxlintrc.json' && eslint"
   },
   "exports": {
     ".": {

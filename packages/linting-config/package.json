@@ -12,10 +12,11 @@
     }
   },
   "scripts": {
+    "lint": "oxlint --config '../../.oxlintrc.json' && eslint",
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint --config '../../.oxlintrc.json' && eslint"
   },
   "dependencies": {
     "@antfu/eslint-config": "^4.11.0",

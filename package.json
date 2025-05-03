@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "newpkg": "moon run scripts:create_package",
-    "lint-staged": "pnpm -r lint-staged"
+    "lint-staged": "pnpm -r lint-staged",
+    "lint": "pnpm -r lint"
   },
   "devDependencies": {
     "husky": "^9.1.7",
