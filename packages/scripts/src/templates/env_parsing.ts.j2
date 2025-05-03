@@ -1,17 +1,38 @@
 // eslint-disable no-console
 /* eslint-disable node/no-process-env */
 import { type } from "arktype";
+import { config } from "dotenv";
+import { expand } from "dotenv-expand";
+
+expand(config());
 
 const envSchema = type({
+  NODE_ENV: type.enumerated("production", "development", "test").default(
+    "development",
+  ),
+  LOG_LEVEL: type.enumerated(
+    "silent",
+    "fatal",
+    "error",
+    "warn",
+    "info",
+    "debug",
+    "trace",
+  ).default("info"),
   "+": "delete",
 });
 
-const env = envSchema(process.env);
+const parseResult = envSchema(process.env);
 
-if (env instanceof type.errors) {
+if (parseResult instanceof type.errors) {
   console.log("❌ Error while parsing envs: ❌");
-  console.log(env.flatProblemsByPath);
+  console.log(parseResult.summary);
   process.exit(1);
 }
 
+type ParsedEnvs = typeof envSchema.infer;
+
+const env: ParsedEnvs = parseResult;
+
 export { env };
+
