@@ -1,0 +1,15 @@
+{
+  "name": "{{ projectName }}",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "lint-staged": "pnpm -r lint-staged",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    {% for dep in rootPackages -%}
+    "{{ dep.name }}": "{{ dep.version }}"{{- "," if loop.last !== true }}
+    {% endfor -%} 
+  }
+}

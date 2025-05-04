@@ -1,0 +1,33 @@
+{
+"name": "@{{ projectName }}/linting-config",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "scripts": {
+    "lint": "oxlint --config '../../.oxlintrc.json' && eslint",
+    "lint-staged": "lint-staged"
+  },
+  "lint-staged": {
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint --config '../../.oxlintrc.json' && eslint"
+  },
+  "dependencies": {
+    "@antfu/eslint-config": "^4.11.0",
+    "@eslint/config-inspector": "^1.0.2",
+    "@types/node": "^22.15.3",
+    "lint-staged": "^12.3.2",
+    "eslint": "^9.23.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-oxlint": "^0.16.8",
+    "eslint-plugin-svelte": "^3.5.1",
+    "oxlint": "0.16.9",
+    "typescript-eslint": "^8.31.1"
+  }
+}
