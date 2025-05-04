@@ -84,6 +84,7 @@
         "allowSwitch": false
       }
     ],
+    "no-await-in-loop": "off",
     "no-lone-blocks": "error",
     "no-multi-str": "error",
     "no-new": "error",

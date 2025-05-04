@@ -23,7 +23,9 @@
     }
   },
   "dependencies": {
-    "arktype": "^2.1.20"
+    "@clack/prompts": "^0.10.1",
+    "arktype": "^2.1.20",
+    "fast-glob": "^3.3.3"
   },
   "devDependencies": {
     "@monorepo-starter/linting-config": "workspace:*",

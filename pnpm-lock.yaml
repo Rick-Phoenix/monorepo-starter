@@ -120,16 +120,46 @@ importers:
 
   packages/scripts:
     dependencies:
+      '@clack/prompts':
+        specifier: ^0.10.1
+        version: 0.10.1
       '@monorepo-starter/utils':
         specifier: workspace:*
         version: link:../utils
       arktype:
         specifier: ^2.1.20
         version: 2.1.20
+      dedent:
+        specifier: ^1.5.3
+        version: 1.5.3
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
+      find-up:
+        specifier: ^7.0.0
+        version: 7.0.0
+      fs-extra:
+        specifier: ^11.3.0
+        version: 11.3.0
+      latest-version:
+        specifier: ^9.0.0
+        version: 9.0.0
+      nunjucks:
+        specifier: ^3.2.4
+        version: 3.2.4(chokidar@3.6.0)
+      package-up:
+        specifier: ^5.0.0
+        version: 5.0.0
+      read-package-up:
+        specifier: ^11.0.0
+        version: 11.0.0
+      read-pkg:
+        specifier: ^9.0.1
+        version: 9.0.1
+      write-json-file:
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
-      '@clack/prompts':
-        specifier: ^0.10.1
-        version: 0.10.1
       '@monorepo-starter/linting-config':
         specifier: workspace:*
         version: link:../linting-config
@@ -142,51 +172,30 @@ importers:
       '@types/nunjucks':
         specifier: ^3.2.6
         version: 3.2.6
-      dedent:
-        specifier: ^1.5.3
-        version: 1.5.3
       eslint:
         specifier: ^9.23.0
         version: 9.26.0
-      find-up:
-        specifier: ^7.0.0
-        version: 7.0.0
-      fs-extra:
-        specifier: ^11.3.0
-        version: 11.3.0
-      latest-version:
-        specifier: ^9.0.0
-        version: 9.0.0
       lint-staged:
         specifier: ^12.3.2
         version: 12.5.0
-      nunjucks:
-        specifier: ^3.2.4
-        version: 3.2.4(chokidar@3.6.0)
       oxlint:
         specifier: 'catalog:'
         version: 0.16.9
-      package-up:
-        specifier: ^5.0.0
-        version: 5.0.0
-      read-package-up:
-        specifier: ^11.0.0
-        version: 11.0.0
-      read-pkg:
-        specifier: ^9.0.1
-        version: 9.0.1
       typescript:
         specifier: ^5.8.2
         version: 5.8.3
-      write-json-file:
-        specifier: ^6.0.0
-        version: 6.0.0
 
   packages/utils:
     dependencies:
+      '@clack/prompts':
+        specifier: ^0.10.1
+        version: 0.10.1
       arktype:
         specifier: ^2.1.20
         version: 2.1.20
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
     devDependencies:
       '@monorepo-starter/linting-config':
         specifier: workspace:*

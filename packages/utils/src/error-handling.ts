@@ -24,7 +24,7 @@ export async function tryCatch<T>(
       : new Error(String(rawError));
     if (description) {
       processedError.message =
-        `(while ${description})\n ${processedError.message}`;
+        `An error occurred while ${description}\n ${processedError.message}`;
     }
     Error.captureStackTrace(processedError, tryCatch);
     return [null, processedError];
@@ -51,7 +51,7 @@ export function tryCatchSync<T>(
       : new Error(String(rawError));
     if (description) {
       processedError.message =
-        `(while ${description})\n ${processedError.message}`;
+        `An error occurred while ${description}\n ${processedError.message}`;
     }
     Error.captureStackTrace(processedError, tryCatchSync);
     return [null, processedError];
