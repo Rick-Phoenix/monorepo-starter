@@ -1,7 +1,7 @@
 import { findDirectories } from "@monorepo-starter/utils";
 import { type } from "arktype";
 import { findUpSync } from "find-up";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 
 const curdir = import.meta.dirname;
 
@@ -16,4 +16,6 @@ export const monorepoRoot = dirname(rootMarker);
 
 const directories = ["templates"] as const;
 
-export const localDirs = await findDirectories(directories, { cwd: curdir });
+export const localDirs = await findDirectories(directories, {
+  cwd: resolve(curdir, ".."),
+});

@@ -4,7 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    {% if lint-staged %}
     "lint-staged": "pnpm -r lint-staged",
+    {% endif %}
     "lint": "pnpm -r lint"
   },
   "devDependencies": {

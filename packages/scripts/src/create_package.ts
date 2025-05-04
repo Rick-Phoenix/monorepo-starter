@@ -16,7 +16,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
 import { optionalPackages, type Package } from "./constants/packages_list.js";
-import { writeRender } from "./lib/rendering.js";
+import { writeRenderSync } from "./lib/rendering.js";
 
 process.on("SIGINT", () => {
   console.warn("\nPackage initialization aborted.");
@@ -132,12 +132,12 @@ async function initializePackage() {
 
   await mkdir(join(packageDir, "src", "lib"), { recursive: true });
 
-  writeRender(
+  writeRenderSync(
     resolve(templatesDir, "tsconfig.json.j2"),
     resolve(packageDir, "tsconfig.json"),
   );
 
-  writeRender(
+  writeRenderSync(
     resolve(templatesDir, "package.json.j2"),
     join(packageDir, "package.json"),
     {

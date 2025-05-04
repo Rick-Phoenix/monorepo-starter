@@ -7,4 +7,6 @@ fi
 infisical scan git-changes --staged --verbose
 {%- endif %}
 
+{% if lint-staged -%}
 pnpm run lint-staged
+{%- endif %}
