@@ -1,3 +1,6 @@
+import os from "node:os";
+import { posixUnsafePathRegex, windowsUnsafePathRegex } from "./regex.js";
+
 export function isRunningInBrowser() {
   return (
     typeof window !== "undefined" && typeof window.document !== "undefined"
@@ -36,4 +39,35 @@ export function assertErrorWithMsg(
 export function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   if (assertIsObject(error)) return typeof error.code === "string";
   else return false;
+}
+
+export function isOnWindows() {
+  return os.platform() === "win32";
+}
+
+export function isValidPathComponent(name: string): boolean {
+  if (!name) {
+    return false;
+  }
+  const unsafeCharsRegex = isOnWindows()
+    ? windowsUnsafePathRegex
+    : posixUnsafePathRegex;
+  const hasUnsafe = unsafeCharsRegex.test(name);
+  return !hasUnsafe;
+}
+
+export function getUnsafePathChar(name: string) {
+  const unsafeCharsRegex = isOnWindows()
+    ? windowsUnsafePathRegex
+    : posixUnsafePathRegex;
+  const matchResult = unsafeCharsRegex.exec(name);
+
+  // Check the result
+  if (matchResult === null) {
+    return null;
+  } else {
+    const unsafeChar = matchResult[0];
+    const displayChar = unsafeChar === "\0" ? "NUL byte (\\0)" : unsafeChar;
+    return displayChar;
+  }
 }

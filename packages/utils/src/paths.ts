@@ -27,7 +27,9 @@ interface DirectoryStatus {
  * @param dirPath The path to the directory to check.
  * @returns A promise resolving to a DirectoryStatus object.
  */
-async function checkDirectoryStatus(dirPath: string): Promise<DirectoryStatus> {
+export async function checkDirectoryStatus(
+  dirPath: string,
+): Promise<DirectoryStatus> {
   const status: DirectoryStatus = {
     exists: false,
     isDirectory: false,
