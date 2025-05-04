@@ -15,7 +15,7 @@ import fs, { readFileSync, writeFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
-import { optionalPackages, type Package } from "./constants/packages.js";
+import { optionalPackages, type Package } from "./constants/packages_list.js";
 import { writeRender } from "./lib/rendering.js";
 
 process.on("SIGINT", () => {

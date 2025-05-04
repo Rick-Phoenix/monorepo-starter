@@ -23,9 +23,11 @@
     }
   },
   "dependencies": {
-    "@monorepo-starter/utils": "workspace:*",
     "@clack/prompts": "^0.10.1",
+    "@monorepo-starter/utils": "workspace:*",
+    "arktype": "^2.1.20",
     "dedent": "^1.5.3",
+    "fast-glob": "^3.3.3",
     "find-up": "^7.0.0",
     "fs-extra": "^11.3.0",
     "latest-version": "^9.0.0",
@@ -33,16 +35,15 @@
     "package-up": "^5.0.0",
     "read-package-up": "^11.0.0",
     "read-pkg": "^9.0.1",
-    "arktype": "^2.1.20",
     "write-json-file": "^6.0.0"
   },
   "devDependencies": {
     "@monorepo-starter/linting-config": "workspace:*",
     "@types/bun": "^1.2.10",
     "@types/node": "^22.15.3",
-    "lint-staged": "^12.3.2",
     "@types/nunjucks": "^3.2.6",
     "eslint": "^9.23.0",
+    "lint-staged": "^12.3.2",
     "oxlint": "catalog:",
     "typescript": "^5.8.2"
   }

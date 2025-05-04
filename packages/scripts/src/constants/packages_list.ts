@@ -1,4 +1,5 @@
 import latestVersion from "latest-version";
+import { resolve } from "node:path";
 
 export type Package = {
   name: string;
@@ -33,3 +34,6 @@ export const optionalPackages: Package[] = [
   { name: "dotenv", version: await latestRange("dotenv") },
   { name: "dotenv-expand", version: await latestRange("dotenv-expand") },
 ];
+
+const templatesDir = resolve(import.meta.dirname, "./templates");
+console.log("🔍🔍 templatesDir: 🔍🔍", templatesDir);
