@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.options.json",
   "compilerOptions": {
     "rootDir": "src",
-    "composite": false,
-    "noEmit": true,
+    "outDir": "dist",
     "paths": {
       "@monorepo-starter/utils": [
         "../utils/src/index.ts"
