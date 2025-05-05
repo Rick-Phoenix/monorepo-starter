@@ -3,11 +3,7 @@ import fg, { type Options } from "fast-glob";
 import fs, { constants } from "node:fs/promises";
 import { stringType } from "./arktype.js";
 import { handleUnknownError, tryCatch } from "./error_handling.js";
-import {
-  isENOENTError,
-  isNodeError,
-  isPermissionError,
-} from "./type_checking.js";
+import { isENOENTError, isNodeError } from "./type_checking.js";
 
 export async function assertDirExists(path: string) {
   const { exists, isDirectory } = await getFileInfo(path);
@@ -46,6 +42,9 @@ export async function assertDirIsEmpty(path: string) {
   return path;
 }
 
+export async function assert(args: string) {
+}
+
 interface FileInfo {
   exists: boolean;
   isDirectory: boolean;
@@ -71,7 +70,6 @@ export async function getFileInfo(
     const stats = await fs.stat(filePath);
 
     info.exists = true;
-    info.isReadable = true;
 
     if (!stats.isDirectory()) {
       return info;
@@ -86,9 +84,12 @@ export async function getFileInfo(
     } else {
       info.error = handleUnknownError(error);
     }
+
+    return info;
   }
 
-  if (info.isReadable && info.isDirectory) {
+  // Read Access
+  if (info.isDirectory) {
     const [dirContent, error] = await tryCatch(
       fs.readdir(filePath),
       `checking the contents of ${filePath}`,
@@ -100,16 +101,26 @@ export async function getFileInfo(
     } else {
       info.isEmpty = dirContent.length === 0;
     }
+  } else {
+    const [_, error] = await tryCatch(
+      fs.access(filePath, constants.R_OK),
+      `reading the file at ${filePath}`,
+    );
+
+    if (error) {
+      info.error = error;
+    } else {
+      info.isReadable = true;
+    }
   }
 
+  // Write access
   const [_, writeAccessError] = await tryCatch(
     fs.access(filePath, constants.W_OK),
   );
 
   if (writeAccessError) {
-    if (!isPermissionError(writeAccessError)) {
-      info.error = writeAccessError;
-    }
+    info.error = writeAccessError;
   } else {
     info.isWritable = true;
   }
