@@ -7,11 +7,16 @@ import { tryCatch, tryThrow } from "./error_handling.js";
 import { assertErrorWithMsg, assertIsObject } from "./type_checking.js";
 
 export async function assertPath(path: string) {
+  if (!path || typeof path !== "string") {
+    throw new Error(`${path} is not a valid path string.`);
+  }
   const baseName = basename(path);
   await tryThrow(
     access(path, constants.F_OK),
     `checking the path for ${baseName} (input was ${path})`,
   );
+
+  return path;
 }
 
 interface DirectoryStatus {
@@ -130,7 +135,6 @@ export async function findPaths<T extends readonly string[]>(
       });
 
       if (typeof choice !== "string" || choice === "exit") {
-        // eslint-disable-next-line no-console
         console.log("Operation cancelled.");
         process.exit(1);
       }
