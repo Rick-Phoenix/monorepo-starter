@@ -3,14 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "main": "./index.js",
-  "types": "./index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "default": "./index.js"
-    }
-  },
   "scripts": {
     "lint": "oxlint --config '../../.oxlintrc.json' && eslint",
     "lint-staged": "lint-staged"
@@ -18,6 +10,15 @@
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint --config '../../.oxlintrc.json' && eslint"
   },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@antfu/eslint-config": "^4.11.0",
     "@eslint/config-inspector": "^1.0.2",

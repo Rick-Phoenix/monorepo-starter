@@ -4,11 +4,6 @@
   "private": true,
   "author": "Rick-Phoenix",
   "description": "General purpose utility functions.",
-  "files": [
-    "dist"
-  ],
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "scripts": {
     "lint": "oxlint --config '../../.oxlintrc.json' && eslint",
     "lint-staged": "lint-staged"
@@ -16,10 +11,13 @@
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint --config '../../.oxlintrc.json' && eslint"
   },
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.js"
     }
   },
   "dependencies": {

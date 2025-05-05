@@ -71,3 +71,7 @@ export function getUnsafePathChar(name: string) {
     return displayChar;
   }
 }
+
+export function maybeArrayLength(array: unknown[]) {
+  return Array.isArray(array) && array.length > 0;
+}

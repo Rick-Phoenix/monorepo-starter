@@ -4,11 +4,6 @@
   "private": true,
   "author": "Rick-Phoenix",
   "description": "A starter for a Hono application",
-  "files": [
-    "dist"
-  ],
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "bun --watch ./src/index.ts",
     "build": "tsc --project ./tsconfig.build.json && tsc-alias -p ./tsconfig.build.json",
@@ -19,10 +14,13 @@
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint --config '../../.oxlintrc.json' && eslint"
   },
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.js"
     }
   },
   "dependencies": {

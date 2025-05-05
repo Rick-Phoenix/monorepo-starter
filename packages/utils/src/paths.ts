@@ -3,8 +3,8 @@ import fg, { type Options } from "fast-glob";
 import fs, { access, constants } from "node:fs/promises";
 import { basename } from "node:path";
 import { stringType } from "./arktype.js";
-import { assertErrorWithMsg, assertIsObject } from "./checks.js";
-import { tryCatch, tryThrow } from "./error-handling.js";
+import { tryCatch, tryThrow } from "./error_handling.js";
+import { assertErrorWithMsg, assertIsObject } from "./type_checking.js";
 
 export async function assertPath(path: string) {
   const baseName = basename(path);

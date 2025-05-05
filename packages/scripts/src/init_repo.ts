@@ -1,5 +1,3 @@
-/* eslint-disable ts/promise-function-async */
-import { mkdir } from "node:fs/promises";
 // eslint-disable no-console
 import {
   cancel,
@@ -16,6 +14,7 @@ import {
   maybeArrayIncludes,
   tryThrow,
 } from "@monorepo-starter/utils";
+import { mkdir } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { localDirs } from "./constants/paths.js";
 import { writeRendersInDir } from "./lib/rendering.js";
