@@ -1,90 +1,140 @@
 import { select } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
-import fs, { access, constants } from "node:fs/promises";
-import { basename } from "node:path";
+import fs, { constants } from "node:fs/promises";
 import { stringType } from "./arktype.js";
-import { tryCatch, tryThrow } from "./error_handling.js";
-import { assertErrorWithMsg, assertIsObject } from "./type_checking.js";
+import { handleUnknownError, tryCatch } from "./error_handling.js";
+import {
+  isENOENTError,
+  isNodeError,
+  isPermissionError,
+} from "./type_checking.js";
 
-export async function assertPath(path: string) {
-  if (!path || typeof path !== "string") {
-    throw new Error(`${path} is not a valid path string.`);
+export async function assertDirExists(path: string) {
+  const { exists, isDirectory } = await getFileInfo(path);
+  if (!exists) {
+    throw new Error(`${path} is not a valid directory (does not exist)`);
+  } else if (!isDirectory) {
+    throw new Error(`${path} is not a valid directory (it is not a directory)`);
   }
-  const baseName = basename(path);
-  await tryThrow(
-    access(path, constants.F_OK),
-    `checking the path for ${baseName} (input was ${path})`,
-  );
 
   return path;
 }
 
-interface DirectoryStatus {
+export async function assertFileExists(path: string) {
+  const { exists, isDirectory } = await getFileInfo(path);
+  if (!exists) {
+    throw new Error(`${path} is not a file (does not exist)`);
+  } else if (isDirectory) {
+    throw new Error(`${path} is not a file (it is a directory)`);
+  }
+
+  return path;
+}
+
+export async function assertDirIsEmpty(path: string) {
+  const { exists, isDirectory, isEmpty } = await getFileInfo(path);
+  if (!exists) {
+    throw new Error(`${path} is not an empty directory (does not exist)`);
+  } else if (!isDirectory) {
+    throw new Error(
+      `${path} is not an empty directory (it is not a directory)`,
+    );
+  } else if (!isEmpty) {
+    throw new Error(`${path} is not an empty directory`);
+  }
+
+  return path;
+}
+
+interface FileInfo {
   exists: boolean;
   isDirectory: boolean;
   isEmpty: boolean | null; // null if not a directory or doesn't exist
   isWritable: boolean | null; // null if doesn't exist, false if exists but not writable
-  error?: string; // Optional error message for non-ENOENT/EACCES issues
+  isReadable: boolean | null;
+  error: Error | NodeJS.ErrnoException | null; // Optional error message for non-ENOENT/EACCES issues
 }
 
-/**
- * Checks the status of a directory path: existence, type, emptiness, and writability.
- * @param dirPath The path to the directory to check.
- * @returns A promise resolving to a DirectoryStatus object.
- */
-export async function checkDirectoryStatus(
-  dirPath: string,
-): Promise<DirectoryStatus> {
-  const status: DirectoryStatus = {
+export async function getFileInfo(
+  filePath: string,
+): Promise<FileInfo> {
+  const info: FileInfo = {
     exists: false,
     isDirectory: false,
     isEmpty: null,
     isWritable: null,
+    isReadable: null,
+    error: null,
   };
 
   try {
-    const stats = await fs.stat(dirPath);
+    const stats = await fs.stat(filePath);
 
-    status.exists = true;
+    info.exists = true;
+    info.isReadable = true;
 
     if (!stats.isDirectory()) {
-      return status;
+      return info;
     }
 
-    status.isDirectory = true;
+    info.isDirectory = stats.isDirectory();
   } catch (error: any) {
-    if (assertIsObject(error) && error?.code === "ENOENT") {
+    if (isENOENTError(error)) {
       // Dir does not exist
+    } else if (isNodeError(error)) {
+      info.error = error;
     } else {
-      console.error(`Error getting stats for ${dirPath}:`, error);
-      status.error = `Stat failed: ${
-        assertErrorWithMsg(error) ? error.message : "Unknown Error"
-      }`;
+      info.error = handleUnknownError(error);
     }
-
-    return status;
   }
 
-  const [dirContent, error] = await tryCatch(
-    fs.readdir(dirPath),
-    `checking the contents of ${dirPath}`,
+  if (info.isReadable && info.isDirectory) {
+    const [dirContent, error] = await tryCatch(
+      fs.readdir(filePath),
+      `checking the contents of ${filePath}`,
+    );
+
+    if (error) {
+      info.error = error;
+      return info;
+    } else {
+      info.isEmpty = dirContent.length === 0;
+    }
+  }
+
+  const [_, writeAccessError] = await tryCatch(
+    fs.access(filePath, constants.W_OK),
   );
 
-  if (error) {
-    status.error = error.message;
-    return status;
+  if (writeAccessError) {
+    if (!isPermissionError(writeAccessError)) {
+      info.error = writeAccessError;
+    }
   } else {
-    status.isEmpty = dirContent.length === 0;
+    info.isWritable = true;
   }
 
-  const [_, accessError] = await tryCatch(
-    fs.access(dirPath, constants.W_OK),
-    `checking permissions for ${dirPath}`,
-  );
+  return info;
+}
 
-  if (!accessError) status.isWritable = true;
+export async function isDir(path: string) {
+  const { isDirectory } = await getFileInfo(path);
+  return isDirectory;
+}
 
-  return status;
+export async function isEmptyDir(path: string) {
+  const { isDirectory, isEmpty } = await getFileInfo(path);
+  return isDirectory && isEmpty;
+}
+
+export async function isEmptyWritableDir(path: string) {
+  const { isDirectory, isEmpty, isWritable } = await getFileInfo(path);
+  return isDirectory && isEmpty && isWritable;
+}
+
+export async function isWritableDir(path: string) {
+  const { isDirectory, isWritable } = await getFileInfo(path);
+  return isDirectory && isWritable;
 }
 
 export async function findPaths<T extends readonly string[]>(

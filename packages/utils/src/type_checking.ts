@@ -41,6 +41,19 @@ export function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   else return false;
 }
 
+export function isPermissionError(
+  error: unknown,
+): error is NodeJS.ErrnoException {
+  return isNodeError(error) &&
+    (error.code === "EACCESS" || error.code === "EPERM");
+}
+
+export function isENOENTError(
+  error: unknown,
+): error is NodeJS.ErrnoException {
+  return isNodeError(error) && error.code === "ENOENT";
+}
+
 export function isOnWindows() {
   return os.platform() === "win32";
 }

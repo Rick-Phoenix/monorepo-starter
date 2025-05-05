@@ -228,3 +228,9 @@ export async function tryCatchPipeline<
 
   return results as AsyncTryCatchPipelineResults<P>;
 }
+
+export function handleUnknownError(error: unknown) {
+  const unknownError = new Error(String(error));
+  Error.captureStackTrace(unknownError, handleUnknownError);
+  return unknownError;
+}
