@@ -20,6 +20,7 @@ import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
+import { createPackageCli } from "./lib/cli.js";
 import {
   getPackagesWithLatestVersions,
   optionalPackages,
@@ -28,7 +29,9 @@ import {
 // Hardcoded for now
 const pkgManager = "pnpm";
 
-const monorepoRoot = process.cwd();
+const cliArgs = createPackageCli();
+
+const monorepoRoot = cliArgs.cwd || process.cwd();
 
 const rootPackageJson = readPackageSync({ cwd: monorepoRoot });
 
@@ -42,7 +45,7 @@ if (!projectName.length) {
 async function initializePackage() {
   intro("📦 Initializing new package 📦");
 
-  const packageName = await text({
+  const packageName = cliArgs.name || await text({
     message: `Enter the package's name:`,
     validate: (input) => {
       if (!input || !input.length) {
@@ -59,13 +62,13 @@ async function initializePackage() {
     },
   });
 
-  const outputDir = resolve(monorepoRoot, `packages`, packageName);
+  const outputDir = resolve(monorepoRoot, cliArgs.directory, packageName);
 
   const dirIsOk = await promptIfDirNotEmpty(outputDir);
 
   if (!dirIsOk) process.exit(0);
 
-  const packageDescription = await text({
+  const packageDescription = cliArgs.description ?? await text({
     message: `Enter the package's description:`,
     defaultValue: "",
     placeholder: "",
@@ -82,7 +85,7 @@ async function initializePackage() {
     required: false,
   });
 
-  const includeEnvParsingModule = await confirm({
+  const includeEnvParsingModule = cliArgs.env ?? await confirm({
     message: "Do you want to include an env parsing module?",
     initialValue: false,
   });
@@ -91,7 +94,7 @@ async function initializePackage() {
     additionalPackages.push(...["arktype", "dotenv", "dotenv-expand"] as const);
   }
 
-  const lintConfigSource = await select({
+  const lintConfigSource = cliArgs.lintSource || await select({
     message: "Do you use a local or external linting config?",
     options: [
       {
@@ -102,22 +105,20 @@ async function initializePackage() {
         label: "External",
         value: "external",
       },
-      {
-        label: "Neither, my code is always perfect.",
-        value: "",
-      },
     ],
   });
 
-  const lintConfigName = lintConfigSource === ""
-    ? lintConfigSource
-    : await text({
-      message: "Enter the name of your linting config package:",
-      initialValue: lintConfigSource === "local" ? `@${projectName}/` : "",
-      placeholder: lintConfigSource === "local" ? `@${projectName}/` : "",
-    });
+  const lintConfigName = cliArgs.lintName || await text({
+    message: "Enter the name of your linting config package:",
+    initialValue: lintConfigSource === "local"
+      ? `@${projectName}/linting-config`
+      : "",
+    placeholder: lintConfigSource === "local"
+      ? `@${projectName}/linting-config`
+      : "",
+  });
 
-  const installDeps = await confirm({
+  const installDeps = cliArgs.install ?? await confirm({
     message: `Do you want to run '${pkgManager} install' after initialization?`,
     initialValue: true,
   });
@@ -135,9 +136,7 @@ async function initializePackage() {
     packageName,
     packageDescription,
     lintConfigName,
-    lintConfigVersion: !lintConfigSource
-      ? ""
-      : lintConfigSource === "local"
+    lintConfigVersion: lintConfigSource === "local"
       ? "workspace:*"
       : await getLatestVersionRange(lintConfigName),
   };

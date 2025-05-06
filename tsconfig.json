@@ -6,7 +6,7 @@
       "path": "packages/hono-starter"
     },
     {
-      "path": "packages/scripts"
+      "path": "packages/scaffolder"
     },
     {
       "path": "packages/utils"

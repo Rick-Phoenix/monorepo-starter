@@ -1,9 +1,9 @@
-import { confirm, select } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
 import fs, { constants, rm } from "node:fs/promises";
 import { basename } from "node:path";
 import { stringType } from "./arktype.js";
 import { throwErr, tryCatch } from "./error_handling.js";
+import { confirm, select } from "./prompts.js";
 import {
   isENOENTError,
   isENOTDIRError,
@@ -293,7 +293,7 @@ export async function promptIfDirNotEmpty(path: string) {
           basename(path)
         } already exists. Do you want to overwrite it? ⚠️`,
         initialValue: false,
-      }) as boolean;
+      });
 
       if (removeDir) {
         await rm(path, { recursive: true, force: true });

@@ -14,8 +14,9 @@ import {
   tryThrow,
   writeAllTemplates,
 } from "@monorepo-starter/utils";
+import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import {
   getPackagesWithLatestVersions,
   type OptionalPackage,
@@ -100,7 +101,7 @@ const hookActions = addGitHook === true
     initialValues: ["lint-staged"],
     cursorAt: "infisical",
   })
-  : undefined;
+  : [];
 
 const workspacePackages: string[] = [];
 
@@ -194,7 +195,7 @@ if (workspacePackages.includes("scripts")) {
   });
 }
 
-if (Array.isArray(hookActions) && hookActions.length) {
+if (hookActions.length) {
   await writeAllTemplates({
     templatesDir: join(templatesDir, "git_hooks"),
     targetDir: join(installPath, ".husky"),
@@ -202,8 +203,39 @@ if (Array.isArray(hookActions) && hookActions.length) {
   });
 }
 
-const installPathRelative = relative(process.cwd(), installPath);
+const installDeps = await confirm({
+  message: `Do you want to run '${pkgManager} install'?`,
+  initialValue: false,
+});
+
+if (installDeps) {
+  spawnSync(`${pkgManager} install`, {
+    shell: true,
+    stdio: "inherit",
+    cwd: installPath,
+  });
+}
+
+const gitInit = await confirm({
+  message: "Do you want to start a new git repo?",
+  initialValue: true,
+});
+
+if (gitInit) {
+  spawnSync("git init", {
+    shell: true,
+    stdio: "inherit",
+    cwd: installPath,
+  });
+  if (hookActions.length) {
+    spawnSync("pnpm exec husky", {
+      shell: true,
+      stdio: "inherit",
+      cwd: installPath,
+    });
+  }
+}
 
 outro(
-  `All done! To complete the installation, run:\n"cd ${installPathRelative} && ${pkgManager} i"`,
+  `Operation completed! 🚀`,
 );

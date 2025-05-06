@@ -1,9 +1,13 @@
 {
-  "name": "@monorepo-starter/scripts",
+  "name": "@monorepo-starter/scaffolder",
   "type": "module",
   "private": true,
   "author": "Rick-Phoenix",
-  "description": "A collection of scripts for various uses",
+  "description": "A generator for various types of apps and packages",
+  "bin": {
+    "init-repo": "./dist/init_repo.js",
+    "create-package": "./dist/create_package.js"
+  },
   "scripts": {
     "lint": "oxlint && eslint",
     "lint-staged": "lint-staged"
@@ -22,8 +26,10 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.10.1",
+    "@commander-js/extra-typings": "^13.1.0",
     "@monorepo-starter/utils": "workspace:*",
     "arktype": "^2.1.20",
+    "commander": "^13.1.0",
     "dedent": "^1.5.3",
     "fast-glob": "^3.3.3",
     "find-up": "^7.0.0",
