@@ -54,6 +54,12 @@ export function isENOENTError(
   return isNodeError(error) && error.code === "ENOENT";
 }
 
+export function isENOTDIRError(
+  error: unknown,
+): error is NodeJS.ErrnoException {
+  return isNodeError(error) && error.code === "ENOTDIR";
+}
+
 export function isOnWindows() {
   return os.platform() === "win32";
 }

@@ -234,3 +234,15 @@ export function handleUnknownError(error: unknown) {
   Error.captureStackTrace(unknownError, handleUnknownError);
   return unknownError;
 }
+
+export function newErr(message: string) {
+  const error = new Error(message);
+  Error.captureStackTrace(error, newErr);
+  return error;
+}
+
+export function throwErr(message: string) {
+  const error = new Error(message);
+  Error.captureStackTrace(error, throwErr);
+  throw error;
+}
