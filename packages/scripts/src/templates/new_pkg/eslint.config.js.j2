@@ -1,0 +1,4 @@
+{% if lintConfigSource -%}
+import { createEslintConfig } from '{{ lintConfigName }}' 
+export default createEslintConfig()
+{%- endif %}

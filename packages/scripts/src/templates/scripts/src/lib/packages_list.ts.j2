@@ -1,0 +1,75 @@
+import latestVersion from "latest-version";
+
+export type OptionalPackage = typeof optionalPackages[number];
+
+export const optionalPackages = [
+  "drizzle-arktype",
+  "drizzle-kit",
+  "drizzle-orm",
+  "dotenv",
+  "dotenv-expand",
+  "@infisical/cli",
+  "lint-staged",
+  "arktype",
+] as const;
+
+export const devDependencyPackages = [
+  "drizzle-kit",
+  "@infisical/cli",
+  "lint-staged",
+];
+
+export const subDependencies: {
+  [K in OptionalPackage]?: OptionalPackage[];
+} = {
+  "drizzle-arktype": ["arktype", "drizzle-orm"],
+};
+
+type PackagesWithVersion = { [K in OptionalPackage]?: string };
+
+type Packages = {
+  dependencies: PackagesWithVersion;
+  devDependencies: PackagesWithVersion;
+};
+
+export async function getPackagesWithLatestVersions(
+  packages: OptionalPackage[],
+): Promise<Packages> {
+  //
+  const output: Packages = { dependencies: {}, devDependencies: {} };
+
+  async function assignVersion(pkg: OptionalPackage) {
+    //
+    const pkgSubDependencies: OptionalPackage[] | undefined =
+      subDependencies[pkg];
+
+    if (pkgSubDependencies) {
+      for (const subDep of pkgSubDependencies) {
+        await assignVersion(subDep);
+      }
+    }
+
+    const versionRange = await getLatestVersionRange(pkg);
+
+    if (devDependencyPackages.includes(pkg)) {
+      output.devDependencies[pkg] = versionRange;
+    } else {
+      output.dependencies[pkg] = versionRange;
+    }
+  }
+
+  for (const pkg of packages) {
+    await assignVersion(pkg);
+  }
+
+  return output;
+}
+
+export async function getLatestVersionRange(pkgName: string) {
+  const version = await latestVersion(pkgName);
+  if (!version.length) {
+    // eslint-disable-next-line no-console
+    console.warn(`⚠️ Could not get a valid version for ${pkgName}`);
+  }
+  return `^${version}`;
+}

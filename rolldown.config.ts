@@ -1,5 +1,5 @@
 import { cancel, multiselect } from "@clack/prompts";
-import { assertPath } from "@monorepo-starter/utils";
+import { assertDirExists, assertFileExists } from "@monorepo-starter/utils";
 import { join } from "node:path";
 import { build, RolldownOptions } from "rolldown";
 
@@ -52,11 +52,11 @@ async function buildWithRolldown() {
 async function genRolldownOptions(packageOptions: PackageOptions) {
   const isString = typeof packageOptions === "string";
   const packageName = isString ? packageOptions : packageOptions.name;
-  const packagePath = await assertPath(join(packagesDir, packageName));
+  const packagePath = await assertDirExists(join(packagesDir, packageName));
   const entrypoint = (!isString && packageOptions.entrypoint)
     ? packageOptions.entrypoint
     : "src/index.ts";
-  const input = await assertPath(join(packagePath, entrypoint));
+  const input = await assertFileExists(join(packagePath, entrypoint));
   const outputAsDir = !isString && packageOptions.noSingleFile;
   const buildOutput = outputAsDir
     ? { dir: join(packagePath, "dist") }

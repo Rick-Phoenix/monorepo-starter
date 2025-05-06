@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // eslint-disable no-console
 import {
   cancel,
@@ -5,19 +7,23 @@ import {
   intro,
   multiselect,
   outro,
+  select,
   text,
 } from "@clack/prompts";
 import {
-  checkDirectoryStatus,
   getUnsafePathChar,
   isValidPathComponent,
   maybeArrayIncludes,
+  promptIfDirNotEmpty,
   tryThrow,
+  writeAllTemplates,
 } from "@monorepo-starter/utils";
 import { mkdir } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
-import { localDirs } from "./constants/paths.js";
-import { writeRendersInDir } from "./lib/rendering.js";
+import {
+  getPackagesWithLatestVersions,
+  type OptionalPackage,
+} from "./lib/packages_list.js";
 
 const res = resolve;
 
@@ -58,28 +64,17 @@ const chosenLocation = await text({
 }) as string;
 
 const installPath = res(process.cwd(), chosenLocation);
-const dirStat = await checkDirectoryStatus(installPath);
 
-if (dirStat.error) {
-  console.error(
-    `An error occurred while creating the files at the destination:\n${dirStat.error}`,
-  );
-  process.exit(1);
+const dirIsOk = await promptIfDirNotEmpty(installPath);
+
+if (!dirIsOk) {
+  process.exit(0);
 }
 
-if (dirStat.exists) {
-  if (!dirStat.isDirectory) {
-    console.error("The target path already exists and is not a directory.");
-    process.exit(1);
-  } else if (!dirStat.isEmpty) {
-    console.error(
-      "The target path already exists and is not an empty directory.",
-    );
-    process.exit(1);
-  }
-} else {
-  await tryThrow(mkdir(installPath), "creating the destination directory");
-}
+await tryThrow(
+  mkdir(installPath),
+  "creating the root directory for the new monorepo",
+);
 
 const rootPackages = await multiselect({
   message: "Select packages to add to your workspace root (optional):",
@@ -88,6 +83,8 @@ const rootPackages = await multiselect({
     label: "Infisical [secrets management] (requires an account)",
   }, { label: "Husky [git hooks]", value: "husky" }],
   initialValues: ["husky"],
+  required: false,
+  cursorAt: "@infisical/cli",
 }) as string[];
 
 const addGitHook = rootPackages.includes("husky")
@@ -100,7 +97,7 @@ const addGitHook = rootPackages.includes("husky")
 const hookOptions = [{
   value: "lint-staged",
   label: "Lint-staged",
-  hint: "lint-staged will be added as a dependency for internal packages",
+  hint: "Runs linting checks on committed files",
 }];
 
 if (rootPackages.includes("@infisical/cli")) {
@@ -116,23 +113,39 @@ const hookActions = addGitHook === true
     message: "What do you want to add to the pre-commit hook?",
     options: hookOptions,
     initialValues: ["lint-staged"],
+    cursorAt: "infisical",
   })
   : undefined;
 
-const workspacePackages = await multiselect({
-  message: "Select additional workspace packages (optional):",
+const workspacePackages: string[] = [];
+
+const lintingPkgChoice = await select({
+  message: "Do you want to include a local linting config package?",
   options: [{
-    label: "Eslint Configuration Package (uses antfu's eslint-config)",
-    value: "linting-config",
+    value: "opinionated",
+    label: "Yes, with opinionated defaults",
   }, {
-    label: "Scripts Package (pre-equipped with some basic scripts)",
-    value: "scripts",
+    value: "minimal",
+    label: "Yes, with no defaults",
+  }, {
+    value: "none",
+    label: "No, thank you",
   }],
-  initialValues: ["scripts", "linting-config"],
-}) as string[];
+  initialValue: "opinionated",
+});
+
+const includeLintConfig = lintingPkgChoice !== "none";
+
+if (includeLintConfig) workspacePackages.push("linting-config");
+
+const includeScriptsPkg = await confirm({
+  message: "Do you want to add a local scripts package?",
+  initialValue: true,
+});
+
+if (includeScriptsPkg === true) workspacePackages.push("scripts");
 
 const rootDirs = {
-  git: join(installPath, ".git"),
   packages: join(installPath, "packages"),
   ...(addGitHook && { husky: join(installPath, ".husky") }),
 };
@@ -151,35 +164,53 @@ if (workspacePackages.length) {
   }
 }
 
-const templatesDir = localDirs.templates;
+const templatesDir = join(import.meta.dirname, "templates");
+
+const { dependencies, devDependencies } = await getPackagesWithLatestVersions(
+  rootPackages as OptionalPackage[],
+);
 
 const templatesCtx = {
-  rootPackages,
+  dependencies,
+  devDependencies,
   workspacePackages,
   projectName,
   infisical: maybeArrayIncludes(hookActions, "infisical"),
-  "lint-staged": maybeArrayIncludes(hookActions, "lint-staged"),
+  lintStaged: maybeArrayIncludes(hookActions, "lint-staged"),
+  includeLintConfig,
+  lintConfigOpinionated: lintingPkgChoice === "opinionated",
 };
 
-await writeRendersInDir({
-  ctx: { templatesCtx },
+await writeAllTemplates({
+  ctx: templatesCtx,
   templatesDir: join(templatesDir, "monorepo_root"),
   targetDir: installPath,
 });
 
-if (workspacePackages.includes("linting-config")) {
+if (includeLintConfig) {
   const lintPkgTemplatesDir = join(templatesDir, "linting-config");
   const targetDir = join(installPath, "packages", "linting-config");
 
-  await writeRendersInDir({
+  await writeAllTemplates({
     ctx: templatesCtx,
     targetDir,
     templatesDir: lintPkgTemplatesDir,
   });
 }
 
+if (workspacePackages.includes("scripts")) {
+  const scriptsPkgTemplatesDir = join(templatesDir, "scripts");
+  const targetDir = join(installPath, "packages", "scripts");
+
+  await writeAllTemplates({
+    ctx: templatesCtx,
+    targetDir,
+    templatesDir: scriptsPkgTemplatesDir,
+  });
+}
+
 if (Array.isArray(hookActions) && hookActions.length) {
-  await writeRendersInDir({
+  await writeAllTemplates({
     templatesDir: join(templatesDir, "git_hooks"),
     targetDir: join(installPath, ".husky"),
     ctx: templatesCtx,

@@ -1,8 +1,13 @@
 import { antfu } from "@antfu/eslint-config";
+{% if lintConfigOpinionated -%}
 import eslintConfigPrettier from "eslint-config-prettier";
 import oxlint from "eslint-plugin-oxlint";
+{%- endif %}
 
 function createEslintConfig(options, ...overrides) {
+  {% if not lintConfigOpinionated -%}
+    return antfu(...options, ...overrides)
+  {%- else -%}
   return antfu(
     {
     ignores: ["**/dist/**", "**/node_modules/**", "**/.moon/**", "**/.cache/**"],
@@ -58,18 +63,7 @@ function createEslintConfig(options, ...overrides) {
     ...oxlint.configs["flat/recommended"],
     ...oxlint.buildFromOxlintConfigFile("../../.oxlintrc.json"),
   );
+  {%- endif %}
 }
-
-//const eslintConfigReact = createEslintConfig(
-//  { react: true },
-//  {
-//    rules: {
-//      "react/no-children-prop": "off",
-//      "react/prop-types": "off",
-//      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-//      "@typescript-eslint/only-throw-error": "off",
-//    },
-//  }
-//);
 
 export { createEslintConfig };

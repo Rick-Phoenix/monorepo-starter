@@ -1,16 +1,19 @@
 {
-  "name": "@monorepo-starter/scripts",
+  "name": "@{{ projectName }}/scripts",
   "type": "module",
   "private": true,
-  "author": "Rick-Phoenix",
   "description": "A collection of scripts for various uses",
   "scripts": {
-    "lint": "oxlint && eslint",
-    "lint-staged": "lint-staged"
+  {% if lintStaged -%}
+  "lint-staged": "lint-staged",
+  {%- endif %}
+  "lint": "oxlint && eslint"
   },
+  {% if lintStaged -%}
   "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
+  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
   },
+  {%- endif %}
   "files": [
     "dist"
   ],
@@ -21,31 +24,29 @@
     }
   },
   "dependencies": {
+  {% for workspacePkg in workspacePackages -%}
+  {% if workspacePkg !== "linting-config" -%}
+  "@{{ projectName }}/{{ workspacePkg }}": "workspace:*",
+  {%- endif %}
+  {%- endfor %}
     "@clack/prompts": "^0.10.1",
-    "@monorepo-starter/utils": "workspace:*",
     "arktype": "^2.1.20",
     "dedent": "^1.5.3",
     "fast-glob": "^3.3.3",
     "find-up": "^7.0.0",
-    "fs-extra": "^11.3.0",
     "latest-version": "^9.0.0",
-    "nunjucks": "^3.2.4",
-    "package-up": "^5.0.0",
-    "path-type": "^6.0.0",
-    "read-package-up": "^11.0.0",
     "read-pkg": "^9.0.1",
-    "write-json-file": "^6.0.0"
+    "nunjucks": "^3.2.4"
   },
   "devDependencies": {
-    "@monorepo-starter/linting-config": "workspace:*",
-    "@types/bun": "^1.2.10",
+    {% if includeLintConfig !== false -%}
+    "@{{ projectName }}/linting-config": "workspace:*",
+    {%- endif %}
     "@types/node": "^22.15.3",
     "@types/nunjucks": "^3.2.6",
     "eslint": "^9.23.0",
     "lint-staged": "^12.3.2",
     "oxlint": "catalog:",
-    "rollup-plugin-copy": "^3.5.0",
-    "tsdown": "0.11.0-beta.4",
     "typescript": "^5.8.2"
   }
 }

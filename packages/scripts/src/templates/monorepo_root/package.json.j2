@@ -4,14 +4,23 @@
   "type": "module",
   "private": true,
   "scripts": {
-    {% if lint-staged %}
+    {%- if lintStaged %}
     "lint-staged": "pnpm -r lint-staged",
-    {% endif %}
+    {%- endif %}
     "lint": "pnpm -r lint"
   },
+  "dependencies": {
+    {% if dependencies | length > 0 %}
+    {%- for name, version in dependencies -%}
+    "{{ name }}": "{{ version }}"{{- "," if loop.last !== true }}
+    {%- endfor %} 
+    {%- endif %}
+  },
   "devDependencies": {
-    {% for dep in rootPackages -%}
-    "{{ dep.name }}": "{{ dep.version }}"{{- "," if loop.last !== true }}
-    {% endfor -%} 
+    {% if devDependencies | length > 0 %}
+    {%- for name, version in devDependencies -%}
+    "{{ name }}": "{{ version }}"{{- "," if loop.last !== true }}
+    {%- endfor %} 
+    {%- endif %}
   }
 }

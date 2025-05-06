@@ -8,10 +8,14 @@
     "lint-staged": "pnpm -r lint-staged",
     "lint": "pnpm -r lint"
   },
+  "bin": {
+    "init-repo": "./packages/scripts/dist/init_repo.js",
+    "create-package": "./packages/scripts/dist/create_package.js"
+  },
   "devDependencies": {
     "@clack/prompts": "^0.10.1",
     "@monorepo-starter/utils": "workspace:*",
-    "@types/node": "^22.15.3",
+    "@types/node": "^22.15.12",
     "husky": "^9.1.7",
     "rolldown": "1.0.0-beta.8",
     "tsdown": "0.11.0-beta.4",

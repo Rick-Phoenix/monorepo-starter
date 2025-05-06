@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // eslint-disable no-useless-spread
 // eslint-disable no-console
 import {
@@ -6,32 +8,46 @@ import {
   intro,
   multiselect,
   outro,
+  select,
   text,
 } from "@clack/prompts";
-import { type } from "arktype";
-import { findUpSync } from "find-up";
+import {
+  getLatestVersionRange,
+  getUnsafePathChar,
+  isValidPathComponent,
+  promptIfDirNotEmpty,
+  writeAllTemplates,
+  writeRender,
+} from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
-import fs, { readFileSync, writeFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
-import { optionalPackages, type Package } from "./constants/packages_list.js";
-import { writeRenderSync } from "./lib/rendering.js";
+import {
+  getPackagesWithLatestVersions,
+  type OptionalPackage,
+  optionalPackages,
+} from "./lib/packages_list.js";
 
-process.on("SIGINT", () => {
-  console.warn("\nPackage initialization aborted.");
-  process.exit(0);
+// Hardcoded for now
+const pkgManager = "pnpm";
+
+// Have to use this as SIGINT is not reliable in WSL
+let positiveExitStatus = false;
+
+process.on("SIGINT", (code) => {
+  process.exit(code);
 });
 
-const curdir = import.meta.dirname;
+process.on("exit", (code) => {
+  if (code !== 0) {
+    cancel("Operation aborted due to an error.");
+  } else if (!positiveExitStatus) {
+    cancel("Operation cancelled by the user.");
+  }
+});
 
-const string = type("string");
-
-const rootMarker = string.assert(findUpSync("pnpm-workspace.yaml", {
-  type: "file",
-}));
-
-const monorepoRoot = dirname(rootMarker);
+const monorepoRoot = process.cwd();
 
 const rootPackageJson = readPackageSync({ cwd: monorepoRoot });
 
@@ -43,7 +59,7 @@ if (!projectName.length) {
 }
 
 async function initializePackage() {
-  intro("-- Initializing new package --");
+  intro("📦 Initializing new package 📦");
 
   const packageName = (await text({
     message: `Enter the package's name:`,
@@ -53,19 +69,20 @@ async function initializePackage() {
         process.exit(1);
       }
 
-      if (input.match(/[,./:\\]/)) {
-        cancel(`The name contains invalid characters.`);
+      if (!isValidPathComponent(input)) {
+        const unsafeChar = getUnsafePathChar(input);
+        cancel(`The name contains an invalid character: '${unsafeChar}'`);
         process.exit(1);
       }
       return undefined;
     },
   })) as string;
 
-  const packageDir = resolve(monorepoRoot, `packages`, packageName);
-  if (fs.existsSync(packageDir)) {
-    console.error("This folder already exists.");
-    process.exit(1);
-  }
+  const outputDir = resolve(monorepoRoot, `packages`, packageName);
+
+  const dirIsOk = await promptIfDirNotEmpty(outputDir);
+
+  if (!dirIsOk) process.exit(0);
 
   const packageDescription = await text({
     message: `Enter the package's description:`,
@@ -77,107 +94,103 @@ async function initializePackage() {
   const additionalPackages = (await multiselect({
     message:
       "Do you want to install additional packages? (Select with spacebar)",
-    options: [
-      { label: "Arktype", value: "arktype" },
-      { label: "Drizzle", value: "drizzle-orm" },
-    ],
+    options: optionalPackages.map((pac) => ({
+      value: pac,
+      label: `${pac[0]?.toUpperCase()}${pac.slice(1)}`,
+    })),
     required: false,
-  })) as string[];
+  })) as OptionalPackage[];
 
-  const withEnvSchema = await confirm({
+  const includeEnvParsingModule = await confirm({
     message: "Do you want to include an env parsing module?",
     initialValue: false,
   });
 
-  if (withEnvSchema === true) {
-    additionalPackages.push(...["arktype", "dotenv", "dotenv-expand"]);
+  if (includeEnvParsingModule === true) {
+    additionalPackages.push(...["arktype", "dotenv", "dotenv-expand"] as const);
   }
 
-  const selectedPackages = {
-    dependencies: new Map<string, string>(),
-    devDependencies: new Map<string, string>(),
-  };
-
-  const addPackage = (pac: Package) => {
-    pac.isDev
-      ? selectedPackages.devDependencies.set(pac.name, pac.version)
-      : selectedPackages.dependencies.set(pac.name, pac.version);
-    if (pac.subdependencies) pac.subdependencies.forEach(addPackage);
-  };
-
-  additionalPackages.forEach((selection) => {
-    for (const pack of optionalPackages) {
-      if (pack.name === selection) {
-        addPackage(pack);
-      }
-    }
+  const lintConfigSource = await select({
+    message: "Do you use a local or external linting config?",
+    options: [
+      {
+        label: "Local",
+        value: "local",
+      },
+      {
+        label: "External",
+        value: "external",
+      },
+      {
+        label: "Neither, my code is always perfect.",
+        value: "",
+      },
+    ],
   });
 
-  const syncAndInstall = await confirm({
-    message: `Do you want to run 'pnpm install' and 'moon sync projects'?`,
+  const lintConfigName = lintConfigSource === ""
+    ? lintConfigSource
+    : await text({
+      message: "Enter the name of your linting config package:",
+      initialValue: lintConfigSource === "local" ? `@${projectName}/` : "",
+      placeholder: lintConfigSource === "local" ? `@${projectName}/` : "",
+    }) as string;
+
+  const installDeps = await confirm({
+    message: `Do you want to run '${pkgManager} install' after initialization?`,
     initialValue: true,
   });
 
-  const scriptsDir = dirname(string.assert(findUpSync("package.json", {
-    cwd: curdir,
-    type: "file",
-  })));
+  const templatesDir = join(import.meta.dirname, "templates");
 
-  const templatesDir = resolve(scriptsDir, "src/templates");
-
-  const lintPkgName = "linting-config";
-
-  const eslintConfig =
-    `import { createEslintConfig } from '@${projectName}/${lintPkgName}' \n export default createEslintConfig()`;
-
-  await mkdir(join(packageDir, "src", "lib"), { recursive: true });
-
-  writeRenderSync(
-    resolve(templatesDir, "tsconfig.json.j2"),
-    resolve(packageDir, "tsconfig.json"),
+  const { dependencies, devDependencies } = await getPackagesWithLatestVersions(
+    additionalPackages,
   );
 
-  writeRenderSync(
-    resolve(templatesDir, "package.json.j2"),
-    join(packageDir, "package.json"),
-    {
-      projectName,
-      packageName,
-      packageDescription,
-      lintPkgName,
-      dependencies: selectedPackages.dependencies,
-      devDependencies: selectedPackages.devDependencies,
-    },
-  );
+  const templatesCtx = {
+    devDependencies,
+    dependencies,
+    projectName,
+    packageName,
+    packageDescription,
+    lintConfigName,
+    lintConfigVersion: !lintConfigSource
+      ? ""
+      : lintConfigSource === "local"
+      ? "workspace:*"
+      : await getLatestVersionRange(lintConfigName),
+  };
 
-  writeFileSync(resolve(packageDir, "eslint.config.js"), eslintConfig);
+  await writeAllTemplates({
+    ctx: templatesCtx,
+    templatesDir: join(templatesDir, "new_pkg"),
+    targetDir: outputDir,
+  });
 
-  if (withEnvSchema) {
-    const envParsingModule = readFileSync(
-      resolve(templatesDir, "env_parsing.ts.j2"),
-      "utf8",
-    );
-    writeFileSync(resolve(packageDir, "src/lib/env.ts"), envParsingModule, {
-      flag: "a",
-    });
+  if (includeEnvParsingModule === true) {
+    const targetDir = join(outputDir, "src/lib");
+    const templatePath = join(templatesDir, "modules/env_parsing.ts.j2");
+    await mkdir(targetDir, { recursive: true });
+    await writeRender(templatePath, join(targetDir, "env_parsing.ts"));
   }
 
-  if (syncAndInstall) {
-    const { error } = spawnSync("pnpm install && moon sync projects", {
+  if (installDeps) {
+    const { error } = spawnSync(`${pkgManager} install`, {
       stdio: "inherit",
       shell: true,
     });
     if (error) {
       console.warn(
-        `An error occurred with pnpm install or moon sync projects: ${error}`,
+        `An error occurred with ${pkgManager}: ${error}`,
       );
     }
   }
 
+  positiveExitStatus = true;
+
   outro(
-    `'${packageName}' has been successfully initiated. 🚀✅`,
+    `'${packageName}' has been successfully initialized. 🚀✅`,
   );
-  process.exit(0);
 }
 
 await initializePackage();

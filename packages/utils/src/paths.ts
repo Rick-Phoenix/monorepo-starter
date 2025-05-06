@@ -1,6 +1,7 @@
-import { select } from "@clack/prompts";
+import { confirm, select } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
-import fs, { constants } from "node:fs/promises";
+import fs, { constants, rm } from "node:fs/promises";
+import { basename } from "node:path";
 import { stringType } from "./arktype.js";
 import { throwErr, tryCatch } from "./error_handling.js";
 import {
@@ -172,6 +173,11 @@ export async function isWritableDir(path: string) {
   return isDirectory && isWritable && isExecutable;
 }
 
+export async function isFile(path: string) {
+  const { isFile } = await getFileInfo(path);
+  return isFile;
+}
+
 export async function isReadableFile(path: string) {
   const { isFile, isReadable } = await getFileInfo(path);
   return isFile && isReadable;
@@ -265,4 +271,40 @@ export async function findFiles<T extends readonly string[]>(
   options?: Options & { excludedDirs?: string[]; includeNodeModules?: boolean },
 ) {
   return findPaths(paths, { ...options, onlyFiles: true });
+}
+
+export async function promptIfDirNotEmpty(path: string) {
+  const { isExecutable, isWritable, isDirectory, isReadable, isEmpty } =
+    await getFileInfo(path);
+
+  if (isDirectory) {
+    //
+    if (!isReadable) {
+      throwErr(`The directory at ${path} already exists is not readable.`);
+    } else if (!isWritable || !isExecutable) {
+      throwErr(
+        `This process is not allowed to write to directory ${path}.`,
+      );
+    }
+
+    if (!isEmpty) {
+      const removeDir = await confirm({
+        message: `⚠️ The directory at ${
+          basename(path)
+        } already exists. Do you want to overwrite it? ⚠️`,
+        initialValue: false,
+      }) as boolean;
+
+      if (removeDir) {
+        await rm(path, { recursive: true, force: true });
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
+    }
+  } else {
+    return true;
+  }
 }
