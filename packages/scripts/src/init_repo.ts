@@ -1,20 +1,16 @@
 #!/usr/bin/env node
 
 // eslint-disable no-console
+import { intro, outro } from "@clack/prompts";
 import {
-  cancel,
   confirm,
-  intro,
-  multiselect,
-  outro,
-  select,
-  text,
-} from "@clack/prompts";
-import {
   getUnsafePathChar,
   isValidPathComponent,
   maybeArrayIncludes,
+  multiselect,
   promptIfDirNotEmpty,
+  select,
+  text,
   tryThrow,
   writeAllTemplates,
 } from "@monorepo-starter/utils";
@@ -30,24 +26,13 @@ const res = resolve;
 // Hardcoded for now
 const pkgManager = "pnpm";
 
-// Have to use this as SIGINT is not reliable in WSL
-let positiveExitStatus = false;
-
 intro("✨ Monorepo Initialization ✨");
-
-process.on("exit", (code) => {
-  if (code !== 0) {
-    cancel("Operation aborted due to an error.");
-  } else if (!positiveExitStatus) {
-    cancel("Operation cancelled by the user.");
-  }
-});
 
 const projectName = await text({
   message: "Enter the project's name:",
   defaultValue: "playground",
   placeholder: "playground",
-}) as string;
+});
 
 const chosenLocation = await text({
   message:
@@ -61,7 +46,7 @@ const chosenLocation = await text({
       return `The following character is not allowed by your system: ${unsafeChar}`;
     }
   },
-}) as string;
+});
 
 const installPath = res(process.cwd(), chosenLocation);
 
@@ -85,7 +70,7 @@ const rootPackages = await multiselect({
   initialValues: ["husky"],
   required: false,
   cursorAt: "@infisical/cli",
-}) as string[];
+});
 
 const addGitHook = rootPackages.includes("husky")
   ? await confirm({
@@ -218,8 +203,6 @@ if (Array.isArray(hookActions) && hookActions.length) {
 }
 
 const installPathRelative = relative(process.cwd(), installPath);
-
-positiveExitStatus = true;
 
 outro(
   `All done! To complete the installation, run:\n"cd ${installPathRelative} && ${pkgManager} i"`,

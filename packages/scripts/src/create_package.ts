@@ -2,20 +2,17 @@
 
 // eslint-disable no-useless-spread
 // eslint-disable no-console
+
+import { cancel, intro, outro } from "@clack/prompts";
 import {
-  cancel,
   confirm,
-  intro,
-  multiselect,
-  outro,
-  select,
-  text,
-} from "@clack/prompts";
-import {
   getLatestVersionRange,
   getUnsafePathChar,
   isValidPathComponent,
+  multiselect,
   promptIfDirNotEmpty,
+  select,
+  text,
   writeAllTemplates,
   writeRender,
 } from "@monorepo-starter/utils";
@@ -25,27 +22,11 @@ import { join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
 import {
   getPackagesWithLatestVersions,
-  type OptionalPackage,
   optionalPackages,
 } from "./lib/packages_list.js";
 
 // Hardcoded for now
 const pkgManager = "pnpm";
-
-// Have to use this as SIGINT is not reliable in WSL
-let positiveExitStatus = false;
-
-process.on("SIGINT", (code) => {
-  process.exit(code);
-});
-
-process.on("exit", (code) => {
-  if (code !== 0) {
-    cancel("Operation aborted due to an error.");
-  } else if (!positiveExitStatus) {
-    cancel("Operation cancelled by the user.");
-  }
-});
 
 const monorepoRoot = process.cwd();
 
@@ -61,7 +42,7 @@ if (!projectName.length) {
 async function initializePackage() {
   intro("📦 Initializing new package 📦");
 
-  const packageName = (await text({
+  const packageName = await text({
     message: `Enter the package's name:`,
     validate: (input) => {
       if (!input || !input.length) {
@@ -76,7 +57,7 @@ async function initializePackage() {
       }
       return undefined;
     },
-  })) as string;
+  });
 
   const outputDir = resolve(monorepoRoot, `packages`, packageName);
 
@@ -91,7 +72,7 @@ async function initializePackage() {
   });
 
   // Section - Adding additional packages
-  const additionalPackages = (await multiselect({
+  const additionalPackages = await multiselect({
     message:
       "Do you want to install additional packages? (Select with spacebar)",
     options: optionalPackages.map((pac) => ({
@@ -99,7 +80,7 @@ async function initializePackage() {
       label: `${pac[0]?.toUpperCase()}${pac.slice(1)}`,
     })),
     required: false,
-  })) as OptionalPackage[];
+  });
 
   const includeEnvParsingModule = await confirm({
     message: "Do you want to include an env parsing module?",
@@ -134,7 +115,7 @@ async function initializePackage() {
       message: "Enter the name of your linting config package:",
       initialValue: lintConfigSource === "local" ? `@${projectName}/` : "",
       placeholder: lintConfigSource === "local" ? `@${projectName}/` : "",
-    }) as string;
+    });
 
   const installDeps = await confirm({
     message: `Do you want to run '${pkgManager} install' after initialization?`,
@@ -185,8 +166,6 @@ async function initializePackage() {
       );
     }
   }
-
-  positiveExitStatus = true;
 
   outro(
     `'${packageName}' has been successfully initialized. 🚀✅`,
