@@ -44,3 +44,59 @@ export function createPackageCli() {
 
   return options;
 }
+
+export function initRepoCli() {
+  const program = new Command()
+    .option("-n, --name <name>", "The name for the monorepo")
+    .option("-i, --install", "Install dependencies at the end of the script")
+    .option(
+      "--no-install",
+      "Skip installing dependencies at the end of the script",
+    )
+    .option(
+      "-d, --directory <directory>",
+      "The directory where the monorepo will be created",
+    )
+    .addOption(
+      new Option(
+        "-l, --lint-config <type>",
+        "The type of linting config to setup",
+      )
+        .choices(["opinionated", "minimal", "none"]),
+    )
+    .option("--no-lint", "Do not add a linting config package")
+    .action((options) => {
+      if (!options.lint) {
+        options.lintConfig = "none";
+      }
+    })
+    .option(
+      "--lintConfig-name <name>",
+      "The name of the linting config package",
+      "linting-config",
+    )
+    .option("--no-scripts", "Do not include a scripts package")
+    .option("-s, --scripts", "Include a scripts package")
+    .option("-i, --install", "Install dependencies at the end of the script")
+    .option(
+      "--no-install",
+      "Do not install dependencies at the end of the script",
+    )
+    .option("-g, --git", "Create a new git repo")
+    .option("--no-git", "Do not create a new git repo")
+    .parse(process.argv)
+    .showHelpAfterError();
+
+  const options = program.opts();
+
+  if (options.directory) {
+    if (!isValidPathComponent(options.directory)) {
+      const unsafeChar = getUnsafePathChar(options.directory);
+      program.error(
+        `The directory contains an invalid character: '${unsafeChar}'`,
+      );
+    }
+  }
+
+  return options;
+}

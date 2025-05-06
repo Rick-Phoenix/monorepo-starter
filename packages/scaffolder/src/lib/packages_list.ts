@@ -2,7 +2,7 @@ import { getLatestVersionRange } from "@monorepo-starter/utils";
 
 export type OptionalPackage = typeof optionalPackages[number] | string;
 
-type DevDependencyPackage = typeof devDependencyPackages[number];
+type DevDependencyPackage = typeof devDependencyPackages[number] | string;
 
 export const devDependencyPackages = [
   "@infisical/cli",
@@ -11,7 +11,7 @@ export const devDependencyPackages = [
   "rolldown",
   "vitest",
   "vite",
-] as const;
+];
 
 export const optionalPackages = [
   ...devDependencyPackages,
@@ -21,7 +21,7 @@ export const optionalPackages = [
 ] as const;
 
 export const subDependencies: {
-  [K in OptionalPackage]?: (OptionalPackage | string)[];
+  [K in OptionalPackage]?: (OptionalPackage)[];
 } = {
   "drizzle-orm": ["drizzle-kit"],
   "drizzle-arktype": ["arktype", "drizzle-orm"],
@@ -59,7 +59,7 @@ export async function getPackagesWithLatestVersions(
 
     const versionRange = await getLatestVersionRange(pkg);
     const isDevDependency = devDependencyPackages.includes(
-      pkg as DevDependencyPackage,
+      pkg,
     );
 
     if (isDevDependency) {

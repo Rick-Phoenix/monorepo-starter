@@ -23,6 +23,7 @@ import { readPackageSync } from "read-pkg";
 import { createPackageCli } from "./lib/cli.js";
 import {
   getPackagesWithLatestVersions,
+  type OptionalPackage,
   optionalPackages,
 } from "./lib/packages_list.js";
 
@@ -83,7 +84,7 @@ async function initializePackage() {
       label: `${pac[0]?.toUpperCase()}${pac.slice(1)}`,
     })),
     required: false,
-  });
+  }) as OptionalPackage[];
 
   const includeEnvParsingModule = cliArgs.env ?? await confirm({
     message: "Do you want to include an env parsing module?",
@@ -91,7 +92,7 @@ async function initializePackage() {
   });
 
   if (includeEnvParsingModule === true) {
-    additionalPackages.push(...["arktype", "dotenv", "dotenv-expand"] as const);
+    additionalPackages.push(...["arktype", "dotenv", "dotenv-expand"]);
   }
 
   const lintConfigSource = cliArgs.lintSource || await select({

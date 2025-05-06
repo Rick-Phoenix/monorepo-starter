@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // eslint-disable no-console
-import { intro, outro } from "@clack/prompts";
+import { cancel, intro, outro } from "@clack/prompts";
 import {
   confirm,
   getUnsafePathChar,
@@ -17,15 +17,15 @@ import {
 import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import {
-  getPackagesWithLatestVersions,
-  type OptionalPackage,
-} from "./lib/packages_list.js";
+import { initRepoCli } from "./lib/cli.js";
+import { getPackagesWithLatestVersions } from "./lib/packages_list.js";
 
 const res = resolve;
 
 // Hardcoded for now
 const pkgManager = "pnpm";
+
+const cliArgs = initRepoCli();
 
 intro("✨ Monorepo Initialization ✨");
 
@@ -35,19 +35,20 @@ const projectName = await text({
   placeholder: "playground",
 });
 
-const chosenLocation = await text({
-  message:
-    "Where do you want to create the new monorepo? (Path relative to cwd)",
+const chosenLocation = cliArgs.directory || await text({
+  message: "Where do you want to create the new monorepo?",
   defaultValue: projectName,
   placeholder: projectName,
-  validate(value) {
-    if (!isValidPathComponent(value)) {
-      const unsafeChar = getUnsafePathChar(value);
-      if (!unsafeChar) return `This path is not valid.`;
-      return `The following character is not allowed by your system: ${unsafeChar}`;
-    }
-  },
 });
+
+if (!isValidPathComponent(chosenLocation)) {
+  const unsafeChar = getUnsafePathChar(chosenLocation);
+  if (unsafeChar && !(unsafeChar === "/" && chosenLocation.startsWith("/"))) {
+    cancel(
+      `The following character is not allowed by your system: ${unsafeChar}`,
+    );
+  }
+}
 
 const installPath = res(process.cwd(), chosenLocation);
 
@@ -105,7 +106,7 @@ const hookActions = addGitHook === true
 
 const workspacePackages: string[] = [];
 
-const lintingPkgChoice = await select({
+const lintingPkgChoice = cliArgs.lintConfig || await select({
   message: "Do you want to include a local linting config package?",
   options: [{
     value: "opinionated",
@@ -122,9 +123,11 @@ const lintingPkgChoice = await select({
 
 const includeLintConfig = lintingPkgChoice !== "none";
 
-if (includeLintConfig) workspacePackages.push("linting-config");
+const lintConfigName = cliArgs.lintConfigName;
 
-const includeScriptsPkg = await confirm({
+if (includeLintConfig) workspacePackages.push(lintConfigName);
+
+const includeScriptsPkg = cliArgs.scripts ?? await confirm({
   message: "Do you want to add a local scripts package?",
   initialValue: true,
 });
@@ -153,7 +156,7 @@ if (workspacePackages.length) {
 const templatesDir = join(import.meta.dirname, "templates");
 
 const { dependencies, devDependencies } = await getPackagesWithLatestVersions(
-  rootPackages as OptionalPackage[],
+  rootPackages,
 );
 
 const templatesCtx = {
@@ -165,6 +168,7 @@ const templatesCtx = {
   lintStaged: maybeArrayIncludes(hookActions, "lint-staged"),
   includeLintConfig,
   lintConfigOpinionated: lintingPkgChoice === "opinionated",
+  lintConfigName,
 };
 
 await writeAllTemplates({
@@ -175,7 +179,7 @@ await writeAllTemplates({
 
 if (includeLintConfig) {
   const lintPkgTemplatesDir = join(templatesDir, "linting-config");
-  const targetDir = join(installPath, "packages", "linting-config");
+  const targetDir = join(installPath, "packages", lintConfigName);
 
   await writeAllTemplates({
     ctx: templatesCtx,
@@ -203,7 +207,7 @@ if (hookActions.length) {
   });
 }
 
-const installDeps = await confirm({
+const installDeps = cliArgs.install ?? await confirm({
   message: `Do you want to run '${pkgManager} install'?`,
   initialValue: false,
 });
@@ -216,7 +220,7 @@ if (installDeps) {
   });
 }
 
-const gitInit = await confirm({
+const gitInit = cliArgs.git ?? await confirm({
   message: "Do you want to start a new git repo?",
   initialValue: true,
 });
