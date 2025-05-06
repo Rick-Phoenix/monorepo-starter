@@ -1,31 +1,33 @@
 import { getLatestVersionRange } from "@monorepo-starter/utils";
 
-export type OptionalPackage = typeof optionalPackages[number];
+export type OptionalPackage = typeof optionalPackages[number] | string;
 
-export const optionalPackages = [
-  "drizzle-arktype",
-  "drizzle-kit",
-  "drizzle-orm",
-  "dotenv",
-  "dotenv-expand",
+type DevDependencyPackage = typeof devDependencyPackages[number];
+
+export const devDependencyPackages = [
   "@infisical/cli",
   "lint-staged",
+  "tsdown",
+  "rolldown",
+  "vitest",
+  "vite",
+] as const;
+
+export const optionalPackages = [
+  ...devDependencyPackages,
+  "drizzle-arktype",
+  "drizzle-orm",
   "arktype",
 ] as const;
 
-export const devDependencyPackages = [
-  "drizzle-kit",
-  "@infisical/cli",
-  "lint-staged",
-];
-
 export const subDependencies: {
-  [K in OptionalPackage]?: OptionalPackage[];
+  [K in OptionalPackage]?: (OptionalPackage | string)[];
 } = {
+  "drizzle-orm": ["drizzle-kit"],
   "drizzle-arktype": ["arktype", "drizzle-orm"],
 };
 
-type PackagesWithVersion = { [K in OptionalPackage]?: string };
+type PackagesWithVersion = { [key: string]: string };
 
 type Packages = {
   dependencies: PackagesWithVersion;
@@ -56,7 +58,9 @@ export async function getPackagesWithLatestVersions(
     }
 
     const versionRange = await getLatestVersionRange(pkg);
-    const isDevDependency = devDependencyPackages.includes(pkg);
+    const isDevDependency = devDependencyPackages.includes(
+      pkg as DevDependencyPackage,
+    );
 
     if (isDevDependency) {
       output.devDependencies[pkg] = versionRange;
