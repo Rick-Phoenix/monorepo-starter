@@ -1,5 +1,13 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  {% if extends -%}
+  "extends": ["{{ extends }}"],
+  {%- endif %}
+  {% if kind === "extend-console" -%}
+  "rules": {
+    "no-console": "off"
+  }  
+  {%- elif kind === "opinionated" -%}
   "plugins": ["node", "jsdoc", "import", "unicorn", "promise"],
   "categories": {
     "correctness": "error",
@@ -14,44 +22,6 @@
     "node": true,
     "shared-node-browser": true
   },
-  "ignorePatterns": [
-    "**/dist/**",
-    "**/node_modules/**",
-    "**/.cache/**",
-    "**/.moon/cache",
-    "**/*.code-workspace",
-    "**/*.env.*",
-    "**/bun.lock",
-    "**/.husky",
-    "**/package-lock.json",
-    "**/yarn.lock",
-    "**/pnpm-lock.yaml",
-    "**/bun.lockb",
-    "**/output",
-    "**/coverage",
-    "**/temp",
-    "**/.temp",
-    "**/tmp",
-    "**/.tmp",
-    "**/.history",
-    "**/.vitepress/cache",
-    "**/.nuxt",
-    "**/.next",
-    "**/.svelte-kit",
-    "**/.vercel",
-    "**/.changeset",
-    "**/.idea",
-    "**/.output",
-    "**/.vite-inspect",
-    "**/.yarn",
-    "**/vite.config.*.timestamp-*",
-    "**/CHANGELOG*.md",
-    "**/*.min.*",
-    "**/LICENSE*",
-    "**/__snapshots__",
-    "**/auto-import?(s).d.ts",
-    "**/components.d.ts"
-  ],
   "rules": {
     "array-callback-return": "error",
     "default-case-last": "error",
@@ -267,4 +237,43 @@
       }
     }
   ]
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/.cache/**",
+    "**/.moon/cache",
+    "**/*.code-workspace",
+    "**/*.env.*",
+    "**/bun.lock",
+    "**/.husky",
+    "**/package-lock.json",
+    "**/yarn.lock",
+    "**/pnpm-lock.yaml",
+    "**/bun.lockb",
+    "**/output",
+    "**/coverage",
+    "**/temp",
+    "**/.temp",
+    "**/tmp",
+    "**/.tmp",
+    "**/.history",
+    "**/.vitepress/cache",
+    "**/.nuxt",
+    "**/.next",
+    "**/.svelte-kit",
+    "**/.vercel",
+    "**/.changeset",
+    "**/.idea",
+    "**/.output",
+    "**/.vite-inspect",
+    "**/.yarn",
+    "**/vite.config.*.timestamp-*",
+    "**/CHANGELOG*.md",
+    "**/*.min.*",
+    "**/LICENSE*",
+    "**/__snapshots__",
+    "**/auto-import?(s).d.ts",
+    "**/components.d.ts"
+  ],
+  {%- endif %}
 }

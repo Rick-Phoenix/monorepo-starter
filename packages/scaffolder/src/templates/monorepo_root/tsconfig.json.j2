@@ -1,11 +1,5 @@
 {
   "extends": "./tsconfig.options.json",
   "files": [],
-  "references": [
-    {% for workspacePkg in workspacePackages -%}
-    {
-      "path": "packages/{{ workspacePkg }}"    
-    }{{ "," if loop.last !== true }}
-    {% endfor %}
-  ]
+  "references": []
 }

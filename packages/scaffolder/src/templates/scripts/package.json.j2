@@ -4,16 +4,12 @@
   "private": true,
   "description": "A collection of scripts for various uses",
   "scripts": {
-  {% if lintStaged -%}
-  "lint-staged": "lint-staged",
-  {%- endif %}
-  "lint": "oxlint && eslint"
+  "lint": "{{ "oxlint --config '../../.oxlintrc.json' && " if oxlint }}eslint",
+  "lint-staged": "lint-staged"
   },
-  {% if lintStaged -%}
   "lint-staged": {
-  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
-  },
-  {%- endif %}
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "{{ "oxlint --config '../../.oxlintrc.json' && " if oxlint }}eslint"
+  }, 
   "files": [
     "dist"
   ],
@@ -24,11 +20,6 @@
     }
   },
   "dependencies": {
-  {% for workspacePkg in workspacePackages -%}
-  {% if workspacePkg !== "linting-config" -%}
-  "@{{ projectName }}/{{ workspacePkg }}": "workspace:*",
-  {%- endif %}
-  {%- endfor %}
     "@clack/prompts": "^0.10.1",
     "arktype": "^2.1.20",
     "dedent": "^1.5.3",
@@ -39,14 +30,15 @@
     "nunjucks": "^3.2.4"
   },
   "devDependencies": {
-    {% if includeLintConfig !== false -%}
-    "@{{ projectName }}/linting-config": "workspace:*",
+    {% if lintConfig -%}
+    "@{{ projectName}}/{{ lintConfigName }}": "workspace:*",
     {%- endif %}
+    "@eslint/config-inspector": "^1.0.2",
     "@types/node": "^22.15.3",
     "@types/nunjucks": "^3.2.6",
     "eslint": "^9.23.0",
     "lint-staged": "^12.3.2",
-    "oxlint": "catalog:",
+    {{ '"oxlint": "catalog:",' if oxlint }}
     "typescript": "^5.8.2"
   }
 }

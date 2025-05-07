@@ -65,16 +65,4 @@ function createEslintConfig(options, ...overrides) {
   );
 }
 
-//const eslintConfigReact = createEslintConfig(
-//  { react: true },
-//  {
-//    rules: {
-//      "react/no-children-prop": "off",
-//      "react/prop-types": "off",
-//      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-//      "@typescript-eslint/only-throw-error": "off",
-//    },
-//  }
-//);
-
 export { createEslintConfig };

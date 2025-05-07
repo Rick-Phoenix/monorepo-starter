@@ -2,5 +2,13 @@ packages:
   - apps/*
   - packages/*
 
+{% if catalog -%}
 catalog:
+{% for name, version in catalogEntries -%}
+  {{ name }}: "{{ version }}"  
+{%- endfor %}
+  eslint: "^9.23.0"
   oxlint: "^0.16.9"
+  eslint-plugin-oxlint: "^0.16.9"
+  typescript: "^5.8.3"
+{%- endif %}

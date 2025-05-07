@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 
 // eslint-disable no-console
-import { cancel, intro, outro } from "@clack/prompts";
+import { intro, outro } from "@clack/prompts";
 import {
   confirm,
-  getUnsafePathChar,
-  isValidPathComponent,
-  maybeArrayIncludes,
+  getLatestVersionRange,
   multiselect,
   promptIfDirNotEmpty,
   select,
@@ -17,8 +15,14 @@ import {
 import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { initRepoCli } from "./lib/cli.js";
-import { getPackagesWithLatestVersions } from "./lib/packages_list.js";
+import { genEslintConfigCli } from "./cli/gen_eslint_config.js";
+import { genOxlintConfigCli } from "./cli/gen_oxlint_config.js";
+import { initRepoCli } from "./cli/init_repo_cli.js";
+import {
+  getLintPackageDeps,
+  getPackagesWithLatestVersions,
+  optionalRootPackages,
+} from "./lib/packages_list.js";
 
 const res = resolve;
 
@@ -29,7 +33,7 @@ const cliArgs = initRepoCli();
 
 intro("✨ Monorepo Initialization ✨");
 
-const projectName = await text({
+const projectName = cliArgs.name || await text({
   message: "Enter the project's name:",
   defaultValue: "playground",
   placeholder: "playground",
@@ -40,15 +44,6 @@ const chosenLocation = cliArgs.directory || await text({
   defaultValue: projectName,
   placeholder: projectName,
 });
-
-if (!isValidPathComponent(chosenLocation)) {
-  const unsafeChar = getUnsafePathChar(chosenLocation);
-  if (unsafeChar && !(unsafeChar === "/" && chosenLocation.startsWith("/"))) {
-    cancel(
-      `The following character is not allowed by your system: ${unsafeChar}`,
-    );
-  }
-}
 
 const installPath = res(process.cwd(), chosenLocation);
 
@@ -65,74 +60,66 @@ await tryThrow(
 
 const rootPackages = await multiselect({
   message: "Select packages to add to your workspace root (optional):",
-  options: [{
-    value: "@infisical/cli",
-    label: "Infisical [secrets management] (requires an account)",
-  }, { label: "Husky [git hooks]", value: "husky" }],
-  initialValues: ["husky"],
+  options: optionalRootPackages.map((pac) => ({
+    label: pac.label || pac.name[0]!.toUpperCase() + pac.name.slice(1),
+    value: pac,
+  })),
+  initialValues: optionalRootPackages.filter((p) => p.preSelected),
   required: false,
-  cursorAt: "@infisical/cli",
 });
 
-const addGitHook = rootPackages.includes("husky")
+const selectedPackages = new Set(rootPackages.map((p) => p.name));
+
+const addGitHook = selectedPackages.has("husky")
   ? await confirm({
     message: "Do you want to create a pre-commit hook for husky?",
     initialValue: true,
   })
   : false;
 
-const hookOptions = [{
-  value: "lint-staged",
-  label: "Lint-staged",
-  hint: "Runs linting checks on committed files",
-}];
+const hooksOptions = [];
 
-if (rootPackages.includes("@infisical/cli")) {
-  hookOptions.push({
-    label: "Infisical scan",
-    value: "infisical",
-    hint: "Runs automatic checks for potential secrets leaks",
-  });
+if (addGitHook) {
+  if (selectedPackages.has("husky")) {
+    hooksOptions.push({
+      value: "lint-staged",
+      label: "Lint-staged",
+      hint: "Runs linting checks on committed files",
+    });
+  }
+
+  if (selectedPackages.has("@infisical/cli")) {
+    hooksOptions.push({
+      label: "Infisical scan",
+      value: "infisical",
+      hint: "Runs automatic checks for potential secrets leaks",
+    });
+  }
 }
 
-const hookActions = addGitHook === true
+const hookActions = hooksOptions.length
   ? await multiselect({
     message: "What do you want to add to the pre-commit hook?",
-    options: hookOptions,
+    options: hooksOptions,
     initialValues: ["lint-staged"],
     cursorAt: "infisical",
   })
   : [];
 
-const workspacePackages: string[] = [];
-
-const lintingPkgChoice = cliArgs.lintConfig || await select({
-  message: "Do you want to include a local linting config package?",
+const lintConfig = cliArgs.lintConfig || await select({
+  message: "Do you want to add an internal linting config package?",
   options: [{
     value: "opinionated",
     label: "Yes, with opinionated defaults",
   }, {
-    value: "minimal",
-    label: "Yes, with no defaults",
+    value: "minimal-extensible",
+    label: "Yes, with minimal defaults",
   }, {
-    value: "none",
-    label: "No, thank you",
+    value: "",
+    label: "No, thank you. My code is always perfect.",
   }],
   initialValue: "opinionated",
 });
-
-const includeLintConfig = lintingPkgChoice !== "none";
-
-const lintConfigName = cliArgs.lintConfigName;
-
-if (includeLintConfig) workspacePackages.push(lintConfigName);
-
-const includeScriptsPkg = cliArgs.scripts ?? await confirm({
-  message: "Do you want to add a local scripts package?",
-  initialValue: true,
-});
-
-if (includeScriptsPkg === true) workspacePackages.push("scripts");
 
 const rootDirs = {
   packages: join(installPath, "packages"),
@@ -143,31 +130,31 @@ for (const [name, path] of Object.entries(rootDirs)) {
   await tryThrow(mkdir(path), `creating the directory for ${name} at ${path}`);
 }
 
-if (workspacePackages.length) {
-  for (const workspacePackage of workspacePackages) {
-    const targetDir = join(installPath, "packages", workspacePackage);
-    await tryThrow(
-      mkdir(targetDir, { recursive: true }),
-      `creating the directory for ${workspacePackage} at ${targetDir}`,
-    );
-  }
-}
-
 const templatesDir = join(import.meta.dirname, "templates");
 
-const { dependencies, devDependencies } = await getPackagesWithLatestVersions(
-  rootPackages,
-);
+const { dependencies, devDependencies, catalogEntries } =
+  await getPackagesWithLatestVersions(
+    rootPackages,
+    { catalog: cliArgs.catalog },
+  );
+
+const typescriptVersion = cliArgs.catalog
+  ? "catalog:"
+  : await getLatestVersionRange("typescript");
+
+devDependencies.typescript = typescriptVersion;
+
+const lintConfigName = cliArgs.lintConfigName;
 
 const templatesCtx = {
+  catalog: cliArgs.catalog,
   dependencies,
   devDependencies,
-  workspacePackages,
+  catalogEntries,
   projectName,
-  infisical: maybeArrayIncludes(hookActions, "infisical"),
-  lintStaged: maybeArrayIncludes(hookActions, "lint-staged"),
-  includeLintConfig,
-  lintConfigOpinionated: lintingPkgChoice === "opinionated",
+  oxlint: cliArgs.oxlint,
+  hookActions,
+  lintConfig,
   lintConfigName,
 };
 
@@ -177,26 +164,37 @@ await writeAllTemplates({
   targetDir: installPath,
 });
 
-if (includeLintConfig) {
+if (cliArgs.oxlint) {
+  await genOxlintConfigCli([
+    "--no-extend",
+    "-d",
+    installPath,
+  ]);
+}
+
+if (lintConfig) {
   const lintPkgTemplatesDir = join(templatesDir, "linting-config");
   const targetDir = join(installPath, "packages", lintConfigName);
+  await mkdir(targetDir, { recursive: true });
 
   await writeAllTemplates({
-    ctx: templatesCtx,
+    ctx: {
+      ...templatesCtx,
+      lintConfigDeps: await getLintPackageDeps({
+        oxlint: cliArgs.oxlint,
+        catalog: cliArgs.catalog,
+      }),
+    },
     targetDir,
     templatesDir: lintPkgTemplatesDir,
   });
-}
 
-if (workspacePackages.includes("scripts")) {
-  const scriptsPkgTemplatesDir = join(templatesDir, "scripts");
-  const targetDir = join(installPath, "packages", "scripts");
-
-  await writeAllTemplates({
-    ctx: templatesCtx,
+  await genEslintConfigCli([
+    "-d",
     targetDir,
-    templatesDir: scriptsPkgTemplatesDir,
-  });
+    "--kind",
+    lintConfig,
+  ]);
 }
 
 if (hookActions.length) {
@@ -231,7 +229,7 @@ if (gitInit) {
     stdio: "inherit",
     cwd: installPath,
   });
-  if (hookActions.length) {
+  if (hookActions.length && installDeps) {
     spawnSync("pnpm exec husky", {
       shell: true,
       stdio: "inherit",
