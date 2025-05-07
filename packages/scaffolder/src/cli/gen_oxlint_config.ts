@@ -44,6 +44,11 @@ export async function genOxlintConfigCli(args?: string[]) {
   }
 
   const cliArgs = program.opts();
+
+  if (cliArgs.kind === "opinionated") {
+    cliArgs.extend = false;
+  }
+
   const outputTarget = resolve(cliArgs.directory || process.cwd());
 
   let action: Promise<unknown>;
@@ -62,11 +67,12 @@ export async function genOxlintConfigCli(args?: string[]) {
     action = writeRender(templateFile, outputFile, { extend, kind });
   }
 
-  const [_, error] = await tryCatch(action, "generating the config file");
+  const [_, error] = await tryCatch(
+    action,
+    "generating the oxlint config file",
+  );
 
   if (error) {
     console.error(error);
-  } else if (!args) {
-    console.log("✅ Oxlint config file generated");
   }
 }

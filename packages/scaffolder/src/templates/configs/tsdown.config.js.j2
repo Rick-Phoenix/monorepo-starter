@@ -1,0 +1,18 @@
+// @ts-check 
+
+{% for plugin in plugins %}
+import {{ plugin.name }} from "{{ plugin.packageName }}";
+{% endfor %}
+import { defineConfig } from "tsdown";
+
+/** @type {import('tsdown').UserConfig} */
+export default defineConfig({
+  entry: ["./src/index.ts"],
+  dts: true, 
+  plugins: [
+    {% for plugin in plugins %}
+    {{ plugin.name }}(){{ "," if loop.last !== true }}
+    {% endfor %}
+  ],
+});
+

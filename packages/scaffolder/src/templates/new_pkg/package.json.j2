@@ -2,21 +2,23 @@
   "name": "@{{ projectName }}/{{ packageName }}",
   "type": "module",
   "private": true,
-  {% if packageDescription -%}
-  "description": "{{- packageDescription -}}",
-  {%- endif %}
+  {% if packageDescription %}
+  "description": "{{ packageDescription }}",
+  {% endif %}
   "scripts": {
-    "lint": "oxlint && eslint",
-    {% if lintStaged !== false -%}
+    {% if lintCommand %}
+    "lint": "{{ lintCommand }}",
+    {% endif %}
+    {% if devDependencies['lint-staged'] %}
     "lint-staged": "lint-staged",
-    {%- endif %}
+  {% endif %}
     "clean": "rm -rf ./.cache && rm -rf ./dist"
   },
-  {% if lintStaged !== false -%}
+  {% if devDependencies['lint-staged'] %}
   "lint-staged": {
-  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "{{ lintCommand }}"
   },
-  {%- endif %}
+  {% endif %}
   "files": [
     "dist"
   ],
@@ -27,23 +29,15 @@
     }
   },
   "dependencies": {
-    {% for name, version in dependencies -%}
+    {% for name, version in dependencies %}
     "{{ name }}": "{{ version }}"{{ "," if loop.last !== true }}
-    {% endfor -%}
+    {% endfor %}
   },
   "devDependencies": {
-    {% if lintConfigSource -%}
-      "{{ lintConfigName }}": "{{ lintConfigVersion }}",
-    {%- endif %}
-    {% for name, version in devDependencies -%}
-    "{{ name }}": "{{- version }}",
-    {% endfor -%}    
-    "@types/node": "^22.15.3",
-    "typescript": "^5.8.2",
-    "eslint": "^9.23.0",
-    "@eslint/config-inspector": "^1.0.2",
-    "oxlint": "catalog:",
-    "lint-staged": "^12.3.2"
+    {% for name, version in devDependencies %}
+      "{{ name }}": "{{ version }}",
+    {% endfor %}    
+      "@types/node": "^22.15.3"
   }
 }
 

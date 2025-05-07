@@ -25,10 +25,14 @@ export function createPackageCli() {
     )
     .option("--description <description>", "The package's description")
     .option("--no-description", "Skip prompt for the package's description")
-    .option("-c, --cwd <cwd>", "The cwd for the process")
     .addOption(
       new Option("--lint-source <name>", "The type of lint config source")
-        .choices(["local", "external"]),
+        .choices(["workspace", "external", "new", "none"]),
+    )
+    .addOption(new Option("--no-lint").implies({ lintSource: "none" }))
+    .option(
+      "-c, --catalog",
+      "Use the pnpm catalog for key packages",
     )
     .parse(process.argv)
     .showHelpAfterError();

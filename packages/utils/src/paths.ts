@@ -1,3 +1,4 @@
+import { cancel } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
 import fs, { constants, rm } from "node:fs/promises";
 import { basename } from "node:path";
@@ -9,6 +10,22 @@ import {
   isENOTDIRError,
   isPermissionError,
 } from "./type_checking.js";
+
+export async function assertReadableWritableFile(path: string) {
+  const { exists, isFile, isReadable, isWritable } = await getFileInfo(path);
+  const errBase = `the file at ${path} `;
+  if (!exists) {
+    throwErr(errBase.concat("does not exist."));
+  } else if (!isFile) {
+    throwErr(errBase.concat("is a file, not a directory."));
+  } else if (!isReadable) {
+    throwErr(errBase.concat("is not readable by this process."));
+  } else if (!isWritable) {
+    throwErr(errBase.concat("is not writable by this process."));
+  } else {
+    return path;
+  }
+}
 
 export async function assertReadableFile(path: string) {
   const { isReadable, isFile, exists } = await getFileInfo(path);
@@ -241,6 +258,7 @@ export async function findPaths<T extends readonly string[]>(
       });
 
       if (typeof choice !== "string" || choice === "exit") {
+        // eslint-disable-next-line no-console
         console.log("Operation cancelled.");
         process.exit(1);
       }
@@ -299,6 +317,7 @@ export async function promptIfDirNotEmpty(path: string) {
         await rm(path, { recursive: true, force: true });
         return true;
       } else {
+        cancel("Operation aborted.");
         return false;
       }
     } else {

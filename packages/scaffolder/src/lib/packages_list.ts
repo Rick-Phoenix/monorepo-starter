@@ -34,12 +34,22 @@ export const optionalRootPackages: Package[] = [
 ];
 
 const packages: Package[] = [
+  { name: "dotenv", isDev: true, catalog: true },
+  { name: "dotenv-expand", isDev: true, catalog: true },
   {
     name: "lint-staged",
     isDev: true,
     catalog: true,
     preSelected: true,
   },
+  { name: "eslint", isDev: true, catalog: true, preSelected: true },
+  {
+    name: "@eslint/config-inspector",
+    label: "Eslint-config-inspector",
+    isDev: true,
+    preSelected: true,
+  },
+  { name: "oxlint", isDev: true, catalog: true, preSelected: true },
   {
     name: "vitest",
     isDev: true,
@@ -67,6 +77,10 @@ const packages: Package[] = [
   },
 ];
 
+export const generalOptionalPackages = packages.concat(
+  optionalRootPackages.filter((p) => p.name !== "husky"),
+);
+
 type PackageJsonDependencies = {
   dependencies: Record<string, string>;
   devDependencies: Record<string, string>;
@@ -75,7 +89,7 @@ type PackageJsonDependencies = {
 
 export async function getPackagesWithLatestVersions(
   packages: Package[],
-  options: { catalog?: boolean } = { catalog: true },
+  options?: { catalog?: boolean; excludeTs?: boolean },
 ) {
   //
   const output: PackageJsonDependencies = {
@@ -93,11 +107,21 @@ export async function getPackagesWithLatestVersions(
       ? output.devDependencies
       : output.dependencies;
 
-    if (options.catalog && pkg.catalog) {
+    if (options?.catalog && pkg.catalog) {
       targetCategory[pkg.name] = "catalog:";
       output.catalogEntries[pkg.name] = version;
     } else {
       targetCategory[pkg.name] = version;
+    }
+  }
+
+  if (!options?.excludeTs) {
+    const typescriptVersion = await getLatestVersionRange("typescript");
+    if (options?.catalog) {
+      output.devDependencies.typescript = "catalog:";
+      output.catalogEntries.typescript = typescriptVersion;
+    } else {
+      output.devDependencies.typescript = typescriptVersion;
     }
   }
 

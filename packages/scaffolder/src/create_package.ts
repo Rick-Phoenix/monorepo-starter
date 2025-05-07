@@ -5,11 +5,12 @@
 
 import { cancel, intro, outro } from "@clack/prompts";
 import {
+  assertReadableWritableFile,
   confirm,
-  getLatestVersionRange,
   getUnsafePathChar,
   isValidPathComponent,
   multiselect,
+  objectIsEmpty,
   promptIfDirNotEmpty,
   select,
   text,
@@ -17,14 +18,16 @@ import {
   writeRender,
 } from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
-import { createPackageCli } from "./lib/cli.js";
+import YAML from "yaml";
+import { createPackageCli } from "./cli/create_package_cli.js";
+import { genEslintConfigCli } from "./cli/gen_eslint_config.js";
+import { genOxlintConfigCli } from "./cli/gen_oxlint_config.js";
 import {
+  generalOptionalPackages,
   getPackagesWithLatestVersions,
-  type OptionalPackage,
-  optionalPackages,
 } from "./lib/packages_list.js";
 
 // Hardcoded for now
@@ -32,7 +35,7 @@ const pkgManager = "pnpm";
 
 const cliArgs = createPackageCli();
 
-const monorepoRoot = cliArgs.cwd || process.cwd();
+const monorepoRoot = process.cwd();
 
 const rootPackageJson = readPackageSync({ cwd: monorepoRoot });
 
@@ -79,56 +82,159 @@ async function initializePackage() {
   const additionalPackages = await multiselect({
     message:
       "Do you want to install additional packages? (Select with spacebar)",
-    options: optionalPackages.map((pac) => ({
+    options: generalOptionalPackages.map((pac) => ({
+      label: pac.label || pac.name[0]!.toUpperCase() + pac.name.slice(1),
       value: pac,
-      label: `${pac[0]?.toUpperCase()}${pac.slice(1)}`,
     })),
+    initialValues: generalOptionalPackages.filter((p) => p.preSelected),
     required: false,
-  }) as OptionalPackage[];
+  });
+
+  const selectedPackages = new Set(additionalPackages.map((p) => p.name));
+  const selectedOxlint = selectedPackages.has("oxlint");
+  const selectedEslint = selectedPackages.has("eslint");
 
   const includeEnvParsingModule = cliArgs.env ?? await confirm({
     message: "Do you want to include an env parsing module?",
     initialValue: false,
   });
 
-  if (includeEnvParsingModule === true) {
-    additionalPackages.push(...["arktype", "dotenv", "dotenv-expand"]);
+  if (includeEnvParsingModule) {
+    const necessaryDeps = generalOptionalPackages.filter((pac) =>
+      ["arktype", "dotenv", "dotenv-expand"].includes(pac.name)
+    );
+    additionalPackages.push(...necessaryDeps);
   }
 
-  const lintConfigSource = cliArgs.lintSource || await select({
-    message: "Do you use a local or external linting config?",
-    options: [
-      {
-        label: "Local",
-        value: "local",
-      },
-      {
-        label: "External",
-        value: "external",
-      },
-    ],
-  });
+  const eslintConfigSource = selectedEslint
+    ? await select({
+      message: "How do you want to set up your eslint config?",
+      options: [
+        {
+          label: "Extend it from a workspace package",
+          value: "workspace",
+        },
+        {
+          label: "Extend it from an external package",
+          value: "external",
+        },
+        {
+          label: "Make a new one from scratch",
+          value: "new",
+        },
+      ],
+    })
+    : "";
 
-  const lintConfigName = cliArgs.lintName || await text({
-    message: "Enter the name of your linting config package:",
-    initialValue: lintConfigSource === "local"
-      ? `@${projectName}/linting-config`
-      : "",
-    placeholder: lintConfigSource === "local"
-      ? `@${projectName}/linting-config`
-      : "",
-  });
+  const eslintConfigName =
+    eslintConfigSource === "workspace" || eslintConfigSource === "external"
+      ? await text({
+        message:
+          "What's the name of the config package that you want to extend?",
+        initialValue: eslintConfigSource === "workspace"
+          ? `@${projectName}/linting-config`
+          : "",
+        placeholder: eslintConfigSource === "workspace"
+          ? `@${projectName}/linting-config`
+          : "",
+      })
+      : "";
+
+  if (eslintConfigName) {
+    const isWorkspace = eslintConfigSource === "workspace";
+    additionalPackages.push({
+      name: eslintConfigName,
+      isDev: true,
+      isWorkspace,
+      catalog: !isWorkspace,
+    });
+  } else {
+    additionalPackages.push({
+      name: "@antfu/eslint-config",
+      isDev: true,
+      catalog: true,
+    });
+  }
+
+  const oxlintConfigType = selectedOxlint
+    ? await select({
+      message: "How do you want to setup the oxlint config?",
+      options: [
+        {
+          label: "Extend another config",
+          value: "extend",
+        },
+        {
+          label: "Make a new one (extensive)",
+          value: "opinionated",
+        },
+        {
+          label: "Make a new one (minimal)",
+          value: "minimal",
+        },
+        {
+          label: "Reuse the root config",
+          value: "root",
+        },
+      ],
+      initialValue: "root",
+    })
+    : "";
+
+  const oxlintExtendPath = oxlintConfigType === "extend"
+    ? await text({
+      message: "What's the path for the config to extend?",
+      initialValue: "../../.oxlintrc.json",
+      placeholder: "../../.oxlintrc.json",
+    })
+    : "";
 
   const installDeps = cliArgs.install ?? await confirm({
-    message: `Do you want to run '${pkgManager} install' after initialization?`,
+    message:
+      `Do you want to run '${pkgManager} install' after creating the new package?`,
     initialValue: true,
   });
 
   const templatesDir = join(import.meta.dirname, "templates");
 
-  const { dependencies, devDependencies } = await getPackagesWithLatestVersions(
-    additionalPackages,
-  );
+  const { dependencies, devDependencies, catalogEntries } =
+    await getPackagesWithLatestVersions(
+      additionalPackages,
+      { catalog: cliArgs.catalog },
+    );
+
+  if (cliArgs.catalog && !objectIsEmpty(catalogEntries)) {
+    const pnpmWorkspacePath = join(monorepoRoot, "pnpm-workspace.yaml");
+    await assertReadableWritableFile(pnpmWorkspacePath);
+    const textContent = await readFile(pnpmWorkspacePath, "utf8");
+    const content = YAML.parse(textContent) as {
+      catalog?: Record<string, string>;
+    };
+
+    if (content.catalog) {
+      for (const [name, version] of Object.entries(catalogEntries)) {
+        if (!content.catalog[name]) {
+          content.catalog[name] = version;
+        }
+      }
+    } else {
+      content.catalog = {};
+      for (const [name, version] of Object.entries(catalogEntries)) {
+        content.catalog[name] = version;
+      }
+    }
+
+    await writeFile(pnpmWorkspacePath, YAML.stringify(content));
+  }
+
+  const oxlintCommand = !selectedOxlint
+    ? ""
+    : oxlintConfigType === "root"
+    ? "oxlint -c ../../.oxlintrc.json"
+    : "oxlint";
+  const separator = selectedOxlint && selectedEslint ? " && " : "";
+  const eslintCommand = selectedEslint ? "eslint" : "";
+  const lintCommand = oxlintCommand.concat(separator).concat(eslintCommand);
 
   const templatesCtx = {
     devDependencies,
@@ -136,10 +242,8 @@ async function initializePackage() {
     projectName,
     packageName,
     packageDescription,
-    lintConfigName,
-    lintConfigVersion: lintConfigSource === "local"
-      ? "workspace:*"
-      : await getLatestVersionRange(lintConfigName),
+    eslintConfigName,
+    lintCommand,
   };
 
   await writeAllTemplates({
@@ -147,6 +251,44 @@ async function initializePackage() {
     templatesDir: join(templatesDir, "new_pkg"),
     targetDir: outputDir,
   });
+
+  if (eslintConfigSource) {
+    if (eslintConfigSource === "new") {
+      await genEslintConfigCli([
+        "-d",
+        outputDir,
+        "-k",
+        "minimal",
+      ]);
+    } else {
+      await genEslintConfigCli([
+        "-d",
+        outputDir,
+        "-k",
+        "extended",
+        "-e",
+        eslintConfigName,
+      ]);
+    }
+  }
+
+  if (oxlintConfigType && oxlintConfigType !== "root") {
+    let extraArgs: string[] = [];
+    if (oxlintConfigType === "extend") {
+      extraArgs = [
+        "-e",
+        oxlintExtendPath,
+      ];
+    } else {
+      extraArgs = [
+        "-k",
+        oxlintConfigType,
+        "--no-extend",
+      ];
+    }
+
+    await genOxlintConfigCli(["-d", outputDir, ...extraArgs]);
+  }
 
   if (includeEnvParsingModule === true) {
     const targetDir = join(outputDir, "src/lib");

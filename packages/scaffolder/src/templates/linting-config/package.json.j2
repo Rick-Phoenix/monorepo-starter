@@ -1,5 +1,5 @@
 {
-"name": "@{{ projectName }}/{{ lintConfigName }}",
+  "name": "@{{ projectName }}/{{ lintConfigName }}",
   "version": "0.0.1",
   "type": "module",
   "private": true,
@@ -9,15 +9,15 @@
     }
   },
   "scripts": {
-  "lint": "{{ "oxlint --config '../../.oxlintrc.json' && " if oxlint }}eslint",
-  "lint-staged": "lint-staged"
+    "lint": "{{ lintCommand }}",
+    "lint-staged": "lint-staged"
   },
   "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "{{ "oxlint --config '../../.oxlintrc.json' && " if oxlint }}eslint"
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "{{ lintCommand }}"
   },    
   "dependencies": {
   {% for name, version in lintConfigDeps %}
-  "{{ name }}": "{{ version }}"{{ "," if loop.last !== true }}  
-  {% endfor -%}
+    "{{ name }}": "{{ version }}"{{ "," if loop.last !== true }}  
+  {% endfor %}
   }
 }

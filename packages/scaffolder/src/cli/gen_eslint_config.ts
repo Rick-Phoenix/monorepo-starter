@@ -69,10 +69,11 @@ export async function genEslintConfigCli(args?: string[]) {
     action = writeRender(templateFile, outputFile, { extend, kind });
   }
 
-  const [_, error] = await tryCatch(action, "generating the config file");
+  const [_, error] = await tryCatch(
+    action,
+    "generating the eslint config file",
+  );
   if (error) {
     console.error(error);
-  } else if (!args) {
-    console.log("✅ Eslint config file generated");
   }
 }

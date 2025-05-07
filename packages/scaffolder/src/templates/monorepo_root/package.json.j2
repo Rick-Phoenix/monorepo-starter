@@ -9,16 +9,16 @@
   },
   "dependencies": {
     {% if dependencies | length > 0 %}
-    {%- for name, version in dependencies -%}
-    "{{ name }}": "{{ version }}"{{- "," if loop.last !== true }}
-    {%- endfor %} 
-    {%- endif %}
+    {% for name, version in dependencies %}
+    "{{ name }}": "{{ version }}"{{ "," if loop.last !== true }}
+    {% endfor %} 
+    {% endif %}
   },
   "devDependencies": {
     {% if devDependencies | length > 0 %}
-    {%- for name, version in devDependencies -%}
-    "{{ name }}": "{{ version }}"{{- "," if loop.last !== true }}
-    {%- endfor %} 
-    {%- endif %}
+    {% for name, version in devDependencies %}
+    "{{ name }}": "{{ version }}"{{ "," if loop.last !== true }}
+    {% endfor %} 
+    {% endif %}
   }
 }

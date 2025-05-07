@@ -4,7 +4,6 @@
 import { intro, outro } from "@clack/prompts";
 import {
   confirm,
-  getLatestVersionRange,
   multiselect,
   promptIfDirNotEmpty,
   select,
@@ -82,7 +81,7 @@ const hooksOptions = [];
 if (addGitHook) {
   if (selectedPackages.has("husky")) {
     hooksOptions.push({
-      value: "lint-staged",
+      value: "lintStaged",
       label: "Lint-staged",
       hint: "Runs linting checks on committed files",
     });
@@ -101,12 +100,12 @@ const hookActions = hooksOptions.length
   ? await multiselect({
     message: "What do you want to add to the pre-commit hook?",
     options: hooksOptions,
-    initialValues: ["lint-staged"],
+    initialValues: ["lintStaged"],
     cursorAt: "infisical",
   })
   : [];
 
-const lintConfig = cliArgs.lintConfig || await select({
+const lintConfig = cliArgs.lint ?? await select({
   message: "Do you want to add an internal linting config package?",
   options: [{
     value: "opinionated",
@@ -118,6 +117,25 @@ const lintConfig = cliArgs.lintConfig || await select({
     value: "",
     label: "No, thank you. My code is always perfect.",
   }],
+  initialValue: "opinionated",
+});
+
+const oxlint = cliArgs.oxlint ?? await select({
+  message: "Do you want to add an oxlint config?",
+  options: [
+    {
+      label: "Yes, with opinionated defaults",
+      value: "opinionated",
+    },
+    {
+      label: "Yes, with minimal defaults",
+      value: "minimal",
+    },
+    {
+      label: "Nah, I am not into all that oxidation stuff",
+      value: "",
+    },
+  ],
   initialValue: "opinionated",
 });
 
@@ -138,13 +156,10 @@ const { dependencies, devDependencies, catalogEntries } =
     { catalog: cliArgs.catalog },
   );
 
-const typescriptVersion = cliArgs.catalog
-  ? "catalog:"
-  : await getLatestVersionRange("typescript");
+const lintConfigName = cliArgs.lintName;
 
-devDependencies.typescript = typescriptVersion;
-
-const lintConfigName = cliArgs.lintConfigName;
+const oxlintCommand = !oxlint ? "oxlint -c ../../.oxlintrc.json && " : "";
+const lintCommand = oxlintCommand.concat("eslint");
 
 const templatesCtx = {
   catalog: cliArgs.catalog,
@@ -152,10 +167,14 @@ const templatesCtx = {
   devDependencies,
   catalogEntries,
   projectName,
-  oxlint: cliArgs.oxlint,
-  hookActions,
+  oxlint,
+  hooks: {
+    infisical: hookActions.includes("infisical"),
+    lintStaged: hookActions.includes("lintStaged"),
+  },
   lintConfig,
   lintConfigName,
+  lintCommand,
 };
 
 await writeAllTemplates({
@@ -164,11 +183,13 @@ await writeAllTemplates({
   targetDir: installPath,
 });
 
-if (cliArgs.oxlint) {
+if (oxlint) {
   await genOxlintConfigCli([
     "--no-extend",
     "-d",
     installPath,
+    "-k",
+    oxlint,
   ]);
 }
 
@@ -181,7 +202,7 @@ if (lintConfig) {
     ctx: {
       ...templatesCtx,
       lintConfigDeps: await getLintPackageDeps({
-        oxlint: cliArgs.oxlint,
+        oxlint: !!oxlint,
         catalog: cliArgs.catalog,
       }),
     },

@@ -9,6 +9,8 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import nunjucks from "nunjucks";
 
+nunjucks.configure({ autoescape: false, trimBlocks: true, lstripBlocks: true });
+
 export function writeRenderSync(
   templatePath: string,
   targetPath: string,
@@ -19,6 +21,7 @@ export function writeRenderSync(
   const renderedText = nunjucks.renderString(rawTemplate, ctx);
 
   if (!renderedText.length) {
+    // eslint-disable-next-line no-console
     console.warn("⚠️ The output of the render was empty ⚠️");
   }
 
@@ -38,6 +41,7 @@ export async function writeRender(
   const renderedText = nunjucks.renderString(rawTemplate, ctx);
 
   if (!renderedText.length) {
+    // eslint-disable-next-line no-console
     console.warn("⚠️ The output of the render was empty ⚠️");
   }
 

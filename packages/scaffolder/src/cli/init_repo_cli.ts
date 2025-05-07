@@ -8,33 +8,43 @@ export function initRepoCli() {
       "The directory where the monorepo will be created",
     )
     .option(
-      "--lint-config-name <name>",
+      "--lint-name <name>",
       "The name of the linting config package",
       "linting-config",
     )
     .addOption(
       new Option(
-        "--lint-config <type>",
+        "-l, --lint <type>",
         "The type of linting config package to setup",
       )
-        .choices(["minimal", "opinionated", ""]),
+        .choices(["minimal", "opinionated", ""]).default("minimal"),
     )
     .addOption(
       new Option(
         "--no-lint",
         "Do not create an internal linting config package",
-      ).implies({ lintConfig: "" }),
+      ),
     )
-    .option("--no-oxlint", "Do not create a .oxlintrc.json file")
-    .option("--no-scripts", "Do not include a scripts package")
-    .option("-s, --scripts", "Include a scripts package")
+    .addOption(
+      new Option("-o, --oxlint <config_type>").choices([
+        "minimal",
+        "opinionated",
+        "",
+      ]).default("minimal"),
+    )
+    .addOption(
+      new Option("--no-oxlint", "Do not create a config file for oxlint"),
+    )
     .option("-i, --install", "Install dependencies at the end of the script")
     .option(
       "--no-install",
       "Do not install dependencies at the end of the script",
     )
-    .option("-g, --git", "Create a new git repo")
     .option("--no-git", "Do not create a new git repo")
+    .option(
+      "-c, --catalog",
+      "Use the pnpm catalog to pin versions for key packages (recommended)",
+    )
     .option(
       "--no-catalog",
       "Do not use the pnpm catalog for key packages (not recommended)",

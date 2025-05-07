@@ -91,6 +91,8 @@ export function getUnsafePathChar(name: string) {
   }
 }
 
-export function isNonEmptyArray<T>(array: T[]): array is Array<T> {
-  return Array.isArray(array) && array.length > 0;
+export function isNonEmptyArray<T>(
+  maybeArray: T[] | unknown,
+): maybeArray is Array<T> {
+  return Array.isArray(maybeArray) && maybeArray.length > 0;
 }
