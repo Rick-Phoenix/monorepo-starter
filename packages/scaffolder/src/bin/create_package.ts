@@ -108,25 +108,26 @@ async function initializePackage() {
     additionalPackages.push(...necessaryDeps);
   }
 
-  const eslintConfigSource = selectedEslint
-    ? await select({
-      message: "How do you want to set up your eslint config?",
-      options: [
-        {
-          label: "Extend it from a workspace package",
-          value: "workspace",
-        },
-        {
-          label: "Extend it from an external package",
-          value: "external",
-        },
-        {
-          label: "Make a new one from scratch",
-          value: "new",
-        },
-      ],
-    })
-    : "";
+  const eslintConfigSource = cliArgs.lintSource === "none" || !selectedEslint
+    ? ""
+    : cliArgs.lintSource ||
+      await select({
+        message: "How do you want to set up your eslint config?",
+        options: [
+          {
+            label: "Extend it from a workspace package",
+            value: "workspace",
+          },
+          {
+            label: "Extend it from an external package",
+            value: "external",
+          },
+          {
+            label: "Make a new one from scratch",
+            value: "new",
+          },
+        ],
+      });
 
   const eslintConfigName =
     eslintConfigSource === "workspace" || eslintConfigSource === "external"
@@ -234,8 +235,8 @@ async function initializePackage() {
     : oxlintConfigType === "root"
     ? "oxlint -c ../../.oxlintrc.json"
     : "oxlint";
-  const separator = oxlint && selectedEslint ? " && " : "";
-  const eslintCommand = selectedEslint ? "eslint" : "";
+  const separator = oxlint && eslintConfigSource ? " && " : "";
+  const eslintCommand = eslintConfigSource ? "eslint" : "";
   const lintCommand = oxlintCommand.concat(separator).concat(eslintCommand);
 
   const templatesCtx = {

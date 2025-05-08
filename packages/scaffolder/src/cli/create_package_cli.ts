@@ -32,7 +32,7 @@ export function createPackageCli() {
     .addOption(new Option("--no-lint").implies({ lintSource: "none" }))
     .option(
       "-c, --catalog",
-      "Use the pnpm catalog for key packages",
+      "Use the pnpm catalog for key packages (recommended)",
     )
     .option(
       "--tests-dir <tests_dir>",
