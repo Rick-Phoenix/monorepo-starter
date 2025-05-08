@@ -7,6 +7,7 @@ type Package = {
   isWorkspace?: boolean;
   label?: string;
   preSelected?: boolean;
+  presets?: readonly string[];
 };
 
 export const optionalRootPackages: Package[] = [
@@ -159,25 +160,59 @@ export async function getLintPackageDeps(
   return deps;
 }
 
-const presets = {
-  cli: {
-    deps: ["@clack/prompts", "@commander-js/extra-typings", "commander"],
-    devDeps: [],
+export const presetPackages = [
+  { name: "@clack/prompts", catalog: true, presets: ["cli"] },
+  { name: "@commander-js/extra-typings", presets: ["cli"] },
+  {
+    name: "fast-glob",
+    presets: ["fileSystem"],
   },
-  fileSystem: {
-    deps: [
-      "fast-glob",
-      "find-up",
-      "fs-extra",
-      "package-up",
-      "path-type",
-      "read-package-up",
-      "read-pkg",
-    ],
-    devDeps: ["@types/node"],
+  {
+    name: "find-up",
+    presets: ["fileSystem"],
   },
-  templating: {
-    deps: ["write-json-file", "yaml", "dedent", "nunjucks"],
-    devDeps: ["@types/nunjucks"],
+  {
+    name: "fs-extra",
+    presets: ["fileSystem"],
   },
-};
+  {
+    name: "package-up",
+    presets: ["fileSystem"],
+  },
+  {
+    name: "path-type",
+    presets: ["fileSystem"],
+  },
+  {
+    name: "@types/node",
+    presets: ["fileSystem", "cli", "templating"],
+    isDev: true,
+  },
+  { name: "read-package-up", presets: ["templating", "fileSystem"] },
+  {
+    name: "read-pkg",
+    presets: ["templating", "fileSystem"],
+  },
+  {
+    name: "write-json-file",
+    presets: ["templating", "filesystem"],
+  },
+  {
+    name: "yaml",
+    presets: ["templating"],
+  },
+  {
+    name: "dedent",
+    presets: ["templating"],
+  },
+  {
+    name: "nunjucks",
+    presets: ["templating"],
+  },
+  { name: "@types/nunjucks", presets: ["templating"], isDev: true },
+] as const;
+
+export type PackagePreset = typeof presetPackages[number]["presets"][number];
+export const packagesPresetChoices = Array.from(
+  new Set(presetPackages.flatMap((pkg) => pkg.presets)),
+);

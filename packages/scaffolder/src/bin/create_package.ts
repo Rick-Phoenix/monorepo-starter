@@ -3,7 +3,7 @@
 // eslint-disable no-useless-spread
 // eslint-disable no-console
 
-import { cancel, intro, outro } from "@clack/prompts";
+import { cancel, intro, log, outro } from "@clack/prompts";
 import {
   assertReadableWritableFile,
   confirm,
@@ -30,6 +30,7 @@ import { genVitestConfigCli } from "../cli/gen_vitest_config.js";
 import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
+  presetPackages,
 } from "../lib/packages_list.js";
 
 // Hardcoded for now
@@ -80,6 +81,14 @@ async function initializePackage() {
     placeholder: "",
   });
 
+  if (cliArgs.preset) {
+    cliArgs.preset.forEach((p) => log.info(`Preset ${p} added to the list.`));
+  }
+
+  if (cliArgs.add) {
+    log.info(`Added ${add.length} packages to the list.`);
+  }
+
   // Section - Adding additional packages
   const additionalPackages = await multiselect({
     message:
@@ -91,6 +100,21 @@ async function initializePackage() {
     initialValues: generalOptionalPackages.filter((p) => p.preSelected),
     required: false,
   });
+
+  if (cliArgs.preset) {
+    const presetChoices = new Set(cliArgs.preset);
+    presetPackages.forEach((pac) => {
+      if (pac.presets) {
+        pac.presets.forEach((pr) => {
+          if (presetChoices.has(pr)) additionalPackages.push(pac);
+        });
+      }
+    });
+  }
+
+  if (cliArgs.add) {
+    cliArgs.add.forEach((p) => additionalPackages.push({ name: p }));
+  }
 
   const selectedPackages = new Set(additionalPackages.map((p) => p.name));
   const oxlint = selectedPackages.has("oxlint");

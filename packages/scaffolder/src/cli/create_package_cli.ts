@@ -3,6 +3,7 @@ import {
   getUnsafePathChar,
   isValidPathComponent,
 } from "@monorepo-starter/utils";
+import { packagesPresetChoices } from "../lib/packages_list.js";
 
 export function createPackageCli() {
   const program = new Command()
@@ -42,6 +43,13 @@ export function createPackageCli() {
     .option(
       "--default-configs",
       "Accept all defaults for config files generation",
+    )
+    .addOption(
+      new Option("-p, --preset <preset...>").choices(packagesPresetChoices),
+    )
+    .option(
+      "-a, --add <package...>",
+      "Extra packages to include as dependencies",
     )
     .parse(process.argv)
     .showHelpAfterError();
