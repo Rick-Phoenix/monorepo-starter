@@ -1,24 +1,34 @@
-{% if kind === 'extended' -%}
-import { createEslintConfig } from '{{ extend }}' 
- export default createEslintConfig()  
-{%- elif kind === 'minimal' -%}
-import { antfu } from "@antfu/eslint-config";
+// @ts-check
 
+{% if kind === 'extended' or kind === 'svelte-extended' %}
+import { createEslintConfig } from '{{ extend }}' 
+{% else %}
+import { antfu } from "@antfu/eslint-config";
+{% endif %}
+{% if prettier %}
+import eslintConfigPrettier from "eslint-config-prettier";
+{% endif %}
+{% if oxlint %}
+import oxlint from "eslint-plugin-oxlint";
+{% endif %}
+
+/**
+ * Creates an ESLint configuration.
+ * @param {import('@antfu/eslint-config').OptionsConfig} options - The options specific to antfu's config function.
+ * @param {...import('@antfu/eslint-config').TypedFlatConfigItem} overrides - Additional override configurations. Each argument is a TypedFlatConfigItem.
+ * @returns {import('eslint-flat-config-utils').FlatConfigComposer} An instance of FlatConfigComposer.
+ */
+{% if kind === 'extended' %}
+export default createEslintConfig()
+{% elif kind === 'minimal' %}
 export default antfu()
 {%- elif kind === 'minimal-extensible' -%}
-import { antfu } from "@antfu/eslint-config";
-
 export function createEslintConfig(options, ...overrides) {
   return antfu({...options}, ...overrides)
 }
 
 export default createEslintConfig()
 {%- elif kind === 'opinionated' -%}
-import { antfu } from "@antfu/eslint-config";
-import eslintConfigPrettier from "eslint-config-prettier";
-{% if oxlint -%}
-import oxlint from "eslint-plugin-oxlint";
-{%- endif %}
 
 function createEslintConfig(options, ...overrides) {
   return antfu(
@@ -44,11 +54,9 @@ function createEslintConfig(options, ...overrides) {
           "ts/consistent-type-definitions": "off",
         },
       },
-      imports: true,
-      disables: true,
       regexp: true,
       test: true,
-      jsx: options?.jsx || options?.react || false,
+      jsx: options?.jsx || false,
       stylistic: false,
       jsonc: false,
       yaml: false,
@@ -77,30 +85,27 @@ function createEslintConfig(options, ...overrides) {
       },
     },
     ...overrides,
+    {% if prettier %}
     eslintConfigPrettier,
-    {% if oxlint -%}
+    {% endif %}
+    {% if oxlint %}
     ...oxlint.configs["flat/recommended"],
-    {% if oxlintConfig -%}
-    ...oxlint.buildFromOxlintConfigFile("../../.oxlintrc.json"),
-    {%- endif %}
-    {%- endif %}
+    {% if oxlintConfig %}
+    ...oxlint.buildFromOxlintConfigFile("{{ oxlintConfig }}"),
+    {% endif %}
+    {% endif %}
   );
 }
 
 export default createEslintConfig()
 
 export { createEslintConfig };
-{%- elif kind === 'svelte-extended' -%}
-import { createEslintConfig } from '{{ extend }}' 
-
+{% elif kind === 'svelte-extended' %}
 export default createEslintConfig({
   svelte: true
 })
-{%- elif kind === 'svelte-base' -%}
-import { antfu } from "@antfu/eslint-config";
-
+{% elif kind === 'svelte-base' %}
 export default antfu({
   svelte: true
 })
-{%- endif %}
-
+{% endif %}

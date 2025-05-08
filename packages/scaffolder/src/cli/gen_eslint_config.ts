@@ -1,21 +1,24 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   isNonEmptyArray,
+  promptIfFileExists,
   tryCatch,
   writeRender,
 } from "@monorepo-starter/utils";
 import download from "download";
-import { resolve } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { installPackages, packageManagers } from "../lib/install_package.js";
 
-export async function genEslintConfigCli(args?: string[]) {
+export async function genEslintConfigCli(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-e, --extend <extended_config>",
-      "Path to a config file to extend",
+      "The package where to import a config",
     )
     .option(
-      "-d, --directory <directory>",
-      "The output directory for the config file",
+      "-d, --dir <directory>",
+      "The directory for the generated file (default is cwd)",
     )
     .addOption(
       new Option("-k, --kind <kind>", "The kind of config file to generate")
@@ -30,50 +33,93 @@ export async function genEslintConfigCli(args?: string[]) {
         ])
         .default("opinionated"),
     )
-    .option(
-      "-o, --oxlint-config <config_path>",
-      "The path to the oxlint config to use with eslint-plugin-oxlint",
-      "../../.oxlintrc.json",
+    .addOption(
+      new Option(
+        "--oxlint-config <config_path>",
+        "The path to the oxlint config to use with eslint-plugin-oxlint",
+      ).default("../../.oxlintrc.json").implies({ oxlint: true }),
     )
-    .option("--no-oxlint", "Don't include eslint-plugin-oxlint")
+    .option("-o, --oxlint", "Include eslint-plugin-oxlint")
+    .option("--no-prettier", "Do not include eslint-config-prettier")
     .addOption(
       new Option("-u, --url <url>", "The url for the config file to download")
         .implies({
           kind: "from-url",
         }),
     )
+    .option("-i, --install", "Install eslint and the selected plugins")
+    .addOption(
+      new Option(
+        "-p, --package-manager <package_manager>",
+        "The package manager to use in the installation",
+      ).choices(packageManagers).default("pnpm").implies({ install: true }),
+    )
     .showHelpAfterError();
 
-  if (isNonEmptyArray(args)) {
-    program.parse(args, { from: "user" });
+  if (isNonEmptyArray(injectedArgs)) {
+    program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
   }
 
-  const cliArgs = program.opts();
-  const outputTarget = resolve(cliArgs.directory || process.cwd());
+  const args = program.opts();
+  const outputDir = resolve(args.dir || process.cwd());
+
+  if (outputDir !== process.cwd()) {
+    await mkdir(outputDir, { recursive: true });
+  }
+  const outputFile = join(outputDir, "eslint.config.js");
+
+  await promptIfFileExists(outputFile);
+
+  if (args.install) {
+    const plugins: string[] = [];
+    if (args.oxlint) {
+      plugins.push("eslint-plugin-oxlint");
+    } else if (args.prettier) {
+      plugins.push("eslint-config-prettier");
+    }
+
+    const isOk = installPackages(
+      ["eslint", ...plugins],
+      args.packageManager,
+      true,
+    );
+
+    if (!isOk) process.exit(1);
+  }
 
   let action: Promise<unknown>;
 
-  if (cliArgs.url) {
-    action = download(cliArgs.url, outputTarget, {
+  if (args.url) {
+    action = download(args.url, outputDir, {
       filename: "eslint.config.js",
     });
   } else {
     const templateFile = resolve(
       import.meta.dirname,
-      "templates/configs/eslint.config.js.j2",
+      "../templates/configs/eslint.config.js.j2",
     );
-    const outputFile = resolve(outputTarget, "eslint.config.js");
-    const { extend, kind } = cliArgs;
-    action = writeRender(templateFile, outputFile, { extend, kind });
+    const { extend, kind, oxlint, oxlintConfig, prettier } = args;
+    action = writeRender(templateFile, outputFile, {
+      extend,
+      kind,
+      oxlint,
+      oxlintConfig,
+      prettier,
+    });
   }
 
   const [_, error] = await tryCatch(
     action,
     "generating the eslint config file",
   );
+
   if (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
   }
+
+  // eslint-disable-next-line no-console
+  console.log("✅ Eslint config generated");
 }

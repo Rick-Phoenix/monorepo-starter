@@ -327,3 +327,34 @@ export async function promptIfDirNotEmpty(path: string) {
     return true;
   }
 }
+
+export async function promptIfFileExists(path: string) {
+  const { isFile, exists } = await getFileInfo(path);
+  if (exists && isFile) {
+    const removeFile = await confirm({
+      message: `⚠️ The file ${
+        basename(path)
+      } already exists. Do you want to overwrite it? ⚠️`,
+      initialValue: false,
+    });
+
+    if (removeFile) {
+      const [_, error] = await tryCatch(
+        rm(path, { force: true }),
+        `deleting ${path}`,
+      );
+      if (error) {
+        console.error(error);
+        process.exit(1);
+      } else {
+        return true;
+      }
+    } else {
+      cancel("Operation aborted.");
+      process.exit(0);
+    }
+    //
+  } else {
+    return true;
+  }
+}

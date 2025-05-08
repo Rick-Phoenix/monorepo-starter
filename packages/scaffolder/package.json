@@ -5,8 +5,12 @@
   "author": "Rick-Phoenix",
   "description": "A generator for various types of apps and packages",
   "bin": {
-    "init-repo": "./dist/init_repo.js",
-    "create-package": "./dist/create_package.js"
+    "init-repo": "./dist/bin/init_repo.js",
+    "create-package": "./dist/bin/create_package.js",
+    "gen-eslint": "./dist/bin/gen_eslint.js",
+    "gen-tsdown": "./dist/bin/gen_tsdown.js",
+    "gen-vitest": "./dist/bin/gen_vitest.js",
+    "gen-oxlint": "./dist/bin/gen_oxlint.js"
   },
   "scripts": {
     "lint": "oxlint && eslint",

@@ -8,13 +8,15 @@ import {
 import download from "download";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { readPackage } from "read-pkg";
+import { writeJsonFile } from "write-json-file";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
 const pluginPresets = [
-  { name: "copy", packageName: "rollup-plugin-copy" },
+  { name: "", packageName: "" },
 ];
 
-export async function genTsdownConfigCli(injectedArgs?: string[]) {
+export async function genVitestConfigCli(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-d, --dir <directory>",
@@ -27,12 +29,17 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
           kind: "from-url",
         }),
     )
-    .option("-i, --install", "Install tsdown and the selected plugins")
+    .option("-i, --install", "Install vitest and the selected plugins")
+    .option("-s, --script", "Add vitest as the test script")
     .addOption(
       new Option(
         "-p, --package-manager <package_manager>",
         "The package manager to install tsdown with",
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
+    )
+    .option(
+      "--test-dir <test_dir>",
+      "Create a directory for tests",
     )
     .showHelpAfterError();
 
@@ -49,7 +56,8 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
   if (outputDir !== process.cwd()) {
     await mkdir(outputDir, { recursive: true });
   }
-  const outputFile = join(outputDir, "tsdown.config.js");
+
+  const outputFile = join(outputDir, "vitest.config.js");
 
   await promptIfFileExists(outputFile);
 
@@ -71,7 +79,7 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
 
   if (args.install) {
     const isOk = installPackages(
-      ["tsdown", ...packageNames],
+      ["vitest", ...packageNames],
       args.packageManager,
       true,
     );
@@ -79,16 +87,52 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
     if (!isOk) process.exit(1);
   }
 
+  if (args.testDir) {
+    const [_, error] = await tryCatch(
+      mkdir(resolve(args.testDir), { recursive: true }),
+      "creating the tests directory",
+    );
+    // eslint-disable-next-line no-console
+    if (error) console.warn(error);
+  }
+
+  if (args.script) {
+    const [packageJson, error] = await tryCatch(
+      readPackage({ normalize: false }),
+      "reading the package.json file",
+    );
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.warn(error);
+    } else {
+      packageJson.scripts = packageJson.scripts || {};
+      if (packageJson.scripts.test) {
+        packageJson.___test = "vitest run";
+      } else {
+        packageJson.scripts.test = "vitest run";
+      }
+
+      const [_, writeErr] = await tryCatch(
+        writeJsonFile(join(outputDir, "package.json"), packageJson, {
+          detectIndent: true,
+        }),
+      );
+
+      // eslint-disable-next-line no-console
+      if (writeErr) console.warn(writeErr);
+    }
+  }
+
   let action: Promise<unknown>;
 
   if (args.url) {
     action = download(args.url, outputDir, {
-      filename: "tsdown.config.js",
+      filename: "vitest.config.js",
     });
   } else {
     const templateFile = resolve(
       import.meta.dirname,
-      "../templates/configs/tsdown.config.js",
+      "../templates/configs/vitest.config.js",
     );
 
     action = writeRender(templateFile, outputFile, { plugins });
@@ -96,7 +140,7 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
 
   const [_, error] = await tryCatch(
     action,
-    "generating the tsdown config file",
+    "generating the vitest config file",
   );
 
   if (error) {
@@ -105,5 +149,5 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
   }
 
   // eslint-disable-next-line no-console
-  console.log("✅ Tsdown config generated.");
+  console.log("✅ Vitest config generated.");
 }

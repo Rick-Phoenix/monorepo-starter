@@ -14,14 +14,14 @@ import {
 import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { genEslintConfigCli } from "./cli/gen_eslint_config.js";
-import { genOxlintConfigCli } from "./cli/gen_oxlint_config.js";
-import { initRepoCli } from "./cli/init_repo_cli.js";
+import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
+import { genOxlintConfigCli } from "../cli/gen_oxlint_config.js";
+import { initRepoCli } from "../cli/init_repo_cli.js";
 import {
   getLintPackageDeps,
   getPackagesWithLatestVersions,
   optionalRootPackages,
-} from "./lib/packages_list.js";
+} from "../lib/packages_list.js";
 
 const res = resolve;
 
@@ -49,7 +49,7 @@ const installPath = res(process.cwd(), chosenLocation);
 const dirIsOk = await promptIfDirNotEmpty(installPath);
 
 if (!dirIsOk) {
-  process.exit(0);
+  process.exit(1);
 }
 
 await tryThrow(
@@ -132,7 +132,7 @@ const oxlint = cliArgs.oxlint ?? await select({
       value: "minimal",
     },
     {
-      label: "Nah, I am not into all that oxidation stuff",
+      label: "No, thank you. I prefer my lint script to be slow.",
       value: "",
     },
   ],
@@ -148,7 +148,7 @@ for (const [name, path] of Object.entries(rootDirs)) {
   await tryThrow(mkdir(path), `creating the directory for ${name} at ${path}`);
 }
 
-const templatesDir = join(import.meta.dirname, "templates");
+const templatesDir = join(import.meta.dirname, "../templates");
 
 const { dependencies, devDependencies, catalogEntries } =
   await getPackagesWithLatestVersions(
@@ -194,7 +194,7 @@ if (oxlint) {
 }
 
 if (lintConfig) {
-  const lintPkgTemplatesDir = join(templatesDir, "linting-config");
+  const lintPkgTemplatesDir = join(templatesDir, lintConfigName);
   const targetDir = join(installPath, "packages", lintConfigName);
   await mkdir(targetDir, { recursive: true });
 
@@ -210,12 +210,16 @@ if (lintConfig) {
     templatesDir: lintPkgTemplatesDir,
   });
 
-  await genEslintConfigCli([
+  const args = [
     "-d",
     targetDir,
     "--kind",
     lintConfig,
-  ]);
+  ];
+
+  if (!oxlint) args.push("--no-oxlint");
+
+  await genEslintConfigCli(args);
 }
 
 if (hookActions.length) {

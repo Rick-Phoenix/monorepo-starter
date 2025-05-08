@@ -138,6 +138,7 @@ export async function getLintPackageDeps(
     "eslint-config-prettier",
     "typescript-eslint",
     "lint-staged",
+    "eslint-flat-config-utils",
   ];
 
   const catalogDeps = [
@@ -157,3 +158,26 @@ export async function getLintPackageDeps(
 
   return deps;
 }
+
+const presets = {
+  cli: {
+    deps: ["@clack/prompts", "@commander-js/extra-typings", "commander"],
+    devDeps: [],
+  },
+  fileSystem: {
+    deps: [
+      "fast-glob",
+      "find-up",
+      "fs-extra",
+      "package-up",
+      "path-type",
+      "read-package-up",
+      "read-pkg",
+    ],
+    devDeps: ["@types/node"],
+  },
+  templating: {
+    deps: ["write-json-file", "yaml", "dedent", "nunjucks"],
+    devDeps: ["@types/nunjucks"],
+  },
+};

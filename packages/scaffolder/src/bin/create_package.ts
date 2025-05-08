@@ -22,13 +22,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { readPackageSync } from "read-pkg";
 import YAML from "yaml";
-import { createPackageCli } from "./cli/create_package_cli.js";
-import { genEslintConfigCli } from "./cli/gen_eslint_config.js";
-import { genOxlintConfigCli } from "./cli/gen_oxlint_config.js";
+import { createPackageCli } from "../cli/create_package_cli.js";
+import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
+import { genOxlintConfigCli } from "../cli/gen_oxlint_config.js";
 import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
-} from "./lib/packages_list.js";
+} from "../lib/packages_list.js";
 
 // Hardcoded for now
 const pkgManager = "pnpm";
@@ -195,7 +195,7 @@ async function initializePackage() {
     initialValue: true,
   });
 
-  const templatesDir = join(import.meta.dirname, "templates");
+  const templatesDir = join(import.meta.dirname, "../templates");
 
   const { dependencies, devDependencies, catalogEntries } =
     await getPackagesWithLatestVersions(

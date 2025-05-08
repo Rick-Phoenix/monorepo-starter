@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  {% if extends %}
-  "extends": ["{{ extends }}"],
+  {% if extend %}
+  "extends": ["{{ extend }}"],
   {% endif %}
   {% if kind === "extend-console" %}
   "rules": {

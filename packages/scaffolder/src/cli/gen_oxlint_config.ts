@@ -1,13 +1,16 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   isNonEmptyArray,
+  promptIfFileExists,
   tryCatch,
   writeRender,
 } from "@monorepo-starter/utils";
 import download from "download";
-import { resolve } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { installPackages, packageManagers } from "../lib/install_package.js";
 
-export async function genOxlintConfigCli(args?: string[]) {
+export async function genOxlintConfigCli(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-e, --extend <extended_config>",
@@ -16,8 +19,15 @@ export async function genOxlintConfigCli(args?: string[]) {
     )
     .option("--no-extend", "Do not extend another config")
     .option(
-      "-d, --directory <directory>",
-      "The output directory for the config file",
+      "-d, --dir <directory>",
+      "The directory for the generated file (default is cwd)",
+    )
+    .option("-i, --install", "Install oxlint as a package")
+    .addOption(
+      new Option(
+        "-p, --package-manager <package_manager>",
+        "The package manager to use in the installation",
+      ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
     .addOption(
       new Option("-k, --kind <kind>", "The kind of config file to generate")
@@ -37,33 +47,45 @@ export async function genOxlintConfigCli(args?: string[]) {
     )
     .showHelpAfterError();
 
-  if (isNonEmptyArray(args)) {
-    program.parse(args, { from: "user" });
+  if (isNonEmptyArray(injectedArgs)) {
+    program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
   }
 
-  const cliArgs = program.opts();
+  const args = program.opts();
 
-  if (cliArgs.kind === "opinionated") {
-    cliArgs.extend = false;
+  if (args.install) {
+    const isOk = installPackages("oxlint", args.packageManager);
+    if (!isOk) process.exit(1);
   }
 
-  const outputTarget = resolve(cliArgs.directory || process.cwd());
+  if (args.kind === "opinionated") {
+    args.extend = false;
+  }
+
+  const outputDir = resolve(args.dir || process.cwd());
+
+  if (outputDir !== process.cwd()) {
+    await mkdir(outputDir, { recursive: true });
+  }
+
+  const outputFile = join(outputDir, ".oxlintrc.json");
+
+  await promptIfFileExists(outputFile);
 
   let action: Promise<unknown>;
 
-  if (cliArgs.url) {
-    action = download(cliArgs.url, outputTarget, {
+  if (args.url) {
+    action = download(args.url, outputDir, {
       filename: ".oxlintrc.json",
     });
   } else {
     const templateFile = resolve(
       import.meta.dirname,
-      "templates/configs/.oxlintrc.json.j2",
+      "../templates/configs/.oxlintrc.json.j2",
     );
-    const outputFile = resolve(outputTarget, ".oxlintrc.json");
-    const { extend, kind } = cliArgs;
+    const { extend, kind } = args;
     action = writeRender(templateFile, outputFile, { extend, kind });
   }
 
@@ -73,6 +95,10 @@ export async function genOxlintConfigCli(args?: string[]) {
   );
 
   if (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
   }
+
+  // eslint-disable-next-line no-console
+  console.log("✅ Oxlint config generated.");
 }
