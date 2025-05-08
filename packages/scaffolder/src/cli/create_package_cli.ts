@@ -19,7 +19,7 @@ export function createPackageCli() {
       "Skip installing dependencies at the end of the script",
     )
     .option(
-      "-d, --directory <directory>",
+      "-d, --dir <directory>",
       "The directory where to install the package",
       "packages",
     )
@@ -33,6 +33,15 @@ export function createPackageCli() {
     .option(
       "-c, --catalog",
       "Use the pnpm catalog for key packages",
+    )
+    .option(
+      "--tests-dir <tests_dir>",
+      "The relative path to the tests directory (from the package's root)",
+    )
+    .option("--skip-configs", "Skip prompt for config files generation")
+    .option(
+      "--default-configs",
+      "Accept all defaults for config files generation",
     )
     .parse(process.argv)
     .showHelpAfterError();

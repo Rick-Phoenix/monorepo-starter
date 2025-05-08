@@ -25,6 +25,8 @@ import YAML from "yaml";
 import { createPackageCli } from "../cli/create_package_cli.js";
 import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
 import { genOxlintConfigCli } from "../cli/gen_oxlint_config.js";
+import { genTsdownConfigCli } from "../cli/gen_tsdown_config.js";
+import { genVitestConfigCli } from "../cli/gen_vitest_config.js";
 import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
@@ -66,7 +68,7 @@ async function initializePackage() {
     },
   });
 
-  const outputDir = resolve(monorepoRoot, cliArgs.directory, packageName);
+  const outputDir = resolve(monorepoRoot, cliArgs.dir, packageName);
 
   const dirIsOk = await promptIfDirNotEmpty(outputDir);
 
@@ -91,7 +93,7 @@ async function initializePackage() {
   });
 
   const selectedPackages = new Set(additionalPackages.map((p) => p.name));
-  const selectedOxlint = selectedPackages.has("oxlint");
+  const oxlint = selectedPackages.has("oxlint");
   const selectedEslint = selectedPackages.has("eslint");
 
   const includeEnvParsingModule = cliArgs.env ?? await confirm({
@@ -156,7 +158,7 @@ async function initializePackage() {
     });
   }
 
-  const oxlintConfigType = selectedOxlint
+  const oxlintConfigType = oxlint
     ? await select({
       message: "How do you want to setup the oxlint config?",
       options: [
@@ -227,12 +229,12 @@ async function initializePackage() {
     await writeFile(pnpmWorkspacePath, YAML.stringify(content));
   }
 
-  const oxlintCommand = !selectedOxlint
+  const oxlintCommand = !oxlint
     ? ""
     : oxlintConfigType === "root"
     ? "oxlint -c ../../.oxlintrc.json"
     : "oxlint";
-  const separator = selectedOxlint && selectedEslint ? " && " : "";
+  const separator = oxlint && selectedEslint ? " && " : "";
   const eslintCommand = selectedEslint ? "eslint" : "";
   const lintCommand = oxlintCommand.concat(separator).concat(eslintCommand);
 
@@ -252,13 +254,62 @@ async function initializePackage() {
     targetDir: outputDir,
   });
 
+  if (selectedPackages.has("vitest") && !cliArgs.skipConfigs) {
+    const vitestSetup = cliArgs.defaultConfigs ? true : await confirm({
+      message:
+        "Do you want to set up the config file and tests directory for vitest?",
+      initialValue: true,
+    });
+
+    if (vitestSetup) {
+      const testsDir = cliArgs.testsDir || cliArgs.defaultConfigs
+        ? "tests"
+        : await text({
+          message:
+            "Enter the path to the tests directory (relative to the package's root)",
+          initialValue: "tests",
+          placeholder: "tests",
+        });
+
+      await genVitestConfigCli([
+        "-d",
+        outputDir,
+        "--tests-dir",
+        testsDir,
+        "--script",
+      ]);
+    }
+  }
+
+  if (selectedPackages.has("tsdown") && !cliArgs.skipConfigs) {
+    const tsdownSetup = cliArgs.defaultConfigs ? true : await confirm({
+      message: "Do you want to generate a tsdown config file?",
+      initialValue: true,
+    });
+
+    if (tsdownSetup) {
+      await genTsdownConfigCli([
+        "-d",
+        outputDir,
+      ]);
+    }
+  }
+
   if (eslintConfigSource) {
     if (eslintConfigSource === "new") {
+      const oxlintArgs: string[] = [];
+      if (oxlint) {
+        oxlintArgs.push("-o");
+        if (oxlintConfigType !== "root") {
+          oxlintArgs.push("--oxlint-config", "./.oxlintrc.json");
+        }
+      }
       await genEslintConfigCli([
         "-d",
         outputDir,
         "-k",
         "minimal",
+        ...oxlintArgs,
       ]);
     } else {
       await genEslintConfigCli([

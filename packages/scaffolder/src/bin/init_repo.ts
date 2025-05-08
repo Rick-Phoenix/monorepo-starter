@@ -132,7 +132,7 @@ const oxlint = cliArgs.oxlint ?? await select({
       value: "minimal",
     },
     {
-      label: "No, thank you. I prefer my lint script to be slow.",
+      label: "No, thank you. I prefer my lint task to be slow.",
       value: "",
     },
   ],

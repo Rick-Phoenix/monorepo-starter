@@ -38,7 +38,7 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
     .option(
-      "--test-dir <test_dir>",
+      "--tests-dir <test_dir>",
       "Create a directory for tests",
     )
     .showHelpAfterError();
@@ -87,9 +87,9 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
     if (!isOk) process.exit(1);
   }
 
-  if (args.testDir) {
+  if (args.testsDir) {
     const [_, error] = await tryCatch(
-      mkdir(resolve(args.testDir), { recursive: true }),
+      mkdir(join(outputDir, args.testsDir), { recursive: true }),
       "creating the tests directory",
     );
     // eslint-disable-next-line no-console
@@ -98,7 +98,7 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
 
   if (args.script) {
     const [packageJson, error] = await tryCatch(
-      readPackage({ normalize: false }),
+      readPackage({ normalize: false, cwd: outputDir }),
       "reading the package.json file",
     );
     if (error) {
