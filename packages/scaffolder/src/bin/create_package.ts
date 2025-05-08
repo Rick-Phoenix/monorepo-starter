@@ -82,11 +82,13 @@ async function initializePackage() {
   });
 
   if (cliArgs.preset) {
-    cliArgs.preset.forEach((p) => log.info(`Preset ${p} added to the list.`));
+    cliArgs.preset.forEach((p) =>
+      log.success(`✅ Preset ${p} added to the list.`)
+    );
   }
 
   if (cliArgs.add) {
-    log.info(`Added ${add.length} packages to the list.`);
+    log.success(`✅ Added ${cliArgs.add.length} extra packages to the list.`);
   }
 
   // Section - Adding additional packages
@@ -101,22 +103,33 @@ async function initializePackage() {
     required: false,
   });
 
+  const selectedPackages = new Set(additionalPackages.map((p) => p.name));
+
   if (cliArgs.preset) {
     const presetChoices = new Set(cliArgs.preset);
     presetPackages.forEach((pac) => {
       if (pac.presets) {
         pac.presets.forEach((pr) => {
-          if (presetChoices.has(pr)) additionalPackages.push(pac);
+          if (presetChoices.has(pr)) {
+            if (!selectedPackages.has(pac.name)) {
+              additionalPackages.push(pac);
+              selectedPackages.add(pac.name);
+            }
+          }
         });
       }
     });
   }
 
   if (cliArgs.add) {
-    cliArgs.add.forEach((p) => additionalPackages.push({ name: p }));
+    cliArgs.add.forEach((p) => {
+      if (!selectedPackages.has(p)) {
+        selectedPackages.add(p);
+        additionalPackages.push({ name: p });
+      }
+    });
   }
 
-  const selectedPackages = new Set(additionalPackages.map((p) => p.name));
   const oxlint = selectedPackages.has("oxlint");
   const selectedEslint = selectedPackages.has("eslint");
 
@@ -126,10 +139,17 @@ async function initializePackage() {
   });
 
   if (includeEnvParsingModule) {
-    const necessaryDeps = generalOptionalPackages.filter((pac) =>
-      ["arktype", "dotenv", "dotenv-expand"].includes(pac.name)
-    );
-    additionalPackages.push(...necessaryDeps);
+    const necessaryDeps = ["arktype", "dotenv", "dotenv-expand"];
+    necessaryDeps.forEach((dep) => {
+      if (!selectedPackages.has(dep)) {
+        selectedPackages.add(dep);
+        additionalPackages.push({
+          name: dep,
+          isDev: dep !== "arktype",
+          catalog: true,
+        });
+      }
+    });
   }
 
   const eslintConfigSource = cliArgs.lintSource === "none" || !selectedEslint
@@ -173,7 +193,6 @@ async function initializePackage() {
       name: eslintConfigName,
       isDev: true,
       isWorkspace,
-      catalog: !isWorkspace,
     });
   } else {
     additionalPackages.push({
