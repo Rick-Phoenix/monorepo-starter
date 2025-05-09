@@ -1,21 +1,18 @@
 $schema: "https://moonrepo.dev/schemas/project.json"
 
+dependsOn:
+  - utils
+
+workspace:
+  inheritedTasks:
+    exclude: ["build"]
+
 tasks:
-  init_repo:
-    description: "Initializing a new monorepo"
-    script: "bun ./src/init_repo.ts"
-    options:
-      cache: false
-      interactive: true
-  create_package:
-    description: "Creating a new package"
-    script: "bun ./src/create_package.ts"
-    options:
-      cache: false
-      interactive: true
-  init_svelte:
-    description: "Creating a new svelte app"
-    script: "bun ./src/init_svelte.ts"
-    options:
-      cache: false
-      interactive: true
+  build:
+    deps:
+      - "^:build"
+    command: "tsdown"
+    inputs:
+      - "tsdown.config.ts"
+    outputs:
+      - "dist"
