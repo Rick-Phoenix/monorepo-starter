@@ -12,7 +12,7 @@ export default defineConfig([{
   outDir: "dist/bin",
   plugins: [copy({
     targets: [{
-      src: "src/templates",
+      src: "templates",
       dest: "dist",
     }],
   })],

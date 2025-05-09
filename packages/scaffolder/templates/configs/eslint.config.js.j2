@@ -94,6 +94,11 @@ function createEslintConfig(options, ...overrides) {
     ...oxlint.buildFromOxlintConfigFile("{{ oxlintConfig }}"),
     {% endif %}
     {% endif %}
+    {
+      rules: {
+        "no-console": "error",
+      },
+    },
   );
 }
 

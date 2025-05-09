@@ -14,5 +14,8 @@ tasks:
     command: "tsdown"
     inputs:
       - "tsdown.config.ts"
+      - "src/**/*"
+      - "templates/**/*"
+      - "package.json"
     outputs:
       - "dist"

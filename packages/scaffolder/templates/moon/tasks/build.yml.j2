@@ -1,0 +1,12 @@
+  build:
+    command: "{{ buildCommand | default("tsc --build") }}"
+    inputs:
+      - "src/**/*"
+      - "tsconfig.json"
+    outputs:
+      - "dist"
+      - ".cache"
+    {% if tasks.barrel %}
+    deps:
+      - "barrel"
+    {% endif %}
