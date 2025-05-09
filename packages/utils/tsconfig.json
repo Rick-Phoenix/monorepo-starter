@@ -4,5 +4,6 @@
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": ".cache/.tsbuildinfo"
-  }
+  },
+  "include": ["src"]
 }

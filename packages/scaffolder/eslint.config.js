@@ -1,2 +1,9 @@
-import { createEslintConfig } from '@monorepo-starter/linting-config' 
- export default createEslintConfig()
+import { createEslintConfig } from "@monorepo-starter/linting-config";
+export default createEslintConfig({
+  typescript: {
+    parserOptions: {
+      project: ["./tsconfig.json", "./tsconfig.spec.json"],
+    },
+  },
+});
+

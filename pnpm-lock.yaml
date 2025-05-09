@@ -314,9 +314,6 @@ importers:
       arktype:
         specifier: ^2.1.20
         version: 2.1.20
-      fast-glob:
-        specifier: ^3.3.3
-        version: 3.3.3
       latest-version:
         specifier: ^9.0.0
         version: 9.0.0
@@ -336,6 +333,9 @@ importers:
       eslint:
         specifier: ^9.23.0
         version: 9.26.0(jiti@2.4.2)
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
       lint-staged:
         specifier: ^12.3.2
         version: 12.5.0

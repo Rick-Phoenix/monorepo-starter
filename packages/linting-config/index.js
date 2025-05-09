@@ -6,7 +6,7 @@ import oxlint from "eslint-plugin-oxlint";
 
 /**
  * Creates an ESLint configuration.
- * @param {import('@antfu/eslint-config').OptionsConfig} options - The options specific to antfu's config function.
+ * @param {import('@antfu/eslint-config').OptionsConfig & {ignores?: string[]}} [ options ] - The options specific to antfu's config function.
  * @param {...import('@antfu/eslint-config').TypedFlatConfigItem} overrides - Additional override configurations. Each argument is a TypedFlatConfigItem.
  * @returns {import('eslint-flat-config-utils').FlatConfigComposer} An instance of FlatConfigComposer.
  */
@@ -62,6 +62,7 @@ function createEslintConfig(options, ...overrides) {
         "import/consistent-type-specifier-style": "off",
         "ts/strict-boolean-expressions": "off",
         "ts/unbound-method": "off",
+        "prefer-template": "off",
       },
     },
     ...overrides,

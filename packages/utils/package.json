@@ -23,7 +23,6 @@
   "dependencies": {
     "@clack/prompts": "^0.10.1",
     "arktype": "^2.1.20",
-    "fast-glob": "^3.3.3",
     "latest-version": "^9.0.0",
     "nunjucks": "^3.2.4"
   },
@@ -32,6 +31,7 @@
     "@types/node": "^22.15.3",
     "@types/nunjucks": "^3.2.6",
     "eslint": "^9.23.0",
+    "fast-glob": "^3.3.3",
     "lint-staged": "^12.3.2",
     "oxlint": "^0.16.3",
     "typescript": "^5.8.2"

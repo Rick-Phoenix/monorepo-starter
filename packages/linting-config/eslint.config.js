@@ -1,3 +1,5 @@
 import { createEslintConfig } from "./index.js";
 
-export default createEslintConfig();
+export default createEslintConfig({
+  typescript: {},
+});
