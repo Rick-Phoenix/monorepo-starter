@@ -9,6 +9,8 @@ import {
   select,
   text,
   tryThrow,
+  tryWarn,
+  tryWarnChildProcess,
   writeAllTemplates,
 } from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
@@ -115,7 +117,7 @@ const lintConfig = cliArgs.lint ?? await select({
     label: "Yes, with minimal defaults",
   }, {
     value: "",
-    label: "No, thank you. My code is always perfect.",
+    label: "No, thank you.",
   }],
   initialValue: "opinionated",
 });
@@ -132,7 +134,7 @@ const oxlint = cliArgs.oxlint ?? await select({
       value: "minimal",
     },
     {
-      label: "No, thank you. I prefer my lint task to be slow.",
+      label: "No, thank you.",
       value: "",
     },
   ],
@@ -150,15 +152,17 @@ for (const [name, path] of Object.entries(rootDirs)) {
 
 const templatesDir = join(import.meta.dirname, "../templates");
 
-const { dependencies, devDependencies, catalogEntries } =
-  await getPackagesWithLatestVersions(
+const { dependencies, devDependencies, catalogEntries } = await tryThrow(
+  getPackagesWithLatestVersions(
     rootPackages,
     { catalog: cliArgs.catalog },
-  );
+  ),
+  "fetching the latest versions for the selected packages",
+);
 
 const lintConfigName = cliArgs.lintName;
 
-const oxlintCommand = !oxlint ? "oxlint -c ../../.oxlintrc.json && " : "";
+const oxlintCommand = oxlint ? "oxlint -c ../../.oxlintrc.json && " : "";
 const lintCommand = oxlintCommand.concat("eslint");
 
 const templatesCtx = {
@@ -177,11 +181,14 @@ const templatesCtx = {
   lintCommand,
 };
 
-await writeAllTemplates({
-  ctx: templatesCtx,
-  templatesDir: join(templatesDir, "monorepo_root"),
-  targetDir: installPath,
-});
+await tryThrow(
+  writeAllTemplates({
+    ctx: templatesCtx,
+    templatesDir: join(templatesDir, "monorepo_root"),
+    targetDir: installPath,
+  }),
+  "writing the files at the new monorepo's root",
+);
 
 if (oxlint) {
   await genOxlintConfigCli([
@@ -194,21 +201,27 @@ if (oxlint) {
 }
 
 if (lintConfig) {
-  const lintPkgTemplatesDir = join(templatesDir, lintConfigName);
+  const lintPkgTemplatesDir = join(templatesDir, "linting-config");
   const targetDir = join(installPath, "packages", lintConfigName);
-  await mkdir(targetDir, { recursive: true });
+  await tryThrow(
+    mkdir(targetDir, { recursive: true }),
+    "creating the lint config package's directory",
+  );
 
-  await writeAllTemplates({
-    ctx: {
-      ...templatesCtx,
-      lintConfigDeps: await getLintPackageDeps({
-        oxlint: !!oxlint,
-        catalog: cliArgs.catalog,
-      }),
-    },
-    targetDir,
-    templatesDir: lintPkgTemplatesDir,
-  });
+  await tryThrow(
+    writeAllTemplates({
+      ctx: {
+        ...templatesCtx,
+        lintConfigDeps: await getLintPackageDeps({
+          oxlint: !!oxlint,
+          catalog: cliArgs.catalog,
+        }),
+      },
+      targetDir,
+      templatesDir: lintPkgTemplatesDir,
+    }),
+    "writing the files for the lint config package",
+  );
 
   const args = [
     "-d",
@@ -223,11 +236,14 @@ if (lintConfig) {
 }
 
 if (hookActions.length) {
-  await writeAllTemplates({
-    templatesDir: join(templatesDir, "git_hooks"),
-    targetDir: join(installPath, ".husky"),
-    ctx: templatesCtx,
-  });
+  await tryWarn(
+    writeAllTemplates({
+      templatesDir: join(templatesDir, "git_hooks"),
+      targetDir: join(installPath, ".husky"),
+      ctx: templatesCtx,
+    }),
+    "creating the pre-commit hook file",
+  );
 }
 
 const installDeps = cliArgs.install ?? await confirm({
@@ -235,13 +251,14 @@ const installDeps = cliArgs.install ?? await confirm({
   initialValue: false,
 });
 
-if (installDeps) {
-  spawnSync(`${pkgManager} install`, {
-    shell: true,
-    stdio: "inherit",
-    cwd: installPath,
-  });
-}
+const installOk = installDeps
+  ? tryWarnChildProcess(() =>
+    spawnSync(`${pkgManager} install`, {
+      shell: true,
+      stdio: "inherit",
+      cwd: installPath,
+    }), `installing dependencies with ${pkgManager}`)
+  : false;
 
 const gitInit = cliArgs.git ?? await confirm({
   message: "Do you want to start a new git repo?",
@@ -249,20 +266,23 @@ const gitInit = cliArgs.git ?? await confirm({
 });
 
 if (gitInit) {
-  spawnSync("git init", {
-    shell: true,
-    stdio: "inherit",
-    cwd: installPath,
-  });
-  if (hookActions.length && installDeps) {
-    spawnSync("pnpm exec husky", {
+  tryWarnChildProcess(() =>
+    spawnSync("git init", {
       shell: true,
       stdio: "inherit",
       cwd: installPath,
-    });
+    }), "creating a new git repo");
+
+  if (hookActions.length && installOk) {
+    tryWarnChildProcess(() =>
+      spawnSync("pnpm exec husky", {
+        shell: true,
+        stdio: "inherit",
+        cwd: installPath,
+      }), "initializing husky");
   }
 }
 
 outro(
-  `Operation completed! 🚀`,
+  `✅ Operation completed! Your new monorepo is now up and running! 🚀`,
 );

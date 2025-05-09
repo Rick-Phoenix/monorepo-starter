@@ -1,3 +1,4 @@
+import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   isNonEmptyArray,
@@ -50,10 +51,11 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
     .option("-i, --install", "Install eslint and the selected plugins")
     .addOption(
       new Option(
-        "-p, --package-manager <package_manager>",
+        "-m, --package-manager <package_manager>",
         "The package manager to use in the installation",
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
+    .addOption(new Option("-p, --plugin <plugin...>"))
     .showHelpAfterError();
 
   if (isNonEmptyArray(injectedArgs)) {
@@ -73,7 +75,7 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
   await promptIfFileExists(outputFile);
 
   if (args.install) {
-    const plugins: string[] = [];
+    const plugins: string[] = args.plugin ?? [];
     if (args.oxlint) {
       plugins.push("eslint-plugin-oxlint");
     } else if (args.prettier) {
@@ -118,8 +120,8 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
   if (error) {
     // eslint-disable-next-line no-console
     console.error(error);
+  } else {
+    // eslint-disable-next-line no-console
+    log.success("✅ Eslint config generated");
   }
-
-  // eslint-disable-next-line no-console
-  console.log("✅ Eslint config generated");
 }

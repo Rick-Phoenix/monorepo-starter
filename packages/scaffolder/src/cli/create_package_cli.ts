@@ -1,8 +1,4 @@
 import { Command, Option } from "@commander-js/extra-typings";
-import {
-  getUnsafePathChar,
-  isValidPathComponent,
-} from "@monorepo-starter/utils";
 import { packagesPresetChoices } from "../lib/packages_list.js";
 
 export function createPackageCli() {
@@ -55,13 +51,6 @@ export function createPackageCli() {
     .showHelpAfterError();
 
   const options = program.opts();
-
-  if (options.name) {
-    if (!isValidPathComponent(options.name)) {
-      const unsafeChar = getUnsafePathChar(options.name);
-      program.error(`The name contains an invalid character: '${unsafeChar}'`);
-    }
-  }
 
   return options;
 }

@@ -1,8 +1,52 @@
 /* eslint-disable ts/strict-boolean-expressions */
+
+import { log } from "@clack/prompts";
+import type { SpawnSyncReturns } from "node:child_process";
+
 // eslint-disable no-redeclare
 type Success<T> = [T, null];
 type Failure<E> = [null, E];
 type Result<T, E = Error> = Success<T> | Failure<E>;
+
+export async function tryWarn<T>(
+  action: Promise<T>,
+  description: string,
+) {
+  try {
+    await action;
+  } catch (rawError: unknown) {
+    const processedError = rawError instanceof Error
+      ? rawError
+      : new Error(String(rawError));
+    if (description) {
+      processedError.message =
+        `An error occurred while ${description}\n ${processedError.message}`;
+    }
+    Error.captureStackTrace(processedError, tryCatch);
+    // eslint-disable-next-line no-console
+    console.warn(processedError);
+  }
+}
+
+export function tryWarnChildProcess(
+  // eslint-disable-next-line node/prefer-global/buffer
+  process: () => SpawnSyncReturns<Buffer>,
+  description: string,
+  logError?: boolean,
+) {
+  const { error } = process();
+
+  if (error) {
+    // eslint-disable-next-line no-console
+    log.warn(
+      `⚠️ Non-fatal error occurred while ${description}${
+        logError ? `:\n${error}` : ""
+      }`,
+    );
+  } else {
+    return true;
+  }
+}
 
 /**
  * tryCatch - Performs an action (awaiting a promise) and attaches a description to it.
@@ -13,7 +57,7 @@ type Result<T, E = Error> = Success<T> | Failure<E>;
  */
 export async function tryCatch<T>(
   action: Promise<T>,
-  description?: string,
+  description: string,
 ): Promise<Result<T, Error>> {
   try {
     const result = await action;
@@ -40,7 +84,7 @@ export async function tryCatch<T>(
  */
 export function tryCatchSync<T>(
   action: () => T,
-  description?: string,
+  description: string,
 ): Result<T, Error> {
   try {
     const result = action();
@@ -66,7 +110,7 @@ export function tryCatchSync<T>(
  * @returns If the action is successful, it returns the result.
  * Otherwise, it throws an error with the description attached to it.
  */
-export function tryThrowSync<T>(action: () => T, description?: string): T {
+export function tryThrowSync<T>(action: () => T, description: string): T {
   const [result, error] = tryCatchSync(action, description);
   if (error) {
     Error.captureStackTrace(error, tryThrowSync);
@@ -86,7 +130,7 @@ export function tryThrowSync<T>(action: () => T, description?: string): T {
  */
 export async function tryThrow<T>(
   action: Promise<T>,
-  description?: string,
+  description: string,
 ): Promise<T> {
   const [result, error] = await tryCatch(action, description);
 

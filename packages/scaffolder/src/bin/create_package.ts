@@ -7,20 +7,21 @@ import { cancel, intro, log, outro } from "@clack/prompts";
 import {
   assertReadableWritableFile,
   confirm,
-  getUnsafePathChar,
-  isValidPathComponent,
   multiselect,
   objectIsEmpty,
   promptIfDirNotEmpty,
   select,
   text,
+  tryThrow,
+  tryWarn,
+  tryWarnChildProcess,
   writeAllTemplates,
   writeRender,
 } from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { readPackageSync } from "read-pkg";
+import { readPackage } from "read-pkg";
 import YAML from "yaml";
 import { createPackageCli } from "../cli/create_package_cli.js";
 import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
@@ -40,17 +41,19 @@ const cliArgs = createPackageCli();
 
 const monorepoRoot = process.cwd();
 
-const rootPackageJson = readPackageSync({ cwd: monorepoRoot });
-
-const projectName: string = rootPackageJson.name;
-if (!projectName.length) {
-  throw new Error(
-    "Could not find the project name. Is package.json set up correctly?",
-  );
-}
+const rootPackageJson = await tryThrow(
+  readPackage({ cwd: monorepoRoot }),
+  "reading the root's package.json file (are you launching this process in the root of your monorepo?)",
+);
 
 async function initializePackage() {
-  intro("📦 Initializing new package 📦");
+  intro("📦 New package initialization 📦");
+
+  const projectName: string = rootPackageJson.name ||
+    await text({
+      message: "What is the name of your monorepo?",
+      placeholder: "myrepo",
+    });
 
   const packageName = cliArgs.name || await text({
     message: `Enter the package's name:`,
@@ -60,11 +63,6 @@ async function initializePackage() {
         process.exit(1);
       }
 
-      if (!isValidPathComponent(input)) {
-        const unsafeChar = getUnsafePathChar(input);
-        cancel(`The name contains an invalid character: '${unsafeChar}'`);
-        process.exit(1);
-      }
       return undefined;
     },
   });
@@ -78,20 +76,20 @@ async function initializePackage() {
   const packageDescription = cliArgs.description ?? await text({
     message: `Enter the package's description:`,
     defaultValue: "",
-    placeholder: "",
   });
 
   if (cliArgs.preset) {
     cliArgs.preset.forEach((p) =>
-      log.success(`✅ Preset ${p} added to the list.`)
+      log.success(`✅ Preset ${p} added to the list of dependencies.`)
     );
   }
 
   if (cliArgs.add) {
-    log.success(`✅ Added ${cliArgs.add.length} extra packages to the list.`);
+    log.success(
+      `✅ Added ${cliArgs.add.length} extra packages to the list of dependencies.`,
+    );
   }
 
-  // Section - Adding additional packages
   const additionalPackages = await multiselect({
     message:
       "Do you want to install additional packages? (Select with spacebar)",
@@ -152,45 +150,45 @@ async function initializePackage() {
     });
   }
 
-  const eslintConfigSource = cliArgs.lintSource === "none" || !selectedEslint
-    ? ""
-    : cliArgs.lintSource ||
-      await select({
-        message: "How do you want to set up your eslint config?",
-        options: [
-          {
-            label: "Extend it from a workspace package",
-            value: "workspace",
-          },
-          {
-            label: "Extend it from an external package",
-            value: "external",
-          },
-          {
-            label: "Make a new one from scratch",
-            value: "new",
-          },
-        ],
-      });
+  const eslintConfigSourceType =
+    cliArgs.lintSource === "none" || !selectedEslint
+      ? ""
+      : cliArgs.lintSource ||
+        await select({
+          message: "How do you want to set up your eslint config?",
+          options: [
+            {
+              label: "Extend it from a workspace package",
+              value: "workspace",
+            },
+            {
+              label: "Extend it from an external package",
+              value: "external",
+            },
+            {
+              label: "Make a new one from scratch",
+              value: "new",
+            },
+          ],
+        });
 
-  const eslintConfigName =
-    eslintConfigSource === "workspace" || eslintConfigSource === "external"
-      ? await text({
-        message:
-          "What's the name of the config package that you want to extend?",
-        initialValue: eslintConfigSource === "workspace"
-          ? `@${projectName}/linting-config`
-          : "",
-        placeholder: eslintConfigSource === "workspace"
-          ? `@${projectName}/linting-config`
-          : "",
-      })
-      : "";
+  const eslintConfigSourceName = eslintConfigSourceType === "workspace" ||
+      eslintConfigSourceType === "external"
+    ? await text({
+      message: "What's the name of the config package that you want to extend?",
+      initialValue: eslintConfigSourceType === "workspace"
+        ? `@${projectName}/linting-config`
+        : "",
+      placeholder: eslintConfigSourceType === "workspace"
+        ? `@${projectName}/linting-config`
+        : "",
+    })
+    : "";
 
-  if (eslintConfigName) {
-    const isWorkspace = eslintConfigSource === "workspace";
+  if (eslintConfigSourceName) {
+    const isWorkspace = eslintConfigSourceType === "workspace";
     additionalPackages.push({
-      name: eslintConfigName,
+      name: eslintConfigSourceName,
       isDev: true,
       isWorkspace,
     });
@@ -202,7 +200,7 @@ async function initializePackage() {
     });
   }
 
-  const oxlintConfigType = oxlint
+  const oxlintConfigType = oxlint && !cliArgs.skipConfigs
     ? await select({
       message: "How do you want to setup the oxlint config?",
       options: [
@@ -229,25 +227,21 @@ async function initializePackage() {
 
   const oxlintExtendPath = oxlintConfigType === "extend"
     ? await text({
-      message: "What's the path for the config to extend?",
+      message: "What's the path for the oxlint config to extend?",
       initialValue: "../../.oxlintrc.json",
       placeholder: "../../.oxlintrc.json",
     })
     : "";
 
-  const installDeps = cliArgs.install ?? await confirm({
-    message:
-      `Do you want to run '${pkgManager} install' after creating the new package?`,
-    initialValue: true,
-  });
-
   const templatesDir = join(import.meta.dirname, "../templates");
 
-  const { dependencies, devDependencies, catalogEntries } =
-    await getPackagesWithLatestVersions(
+  const { dependencies, devDependencies, catalogEntries } = await tryThrow(
+    getPackagesWithLatestVersions(
       additionalPackages,
       { catalog: cliArgs.catalog },
-    );
+    ),
+    "fetching the latest versions for the package's dependencies",
+  );
 
   if (cliArgs.catalog && !objectIsEmpty(catalogEntries)) {
     const pnpmWorkspacePath = join(monorepoRoot, "pnpm-workspace.yaml");
@@ -278,8 +272,8 @@ async function initializePackage() {
     : oxlintConfigType === "root"
     ? "oxlint -c ../../.oxlintrc.json"
     : "oxlint";
-  const separator = oxlint && eslintConfigSource ? " && " : "";
-  const eslintCommand = eslintConfigSource ? "eslint" : "";
+  const separator = oxlint && eslintConfigSourceType ? " && " : "";
+  const eslintCommand = eslintConfigSourceType ? "eslint" : "";
   const lintCommand = oxlintCommand.concat(separator).concat(eslintCommand);
 
   const templatesCtx = {
@@ -288,59 +282,21 @@ async function initializePackage() {
     projectName,
     packageName,
     packageDescription,
-    eslintConfigName,
+    eslintConfigSourceName,
     lintCommand,
   };
 
-  await writeAllTemplates({
-    ctx: templatesCtx,
-    templatesDir: join(templatesDir, "new_pkg"),
-    targetDir: outputDir,
-  });
+  await tryThrow(
+    writeAllTemplates({
+      ctx: templatesCtx,
+      templatesDir: join(templatesDir, "new_pkg"),
+      targetDir: outputDir,
+    }),
+    "writing the files to the new package's root directory",
+  );
 
-  if (selectedPackages.has("vitest") && !cliArgs.skipConfigs) {
-    const vitestSetup = cliArgs.defaultConfigs ? true : await confirm({
-      message:
-        "Do you want to set up the config file and tests directory for vitest?",
-      initialValue: true,
-    });
-
-    if (vitestSetup) {
-      const testsDir = cliArgs.testsDir || cliArgs.defaultConfigs
-        ? "tests"
-        : await text({
-          message:
-            "Enter the path to the tests directory (relative to the package's root)",
-          initialValue: "tests",
-          placeholder: "tests",
-        });
-
-      await genVitestConfigCli([
-        "-d",
-        outputDir,
-        "--tests-dir",
-        testsDir,
-        "--script",
-      ]);
-    }
-  }
-
-  if (selectedPackages.has("tsdown") && !cliArgs.skipConfigs) {
-    const tsdownSetup = cliArgs.defaultConfigs ? true : await confirm({
-      message: "Do you want to generate a tsdown config file?",
-      initialValue: true,
-    });
-
-    if (tsdownSetup) {
-      await genTsdownConfigCli([
-        "-d",
-        outputDir,
-      ]);
-    }
-  }
-
-  if (eslintConfigSource) {
-    if (eslintConfigSource === "new") {
+  if (eslintConfigSourceType) {
+    if (eslintConfigSourceType === "new") {
       const oxlintArgs: string[] = [];
       if (oxlint) {
         oxlintArgs.push("-o");
@@ -362,7 +318,47 @@ async function initializePackage() {
         "-k",
         "extended",
         "-e",
-        eslintConfigName,
+        eslintConfigSourceName,
+      ]);
+    }
+  }
+
+  if (selectedPackages.has("vitest") && !cliArgs.skipConfigs) {
+    const vitestSetup = cliArgs.defaultConfigs ? true : await confirm({
+      message:
+        "Do you want to set up the config file and tests directory for vitest?",
+      initialValue: true,
+    });
+
+    if (vitestSetup) {
+      const testsDir = cliArgs.testsDir ||
+        (cliArgs.defaultConfigs ? "tests" : await text({
+          message:
+            "Enter the path to the tests directory (relative to the package's root)",
+          initialValue: "tests",
+          placeholder: "tests",
+        }));
+
+      await genVitestConfigCli([
+        "-d",
+        outputDir,
+        "--tests-dir",
+        testsDir,
+        "--script",
+      ]);
+    }
+  }
+
+  if (selectedPackages.has("tsdown") && !cliArgs.skipConfigs) {
+    const tsdownSetup = cliArgs.defaultConfigs ? true : await confirm({
+      message: "Do you want to generate a tsdown config file?",
+      initialValue: true,
+    });
+
+    if (tsdownSetup) {
+      await genTsdownConfigCli([
+        "-d",
+        outputDir,
       ]);
     }
   }
@@ -389,23 +385,28 @@ async function initializePackage() {
     const targetDir = join(outputDir, "src/lib");
     const templatePath = join(templatesDir, "modules/env_parsing.ts.j2");
     await mkdir(targetDir, { recursive: true });
-    await writeRender(templatePath, join(targetDir, "env_parsing.ts"));
+    await tryWarn(
+      writeRender(templatePath, join(targetDir, "env_parsing.ts")),
+      "writing the env parsing module",
+    );
   }
 
+  const installDeps = cliArgs.install ?? await confirm({
+    message: `Do you want to run '${pkgManager} install'?`,
+    initialValue: true,
+  });
+
   if (installDeps) {
-    const { error } = spawnSync(`${pkgManager} install`, {
-      stdio: "inherit",
-      shell: true,
-    });
-    if (error) {
-      console.warn(
-        `An error occurred with ${pkgManager}: ${error}`,
-      );
-    }
+    tryWarnChildProcess(() =>
+      spawnSync(`${pkgManager} install`, {
+        stdio: "inherit",
+        shell: true,
+        cwd: outputDir,
+      }), `installing dependencies with ${pkgManager}`);
   }
 
   outro(
-    `'${packageName}' has been successfully initialized. 🚀✅`,
+    `📦 The package '${packageName}' has been successfully initialized. 🚀✅`,
   );
 }
 

@@ -1,3 +1,4 @@
+import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   isNonEmptyArray,
@@ -33,7 +34,7 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
     .option("-s, --script", "Add vitest as the test script")
     .addOption(
       new Option(
-        "-p, --package-manager <package_manager>",
+        "-m, --package-manager <package_manager>",
         "The package manager to install tsdown with",
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
@@ -116,6 +117,7 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
         writeJsonFile(join(outputDir, "package.json"), packageJson, {
           detectIndent: true,
         }),
+        "writing the tests script to package.json",
       );
 
       // eslint-disable-next-line no-console
@@ -132,7 +134,7 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
   } else {
     const templateFile = resolve(
       import.meta.dirname,
-      "../templates/configs/vitest.config.js",
+      "../templates/configs/vitest.config.js.j2",
     );
 
     action = writeRender(templateFile, outputFile, { plugins });
@@ -146,8 +148,8 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
   if (error) {
     // eslint-disable-next-line no-console
     console.error(error);
+  } else {
+    // eslint-disable-next-line no-console
+    log.success("✅ Vitest config generated.");
   }
-
-  // eslint-disable-next-line no-console
-  console.log("✅ Vitest config generated.");
 }

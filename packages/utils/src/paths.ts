@@ -117,7 +117,10 @@ export async function getFileInfo(
     error: null,
   };
 
-  const [files, readDirError] = await tryCatch(fs.readdir(filePath));
+  const [files, readDirError] = await tryCatch(
+    fs.readdir(filePath),
+    `reading the contents of the file at ${filePath}`,
+  );
 
   if (readDirError) {
     if (isENOENTError(readDirError)) {
@@ -159,6 +162,7 @@ export async function getFileInfo(
 
   const [_, writeAccessError] = await tryCatch(
     fs.access(filePath, constants.W_OK),
+    `checking write permissions for the file at ${filePath}`,
   );
 
   if (!writeAccessError) {
@@ -344,6 +348,7 @@ export async function promptIfFileExists(path: string) {
         `deleting ${path}`,
       );
       if (error) {
+        // eslint-disable-next-line no-console
         console.error(error);
         process.exit(1);
       } else {

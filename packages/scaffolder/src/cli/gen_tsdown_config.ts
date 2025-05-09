@@ -1,3 +1,4 @@
+import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   isNonEmptyArray,
@@ -30,7 +31,7 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
     .option("-i, --install", "Install tsdown and the selected plugins")
     .addOption(
       new Option(
-        "-p, --package-manager <package_manager>",
+        "-m, --package-manager <package_manager>",
         "The package manager to install tsdown with",
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
@@ -49,6 +50,7 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
   if (outputDir !== process.cwd()) {
     await mkdir(outputDir, { recursive: true });
   }
+
   const outputFile = join(outputDir, "tsdown.config.js");
 
   await promptIfFileExists(outputFile);
@@ -88,7 +90,7 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
   } else {
     const templateFile = resolve(
       import.meta.dirname,
-      "../templates/configs/tsdown.config.js",
+      "../templates/configs/tsdown.config.js.j2",
     );
 
     action = writeRender(templateFile, outputFile, { plugins });
@@ -102,8 +104,8 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
   if (error) {
     // eslint-disable-next-line no-console
     console.error(error);
+  } else {
+    // eslint-disable-next-line no-console
+    log.success("✅ Tsdown config generated.");
   }
-
-  // eslint-disable-next-line no-console
-  console.log("✅ Tsdown config generated.");
 }

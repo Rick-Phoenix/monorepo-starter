@@ -1,3 +1,4 @@
+import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   isNonEmptyArray,
@@ -97,8 +98,8 @@ export async function genOxlintConfigCli(injectedArgs?: string[]) {
   if (error) {
     // eslint-disable-next-line no-console
     console.error(error);
+  } else {
+    // eslint-disable-next-line no-console
+    log.success("✅ Oxlint config generated.");
   }
-
-  // eslint-disable-next-line no-console
-  console.log("✅ Oxlint config generated.");
 }
