@@ -49,6 +49,7 @@ export function initRepoCli() {
       "--no-catalog",
       "Do not use the pnpm catalog for key packages (not recommended)",
     )
+    .option("--moon", "Add a full moonrepo config")
     .parse(process.argv)
     .showHelpAfterError();
 

@@ -4,7 +4,6 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "newpkg": "moon run scripts:create_package",
     "lint-staged": "pnpm -r lint-staged",
     "lint": "pnpm -r lint"
   },

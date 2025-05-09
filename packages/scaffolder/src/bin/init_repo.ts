@@ -18,6 +18,7 @@ import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
 import { genOxlintConfigCli } from "../cli/gen_oxlint_config.js";
+import { genMoonConfig } from "../cli/init_moon.js";
 import { initRepoCli } from "../cli/init_repo_cli.js";
 import {
   getLintPackageDeps,
@@ -189,6 +190,13 @@ await tryThrow(
   }),
   "writing the files at the new monorepo's root",
 );
+
+if (cliArgs.moon) {
+  await genMoonConfig([
+    "-d",
+    installPath,
+  ]);
+}
 
 if (oxlint) {
   await genOxlintConfigCli([

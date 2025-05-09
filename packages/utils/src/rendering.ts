@@ -4,12 +4,12 @@ import {
   tryThrow,
   tryThrowSync,
 } from "@monorepo-starter/utils";
+import FastGlob from "fast-glob";
+import console from "node:console";
 import { readFileSync, writeFileSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import nunjucks from "nunjucks";
-
-nunjucks.configure({ autoescape: false, trimBlocks: true, lstripBlocks: true });
 
 export function writeRenderSync(
   templatePath: string,
@@ -21,7 +21,6 @@ export function writeRenderSync(
   const renderedText = nunjucks.renderString(rawTemplate, ctx);
 
   if (!renderedText.length) {
-    // eslint-disable-next-line no-console
     console.warn("⚠️ The output of the render was empty ⚠️");
   }
 
@@ -31,17 +30,22 @@ export function writeRenderSync(
   );
 }
 
-export async function writeRender(
+export async function writeRenderString(
   templatePath: string,
   targetPath: string,
   ctx: { [key: string]: unknown } = {},
 ) {
   const rawTemplate = await readFile(templatePath, "utf8");
 
+  nunjucks.configure({
+    autoescape: false,
+    trimBlocks: true,
+    lstripBlocks: true,
+  });
+
   const renderedText = nunjucks.renderString(rawTemplate, ctx);
 
   if (!renderedText.length) {
-    // eslint-disable-next-line no-console
     console.warn("⚠️ The output of the render was empty ⚠️");
   }
 
@@ -51,11 +55,11 @@ export async function writeRender(
   );
 }
 
-type WriteRendersInDirOptions = {
+interface WriteRendersInDirOptions {
   templatesDir: string;
   targetDir: string;
   ctx?: { [key: string]: unknown };
-};
+}
 
 export async function writeAllTemplates(options: WriteRendersInDirOptions) {
   const dirContent = await readdir(options.templatesDir);
@@ -67,7 +71,7 @@ export async function writeAllTemplates(options: WriteRendersInDirOptions) {
       const templateFile = absolutePath;
       const outputFilename = contentRelPath.replace(/.j2$/, "");
       const targetPath = join(options.targetDir, outputFilename);
-      await writeRender(templateFile, targetPath, options.ctx);
+      await writeRenderString(templateFile, targetPath, options.ctx);
     } else if (isDirectory) {
       const dir = absolutePath;
       await writeAllTemplates({
@@ -78,5 +82,50 @@ export async function writeAllTemplates(options: WriteRendersInDirOptions) {
     } else {
       throwErr(`${contentRelPath} is not a valid file or directory.`);
     }
+  }
+}
+
+interface RecursiveRenderOptions {
+  templatesDir: string;
+  templatesRoot?: string;
+  outputDir: string;
+  ctx?: { [key: string]: unknown };
+  retainStructure?: boolean;
+}
+
+export async function recursiveRender(options: RecursiveRenderOptions) {
+  const nj = nunjucks.configure(options.templatesRoot || options.templatesDir, {
+    trimBlocks: true,
+    lstripBlocks: true,
+  });
+  const retainStructure = options.retainStructure ?? true;
+  const files = await FastGlob("**/*.j2", {
+    onlyFiles: true,
+    cwd: options.templatesRoot
+      ? join(options.templatesRoot, options.templatesDir)
+      : options.templatesDir,
+  });
+
+  const dirsToCreate = new Set<string>();
+  const { outputDir, templatesRoot, templatesDir } = options;
+
+  for (const file of files) {
+    const outputFilename = !retainStructure
+      ? basename(file).replace(/\.j2$/, "")
+      : file.replace(/\.j2$/, "");
+    const targetDir = !retainStructure
+      ? outputDir
+      : join(outputDir, dirname(file));
+
+    if (!dirsToCreate.has(targetDir)) {
+      dirsToCreate.add(targetDir);
+      await mkdir(targetDir, { recursive: true });
+    }
+
+    const templateLocation = templatesRoot ? join(templatesDir, file) : file;
+
+    const renderedText = nj.render(templateLocation, options.ctx);
+
+    await writeFile(join(outputDir, outputFilename), renderedText);
   }
 }
