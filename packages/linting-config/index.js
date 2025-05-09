@@ -68,6 +68,11 @@ function createEslintConfig(options, ...overrides) {
     eslintConfigPrettier,
     ...oxlint.configs["flat/recommended"],
     ...oxlint.buildFromOxlintConfigFile("../../.oxlintrc.json"),
+    {
+      rules: {
+        "no-console": "error",
+      },
+    },
   );
 }
 

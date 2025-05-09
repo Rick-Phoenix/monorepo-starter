@@ -1,5 +1,3 @@
-/* eslint-disable ts/strict-boolean-expressions */
-
 import { log } from "@clack/prompts";
 import type { SpawnSyncReturns } from "node:child_process";
 
@@ -23,7 +21,6 @@ export async function tryWarn<T>(
         `An error occurred while ${description}\n ${processedError.message}`;
     }
     Error.captureStackTrace(processedError, tryCatch);
-    // eslint-disable-next-line no-console
     console.warn(processedError);
   }
 }
@@ -37,7 +34,6 @@ export function tryWarnChildProcess(
   const { error } = process();
 
   if (error) {
-    // eslint-disable-next-line no-console
     log.warn(
       `⚠️ Non-fatal error occurred while ${description}${
         logError ? `:\n${error}` : ""

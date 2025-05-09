@@ -67,7 +67,7 @@
     "no-alert": "error",
     "no-array-constructor": "error",
     "no-case-declarations": "error",
-    "no-console": "warn",
+    "no-console": "off",
     "no-empty": [
       "error",
       {
@@ -240,30 +240,9 @@
       }
     },
     {
-      "files": ["**/scripts/**/*.?([cm])[jt]s?(x)"],
-      "rules": {
-        "no-console": "off"
-      }
-    },
-    {
-      "files": ["**/cli/**/*.?([cm])[jt]s?(x)", "**/cli.?([cm])[jt]s?(x)"],
-      "rules": {
-        "no-console": "off"
-      }
-    },
-    {
       "files": ["**/*.d.?([cm])ts"],
       "rules": {
         "import/no-duplicates": "off"
-      }
-    },
-    {
-      "files": [
-        "**/*.config.?([cm])[jt]s?(x)",
-        "**/*.config.*.?([cm])[jt]s?(x)"
-      ],
-      "rules": {
-        "no-console": "off"
       }
     }
   ]
