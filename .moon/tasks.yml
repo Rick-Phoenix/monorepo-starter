@@ -7,6 +7,7 @@ tasks:
     inputs:
       - "src/**/*"
       - "tsconfig.json"
+      - "package.json"
     outputs:
       - "dist"
       - ".cache"
@@ -14,3 +15,11 @@ tasks:
     command: "rm -rf ./.cache && rm -rf ./.cache"
     options:
       cache: false
+  test:
+    command: "vitest run"
+    inputs:
+      - "src/**/*"
+      - "package.json"
+      - "tests/**/*"
+      - "tsconfig.json"
+      - "vitest.config.ts"

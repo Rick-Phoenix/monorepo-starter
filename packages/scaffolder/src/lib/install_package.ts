@@ -15,7 +15,7 @@ export function installPackages(
     stdio: "inherit",
   });
 
-  return !!error;
+  return !error;
 }
 
 export function getInstallPackagesCommand(

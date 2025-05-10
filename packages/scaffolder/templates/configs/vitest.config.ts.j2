@@ -12,11 +12,11 @@ export default {
   ],
   resolve: {
     alias: {
-      '@': resolve(import.meta.dirname, "../src"),
+      '@': resolve(import.meta.dirname, "{{ srcRelPath }}"),
     },
   },
 
   {% if fullSetup %}
-  test: { setupFiles: resolve(import.meta.dirname, "tests/tests.setup.ts") },
+  test: { setupFiles: resolve(import.meta.dirname, "{{ setupFileRelPath }}") },
   {% endif %}
 };

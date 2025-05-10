@@ -1,5 +1,5 @@
+import type { TextOptions } from "@clack/prompts";
 import * as p from "@clack/prompts";
-import { type TextOptions } from "@clack/prompts";
 
 export async function text(options: TextOptions, exitMessage?: string) {
   const prompt = await p.text(options);
@@ -49,4 +49,14 @@ export async function multiselect<T>(
   }
 
   return prompt;
+}
+
+export async function confirmOrQuit(message: string, initialValue: boolean) {
+  const confirmation = await confirm({ message, initialValue });
+
+  if (!confirmation) {
+    p.cancel("Operation canceled.");
+    process.exit(0);
+  }
+  return true;
 }

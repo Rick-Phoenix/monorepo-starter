@@ -1,6 +1,7 @@
 import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
+  confirm,
   promptIfFileExists,
   recursiveRender,
   showWarning,
@@ -10,7 +11,7 @@ import {
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { readPackage } from "read-pkg";
 import { writeJsonFile } from "write-json-file";
 import { installPackages, packageManagers } from "../lib/install_package.js";
@@ -42,11 +43,13 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     )
     .option(
       "--tests-dir [test_dir]",
-      "Create a directory for tests at the specified path (relative to --dir, defaults to ./tests)",
+      "Create a directory for tests at the specified path (relative to cwd, defaults to ./tests)",
     )
-    .option(
-      "--full",
-      "Create a full setup, including a tests directory and a setup file",
+    .addOption(
+      new Option(
+        "--full",
+        "Create a full setup, including a tests directory and a setup file",
+      ),
     )
     .showHelpAfterError();
 
@@ -62,14 +65,16 @@ export async function genVitestConfig(injectedArgs?: string[]) {
   const args = program.opts();
 
   if (args.testsDir === true || args.full) {
-    args.testsDir = "tests";
+    if (typeof args.testsDir !== "string") args.testsDir = "tests";
   }
 
   const outputDir = resolve(args.dir || process.cwd());
+  const configFileInRoot = outputDir === process.cwd();
+  const outputFile = join(outputDir, "vitest.config.ts");
 
   let isOk: boolean | undefined;
 
-  if (outputDir !== process.cwd()) {
+  if (!configFileInRoot) {
     isOk = await tryAction(
       mkdir(outputDir, { recursive: true }),
       `creating ${outputDir}`,
@@ -77,7 +82,12 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     );
   }
 
-  const outputFile = join(outputDir, "vitest.config.ts");
+  const setupFileRelPath = relative(
+    outputDir,
+    resolve(args.testsDir || "", "tests.setup.ts"),
+  );
+
+  const srcRelPath = relative(outputDir, "src");
 
   await promptIfFileExists(outputFile);
 
@@ -109,7 +119,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
 
   if (args.testsDir) {
     isOk = await tryAction(
-      mkdir(join(outputDir, args.testsDir), { recursive: true }),
+      mkdir(args.testsDir, { recursive: true }),
       "creating the tests directory",
       { fatal },
     );
@@ -117,7 +127,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     if (args.full) {
       isOk = await tryAction(
         recursiveRender({
-          outputDir: join(outputDir, args.testsDir),
+          outputDir: args.testsDir,
           templatesDir: resolve(import.meta.dirname, "../templates/tests"),
           overwrite: false,
         }),
@@ -129,26 +139,41 @@ export async function genVitestConfig(injectedArgs?: string[]) {
 
   if (args.script) {
     const [packageJson, error] = await tryCatch(
-      readPackage({ normalize: false, cwd: outputDir }),
+      readPackage({ normalize: false }),
     );
     if (error) {
       isOk = false;
       showWarning(error, "reading the package.json file", true);
     } else {
       packageJson.scripts = packageJson.scripts || {};
+
+      const testCmd = !configFileInRoot
+        ? `vitest --config ${outputFile} run`
+        : "vitest run";
+
+      let canWriteScript = true;
+
       if (packageJson.scripts.test) {
-        packageJson.___test = "vitest run";
+        canWriteScript = await confirm({
+          message:
+            "You already have a test script, do you want to override it?",
+          initialValue: false,
+        });
       } else {
-        packageJson.scripts.test = "vitest run";
+        packageJson.scripts.test = testCmd;
       }
 
-      isOk = await tryAction(
-        writeJsonFile(join(outputDir, "package.json"), packageJson, {
-          detectIndent: true,
-        }),
-        "writing the tests script to package.json",
-        { fatal },
-      );
+      if (canWriteScript) {
+        isOk = await tryAction(
+          writeJsonFile("package.json", packageJson, {
+            detectIndent: true,
+          }),
+          "writing the tests script to package.json",
+          { fatal },
+        );
+      } else {
+        log.info("Skipped writing the tests script.");
+      }
     }
   }
 
@@ -167,7 +192,12 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     action = writeRender({
       templateFile,
       outputDir,
-      ctx: { plugins, fullSetup: args.full },
+      ctx: {
+        plugins,
+        fullSetup: args.full,
+        setupFileRelPath,
+        srcRelPath,
+      },
     });
   }
 

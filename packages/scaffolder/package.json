@@ -59,9 +59,11 @@
     "@types/nunjucks": "^3.2.6",
     "eslint": "^9.23.0",
     "lint-staged": "^12.3.2",
+    "memfs": "^4.17.1",
     "oxlint": "catalog:",
     "rollup-plugin-copy": "^3.5.0",
     "tsdown": "0.11.0-beta.4",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^3.1.3"
   }
 }
