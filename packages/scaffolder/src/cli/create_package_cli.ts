@@ -62,7 +62,7 @@ export function createPackageCli() {
       new Option(
         "-m, --package-manager <package_manager>",
         "The package manager to use in the installation",
-      ).choices(packageManagers).default("pnpm").implies({ install: true }),
+      ).choices(packageManagers).implies({ install: true }),
     )
     .parse(process.argv)
     .showHelpAfterError();

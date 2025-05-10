@@ -116,19 +116,9 @@ const hookActions = hooksOptions.length
   })
   : [];
 
-const lintConfig = cliArgs.lint ?? await select({
+const lintConfig = cliArgs.lint ?? await confirm({
   message: "Do you want to add an internal linting config package?",
-  options: [{
-    value: "opinionated",
-    label: "Yes, with opinionated defaults",
-  }, {
-    value: "minimal-extensible",
-    label: "Yes, with minimal defaults",
-  }, {
-    value: "",
-    label: "No, thank you.",
-  }],
-  initialValue: "opinionated",
+  initialValue: true,
 });
 
 const oxlint = cliArgs.oxlint ?? await select({
@@ -189,6 +179,7 @@ const templatesCtx = {
   lintConfigName,
   lintCommand,
   packageJsonWorkspaces: packageManager !== "pnpm",
+  packageManager,
 };
 
 await tryThrow(
@@ -255,7 +246,7 @@ if (lintConfig) {
     "-d",
     targetDir,
     "--kind",
-    lintConfig,
+    "base",
   ];
 
   if (!oxlint) args.push("--no-oxlint");

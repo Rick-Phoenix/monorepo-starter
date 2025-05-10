@@ -30,13 +30,14 @@ import { genOxlintConfig } from "../cli/gen_oxlint_config.js";
 import { genScriptsSetup } from "../cli/gen_scripts.js";
 import { genTsdownConfig } from "../cli/gen_tsdown_config.js";
 import { genVitestConfig } from "../cli/gen_vitest_config.js";
+import { packageManagers } from "../lib/install_package.js";
 import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
   presetPackages,
 } from "../lib/packages_list.js";
 
-const { packageManager, ...cliArgs } = createPackageCli();
+const cliArgs = createPackageCli();
 
 const monorepoRoot = process.cwd();
 
@@ -64,6 +65,15 @@ async function initializePackage() {
 
       return undefined;
     },
+  });
+
+  const packageManager = cliArgs.packageManager || await select({
+    message: "What is your package manager?",
+    options: packageManagers.map((pm) => ({
+      label: pm,
+      value: pm,
+    })),
+    initialValue: "pnpm",
   });
 
   const outputDir = resolve(monorepoRoot, cliArgs.dir, packageName);
@@ -326,7 +336,7 @@ async function initializePackage() {
         "-d",
         outputDir,
         "-k",
-        "minimal",
+        "base",
         ...oxlintArgs,
       ]);
     } else {

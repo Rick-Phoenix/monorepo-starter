@@ -1,5 +1,6 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { packageManagers } from "../lib/install_package.js";
+import { eslintConfigChoices } from "./gen_eslint_config.js";
 
 export function initRepoCli() {
   const program = new Command()
@@ -15,10 +16,10 @@ export function initRepoCli() {
     )
     .addOption(
       new Option(
-        "-l, --lint <type>",
-        "The type of linting config package to setup",
+        "-l, --lint",
+        "Create a local package for linting configuration",
       )
-        .choices(["minimal", "opinionated", ""]).default("minimal"),
+        .choices(eslintConfigChoices).default("base"),
     )
     .addOption(
       new Option(
@@ -42,13 +43,13 @@ export function initRepoCli() {
       "Do not install dependencies at the end of the script",
     )
     .option("--no-git", "Do not create a new git repo")
-    .option(
+    .addOption(new Option(
       "-c, --catalog",
       "Use the pnpm catalog to pin versions for key packages (recommended)",
-    )
+    ).implies({ packageManager: "pnpm" }))
     .addOption(
       new Option(
-        "-m, --package-manager",
+        "-m, --package-manager <package_manager>",
         "The package manager to use for installing dependencies",
       ).choices(packageManagers),
     )

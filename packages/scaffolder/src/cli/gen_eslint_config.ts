@@ -10,6 +10,12 @@ import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
+export const eslintConfigChoices = [
+  "base",
+  "extended",
+  "from-url",
+] as const;
+
 export async function genEslintConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
@@ -22,11 +28,7 @@ export async function genEslintConfig(injectedArgs?: string[]) {
     )
     .addOption(
       new Option("-k, --kind <kind>", "The kind of config file to generate")
-        .choices([
-          "base",
-          "extended",
-          "from-url",
-        ])
+        .choices(eslintConfigChoices)
         .default("base"),
     )
     .addOption(
