@@ -1,30 +1,66 @@
 import { log } from "@clack/prompts";
 import type { SpawnSyncReturns } from "node:child_process";
-import { error } from "node:console";
 
 // eslint-disable no-redeclare
 type Success<T> = [T, null];
 type Failure<E> = [null, E];
 type Result<T, E = Error> = Success<T> | Failure<E>;
 
+export function showWarning(
+  error: Error,
+  description?: string,
+  full?: boolean,
+) {
+  //
+  Error.captureStackTrace(error, showWarning);
+  const descriptionText = description ? ` while ${description}` : "";
+  error.message =
+    `⚠️ A non-fatal error occurred${descriptionText}:\n${error.message}}`;
+  if (full) {
+    console.warn(error);
+  } else {
+    log.warn(
+      error.message,
+    );
+  }
+}
+
 export async function tryWarn<T>(
   action: Promise<T>,
   description: string,
+  opts?: { fullError?: boolean },
 ) {
-  try {
-    await action;
-  } catch (rawError: unknown) {
-    const processedError = rawError instanceof Error
-      ? rawError
-      : new Error(String(rawError));
-    if (description) {
-      processedError.message =
-        `An error occurred while ${description}\n ${processedError.message}`;
+  const [_, error] = await tryCatch(action);
+
+  if (error) {
+    Error.captureStackTrace(error, tryWarn);
+    showWarning(error, description, opts?.fullError);
+  }
+}
+
+interface TryActionOptions {
+  fatal?: boolean;
+  fullError?: boolean;
+}
+
+export async function tryAction(
+  action: Promise<unknown>,
+  description: string,
+  opts: TryActionOptions,
+) {
+  const [_, error] = await tryCatch(action);
+
+  if (error) {
+    Error.captureStackTrace(error, tryAction);
+    if (opts.fatal) {
+      error.message =
+        `❌ A fatal error occurred while ${description}:\n${error.message}`;
+      throw error;
+    } else {
+      showWarning(error, description, opts.fullError);
     }
-    Error.captureStackTrace(processedError, tryWarn);
-    log.warn(
-      `⚠️ Non-fatal error occurred while ${description}:\n${error}`,
-    );
+  } else {
+    return true;
   }
 }
 
@@ -37,11 +73,8 @@ export function tryWarnChildProcess(
   const { error } = process();
 
   if (error) {
-    log.warn(
-      `⚠️ Non-fatal error occurred while ${description}${
-        logError ? `:\n${error}` : ""
-      }`,
-    );
+    Error.captureStackTrace(error, tryWarnChildProcess);
+    showWarning(error, description, logError);
   } else {
     return true;
   }
@@ -56,7 +89,7 @@ export function tryWarnChildProcess(
  */
 export async function tryCatch<T>(
   action: Promise<T>,
-  description: string,
+  description?: string,
 ): Promise<Result<T, Error>> {
   try {
     const result = await action;
@@ -67,7 +100,7 @@ export async function tryCatch<T>(
       : new Error(String(rawError));
     if (description) {
       processedError.message =
-        `An error occurred while ${description}\n ${processedError.message}`;
+        `❌ An error occurred while ${description}:\n${processedError.message}`;
     }
     Error.captureStackTrace(processedError, tryCatch);
     return [null, processedError];
@@ -83,7 +116,7 @@ export async function tryCatch<T>(
  */
 export function tryCatchSync<T>(
   action: () => T,
-  description: string,
+  description?: string,
 ): Result<T, Error> {
   try {
     const result = action();
@@ -94,7 +127,7 @@ export function tryCatchSync<T>(
       : new Error(String(rawError));
     if (description) {
       processedError.message =
-        `An error occurred while ${description}\n ${processedError.message}`;
+        `❌ An error occurred while ${description}:\n${processedError.message}`;
     }
     Error.captureStackTrace(processedError, tryCatchSync);
     return [null, processedError];
@@ -236,9 +269,11 @@ export function tryCatchPipelineSync<
 
   for (const [action, description] of procedures) {
     const resultTuple = tryCatchSync(action, description);
+    if (resultTuple[1]) {
+      Error.captureStackTrace(resultTuple[1], tryCatchPipelineSync);
+    }
     results.push(resultTuple);
   }
-
   return results as SyncTryCatchPipelineResults<P>;
 }
 
@@ -266,16 +301,27 @@ export async function tryCatchPipeline<
   for (const [action, description] of procedures) {
     // oxlint-disable-next-line no-await-in-loop
     const resultTuple = await tryCatch(action, description);
+    if (resultTuple[1]) {
+      Error.captureStackTrace(resultTuple[1], tryCatchPipelineSync);
+    }
     results.push(resultTuple);
   }
 
   return results as AsyncTryCatchPipelineResults<P>;
 }
 
-export function handleUnknownError(error: unknown) {
-  const unknownError = new Error(String(error));
+export function handleUnknownError(
+  error: unknown,
+  description?: string,
+  rethrow?: boolean,
+) {
+  const descriptionText = description ? ` while ${description}` : "";
+  const unknownError = error instanceof Error ? error : new Error(
+    `❓ Unknown error${descriptionText}:\n${error}`,
+  );
   Error.captureStackTrace(unknownError, handleUnknownError);
-  return unknownError;
+  if (rethrow) throw unknownError;
+  else return unknownError;
 }
 
 export function newErr(message: string) {

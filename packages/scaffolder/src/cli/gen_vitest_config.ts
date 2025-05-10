@@ -130,11 +130,10 @@ export async function genVitestConfig(injectedArgs?: string[]) {
   if (args.script) {
     const [packageJson, error] = await tryCatch(
       readPackage({ normalize: false, cwd: outputDir }),
-      "reading the package.json file",
     );
     if (error) {
       isOk = false;
-      showWarning(error, true);
+      showWarning(error, "reading the package.json file", true);
     } else {
       packageJson.scripts = packageJson.scripts || {};
       if (packageJson.scripts.test) {
