@@ -1,6 +1,6 @@
 import { getLatestVersionRange } from "@monorepo-starter/utils";
 
-type Package = {
+interface Package {
   name: string;
   isDev?: boolean;
   catalog?: boolean;
@@ -8,7 +8,7 @@ type Package = {
   label?: string;
   preSelected?: boolean;
   presets?: readonly string[];
-};
+}
 
 export const optionalRootPackages: Package[] = [
   {
@@ -82,11 +82,11 @@ export const generalOptionalPackages = packages.concat(
   optionalRootPackages.filter((p) => p.name !== "husky"),
 );
 
-type PackageJsonDependencies = {
+interface PackageJsonDependencies {
   dependencies: Record<string, string>;
   devDependencies: Record<string, string>;
   catalogEntries: Record<string, string>;
-};
+}
 
 export async function getPackagesWithLatestVersions(
   packages: Package[],
@@ -133,31 +133,34 @@ export async function getLintPackageDeps(
   options: { oxlint?: boolean; catalog?: boolean },
 ) {
   const depsList = [
-    "@antfu/eslint-config",
     "@eslint/config-inspector",
     "eslint-plugin-svelte",
     "eslint-config-prettier",
-    "typescript-eslint",
-    "lint-staged",
     "eslint-flat-config-utils",
   ];
 
   const catalogDeps = [
     "eslint",
+    "@antfu/eslint-config",
+    "typescript-eslint",
+    "lint-staged",
   ];
 
   if (options.oxlint) catalogDeps.push("eslint-plugin-oxlint", "oxlint");
 
   depsList.push(...catalogDeps);
 
-  const deps: Record<string, string> = {};
+  const lintConfigDeps: Record<string, string> = {};
+  const lintCatalogEntries: Record<string, string> = {};
 
   for (const dep of depsList) {
-    if (options.catalog && catalogDeps.includes(dep)) deps[dep] = "catalog:";
-    else deps[dep] = await getLatestVersionRange(dep);
+    if (options.catalog && catalogDeps.includes(dep)) {
+      lintConfigDeps[dep] = "catalog:";
+      lintCatalogEntries[dep] = await getLatestVersionRange(dep);
+    } else lintConfigDeps[dep] = await getLatestVersionRange(dep);
   }
 
-  return deps;
+  return { lintConfigDeps, lintCatalogEntries };
 }
 
 export const presetPackages = [

@@ -168,7 +168,6 @@ const templatesCtx = {
   catalog: cliArgs.catalog,
   dependencies,
   devDependencies,
-  catalogEntries,
   projectName,
   oxlint,
   hooks: {
@@ -190,17 +189,6 @@ await tryThrow(
   }),
   "writing the files at the new monorepo's root",
 );
-
-if (packageManager === "pnpm") {
-  await tryThrow(
-    writeRender({
-      templateFile: join(templatesDir, "configs/pnpm-workspace.yaml.j2"),
-      outputDir: installPath,
-      ctx: { catalog: cliArgs.catalog, catalogEntries },
-    }),
-    "writing the pnpm-workspace file",
-  );
-}
 
 if (cliArgs.moon) {
   await genMoonConfig([
@@ -227,14 +215,22 @@ if (lintConfig) {
     "creating the lint config package's directory",
   );
 
+  const { lintConfigDeps, lintCatalogEntries } = await getLintPackageDeps({
+    oxlint: !!oxlint,
+    catalog: cliArgs.catalog,
+  });
+
+  if (cliArgs.catalog) {
+    for (const [dep, version] of Object.entries(lintCatalogEntries)) {
+      catalogEntries[dep] = version;
+    }
+  }
+
   await tryThrow(
     recursiveRender({
       ctx: {
         ...templatesCtx,
-        lintConfigDeps: await getLintPackageDeps({
-          oxlint: !!oxlint,
-          catalog: cliArgs.catalog,
-        }),
+        lintConfigDeps,
       },
       outputDir: targetDir,
       templatesDir: lintPkgTemplatesDir,
@@ -252,6 +248,17 @@ if (lintConfig) {
   if (!oxlint) args.push("--no-oxlint");
 
   await genEslintConfig(args);
+}
+
+if (packageManager === "pnpm") {
+  await tryThrow(
+    writeRender({
+      templateFile: join(templatesDir, "configs/pnpm-workspace.yaml.j2"),
+      outputDir: installPath,
+      ctx: { catalog: cliArgs.catalog, catalogEntries },
+    }),
+    "writing the pnpm-workspace file",
+  );
 }
 
 if (hookActions.length) {
