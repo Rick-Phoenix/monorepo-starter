@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { genTsdownConfigCli } from "../cli/gen_tsdown_config.js";
+import { genTsdownConfig } from "../cli/gen_tsdown_config.js";
 
-await genTsdownConfigCli();
+await genTsdownConfig();

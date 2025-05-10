@@ -25,11 +25,11 @@ import { join, resolve } from "node:path";
 import { readPackage } from "read-pkg";
 import YAML from "yaml";
 import { createPackageCli } from "../cli/create_package_cli.js";
-import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
-import { genOxlintConfigCli } from "../cli/gen_oxlint_config.js";
+import { genEslintConfig } from "../cli/gen_eslint_config.js";
+import { genOxlintConfig } from "../cli/gen_oxlint_config.js";
 import { genScriptsSetup } from "../cli/gen_scripts.js";
-import { genTsdownConfigCli } from "../cli/gen_tsdown_config.js";
-import { genVitestConfigCli } from "../cli/gen_vitest_config.js";
+import { genTsdownConfig } from "../cli/gen_tsdown_config.js";
+import { genVitestConfig } from "../cli/gen_vitest_config.js";
 import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
@@ -250,20 +250,17 @@ async function initializePackage() {
       catalog?: Record<string, string>;
     };
 
-    if (content.catalog) {
-      for (const [name, version] of Object.entries(catalogEntries)) {
-        if (!content.catalog[name]) {
-          content.catalog[name] = version;
-        }
-      }
-    } else {
-      content.catalog = {};
-      for (const [name, version] of Object.entries(catalogEntries)) {
+    content.catalog = content.catalog || {};
+    for (const [name, version] of Object.entries(catalogEntries)) {
+      if (!content.catalog[name]) {
         content.catalog[name] = version;
       }
     }
 
-    await writeFile(pnpmWorkspacePath, YAML.stringify(content));
+    await tryWarn(
+      writeFile(pnpmWorkspacePath, YAML.stringify(content)),
+      "writing the pnpm-workspace file",
+    );
   }
 
   const oxlintCommand = !oxlint
@@ -313,7 +310,7 @@ async function initializePackage() {
       });
     }
 
-    await tryWarn(genScriptsSetup(flags), "performing the scripts setup");
+    await genScriptsSetup(flags);
   }
 
   if (eslintConfigSourceType) {
@@ -325,7 +322,7 @@ async function initializePackage() {
           oxlintArgs.push("--oxlint-config", "./.oxlintrc.json");
         }
       }
-      await genEslintConfigCli([
+      await genEslintConfig([
         "-d",
         outputDir,
         "-k",
@@ -333,7 +330,7 @@ async function initializePackage() {
         ...oxlintArgs,
       ]);
     } else {
-      await genEslintConfigCli([
+      await genEslintConfig([
         "-d",
         outputDir,
         "-k",
@@ -361,7 +358,7 @@ async function initializePackage() {
           placeholder: "tests",
         }));
 
-      await genVitestConfigCli([
+      await genVitestConfig([
         "-d",
         outputDir,
         "--tests-dir",
@@ -378,7 +375,7 @@ async function initializePackage() {
     });
 
     if (tsdownSetup) {
-      await genTsdownConfigCli([
+      await genTsdownConfig([
         "-d",
         outputDir,
       ]);
@@ -400,16 +397,19 @@ async function initializePackage() {
       ];
     }
 
-    await genOxlintConfigCli(["-d", outputDir, ...extraArgs]);
+    await genOxlintConfig(["-d", outputDir, ...extraArgs]);
   }
 
   if (includeEnvParsingModule === true) {
     const targetDir = join(outputDir, "src/lib");
-    const templatePath = join(templatesDir, "modules/env_parsing.ts.j2");
-    await mkdir(targetDir, { recursive: true });
+    const templateFile = join(templatesDir, "modules/env.ts.j2");
+    await tryWarn(
+      mkdir(targetDir, { recursive: true }),
+      "creating the src/lib directory",
+    );
     await tryWarn(
       writeRenderV2(
-        { outputDir: targetDir, templateFile: templatePath },
+        { outputDir: targetDir, templateFile },
       ),
       "writing the env parsing module",
     );
@@ -430,7 +430,7 @@ async function initializePackage() {
   }
 
   outro(
-    `📦 The package '${packageName}' has been successfully initialized. 🚀✅`,
+    `📦 The package '${packageName}' has been successfully initialized. ✅`,
   );
 }
 

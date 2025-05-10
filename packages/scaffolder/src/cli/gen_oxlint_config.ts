@@ -1,9 +1,8 @@
 import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
-  isNonEmptyArray,
   promptIfFileExists,
-  tryCatch,
+  tryAction,
   writeRenderV2,
 } from "@monorepo-starter/utils";
 import download from "download";
@@ -11,7 +10,7 @@ import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
-export async function genOxlintConfigCli(injectedArgs?: string[]) {
+export async function genOxlintConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-e, --extend <extended_config>",
@@ -48,7 +47,10 @@ export async function genOxlintConfigCli(injectedArgs?: string[]) {
     )
     .showHelpAfterError();
 
-  if (isNonEmptyArray(injectedArgs)) {
+  const isRunningAsCli = !injectedArgs;
+  const fatal = isRunningAsCli;
+
+  if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
@@ -68,7 +70,11 @@ export async function genOxlintConfigCli(injectedArgs?: string[]) {
   const outputDir = resolve(args.dir || process.cwd());
 
   if (outputDir !== process.cwd()) {
-    await mkdir(outputDir, { recursive: true });
+    await tryAction(
+      mkdir(outputDir, { recursive: true }),
+      `creating ${outputDir}`,
+      { fatal: true },
+    );
   }
 
   const outputFile = join(outputDir, ".oxlintrc.json");
@@ -92,16 +98,9 @@ export async function genOxlintConfigCli(injectedArgs?: string[]) {
     );
   }
 
-  const [_, error] = await tryCatch(
-    action,
-    "generating the oxlint config file",
-  );
+  const isOk = await tryAction(action, "generating the oxlint config file", {
+    fatal,
+  });
 
-  if (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-  } else {
-    // eslint-disable-next-line no-console
-    log.success("✅ Oxlint config generated.");
-  }
+  if (isOk) log.success("✅ Oxlint config generated.");
 }

@@ -1,8 +1,10 @@
 import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
-  isNonEmptyArray,
   promptIfFileExists,
+  recursiveRender,
+  showWarning,
+  tryAction,
   tryCatch,
   writeRenderV2,
 } from "@monorepo-starter/utils";
@@ -17,7 +19,7 @@ const pluginPresets = [
   { name: "", packageName: "" },
 ];
 
-export async function genVitestConfigCli(injectedArgs?: string[]) {
+export async function genVitestConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-d, --dir <directory>",
@@ -39,12 +41,19 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
     .option(
-      "--tests-dir <test_dir>",
-      "Create a directory for tests",
+      "--tests-dir [test_dir]",
+      "Create a directory for tests at the specified path (relative to --dir, defaults to ./tests)",
+    )
+    .option(
+      "--full",
+      "Create a full setup, including a tests directory and a setup file",
     )
     .showHelpAfterError();
 
-  if (isNonEmptyArray(injectedArgs)) {
+  const isRunningAsCli = !injectedArgs;
+  const fatal = isRunningAsCli;
+
+  if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
@@ -52,10 +61,20 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
 
   const args = program.opts();
 
+  if (args.testsDir === true || args.full) {
+    args.testsDir = "tests";
+  }
+
   const outputDir = resolve(args.dir || process.cwd());
 
+  let isOk: boolean | undefined;
+
   if (outputDir !== process.cwd()) {
-    await mkdir(outputDir, { recursive: true });
+    isOk = await tryAction(
+      mkdir(outputDir, { recursive: true }),
+      `creating ${outputDir}`,
+      { fatal },
+    );
   }
 
   const outputFile = join(outputDir, "vitest.config.ts");
@@ -79,7 +98,7 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
   const packageNames = plugins.map((p) => p.packageName);
 
   if (args.install) {
-    const isOk = installPackages(
+    isOk = installPackages(
       ["vitest", ...packageNames],
       args.packageManager,
       true,
@@ -89,11 +108,23 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
   }
 
   if (args.testsDir) {
-    const [_, error] = await tryCatch(
+    isOk = await tryAction(
       mkdir(join(outputDir, args.testsDir), { recursive: true }),
       "creating the tests directory",
+      { fatal },
     );
-    if (error) console.warn(error);
+
+    if (args.full) {
+      isOk = await tryAction(
+        recursiveRender({
+          outputDir: join(outputDir, args.testsDir),
+          templatesDir: resolve(import.meta.dirname, "../templates/tests"),
+          overwrite: false,
+        }),
+        "writing the files to the tests folder",
+        { fatal },
+      );
+    }
   }
 
   if (args.script) {
@@ -102,7 +133,8 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
       "reading the package.json file",
     );
     if (error) {
-      console.warn(error);
+      isOk = false;
+      showWarning(error, true);
     } else {
       packageJson.scripts = packageJson.scripts || {};
       if (packageJson.scripts.test) {
@@ -111,14 +143,13 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
         packageJson.scripts.test = "vitest run";
       }
 
-      const [_, writeErr] = await tryCatch(
+      isOk = await tryAction(
         writeJsonFile(join(outputDir, "package.json"), packageJson, {
           detectIndent: true,
         }),
         "writing the tests script to package.json",
+        { fatal },
       );
-
-      if (writeErr) console.warn(writeErr);
     }
   }
 
@@ -134,17 +165,18 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
       "../templates/configs/vitest.config.ts.j2",
     );
 
-    action = writeRenderV2({ templateFile, outputDir, ctx: { plugins } });
+    action = writeRenderV2({
+      templateFile,
+      outputDir,
+      ctx: { plugins, fullSetup: args.full },
+    });
   }
 
-  const [_, error] = await tryCatch(
+  isOk = await tryAction(
     action,
     "generating the vitest config file",
+    { fatal },
   );
 
-  if (error) {
-    console.error(error);
-  } else {
-    log.success("✅ Vitest config generated.");
-  }
+  if (isOk) log.success("✅ Vitest config generated.");
 }

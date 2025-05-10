@@ -1,4 +1,5 @@
 import { Command, Option } from "@commander-js/extra-typings";
+import { packageManagers } from "../lib/install_package.js";
 
 export function initRepoCli() {
   const program = new Command()
@@ -45,15 +46,21 @@ export function initRepoCli() {
       "-c, --catalog",
       "Use the pnpm catalog to pin versions for key packages (recommended)",
     )
-    .option(
-      "--no-catalog",
-      "Do not use the pnpm catalog for key packages (not recommended)",
+    .addOption(
+      new Option(
+        "-m, --package-manager",
+        "The package manager to use for installing dependencies",
+      ).choices(packageManagers),
     )
     .option("--moon", "Add a full moonrepo config")
     .parse(process.argv)
     .showHelpAfterError();
 
   const options = program.opts();
+
+  if (options.catalog && options.packageManager !== "pnpm") {
+    program.error("The 'catalog' option is only available with pnpm.");
+  }
 
   return options;
 }

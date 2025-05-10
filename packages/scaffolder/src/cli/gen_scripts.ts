@@ -2,7 +2,7 @@ import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   promptIfFileExists,
-  tryThrow,
+  tryAction,
   writeRenderV2,
 } from "@monorepo-starter/utils";
 import { mkdir } from "node:fs/promises";
@@ -31,7 +31,10 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
     )
     .showHelpAfterError();
 
-  if (injectedArgs) {
+  const isRunningAsCli = !injectedArgs;
+  const fatal = isRunningAsCli;
+
+  if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
@@ -41,7 +44,13 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
 
   const outputDir = resolve(args.dir);
 
-  await mkdir(outputDir, { recursive: true });
+  let isOk: boolean | undefined;
+
+  isOk = await tryAction(
+    mkdir(outputDir, { recursive: true }),
+    "creating the scripts directory",
+    { fatal },
+  );
 
   if (args.preset) {
     for (const preset of args.preset) {
@@ -51,9 +60,10 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
         `../templates/scripts/${outputFile}.j2`,
       );
       await promptIfFileExists(join(outputDir, outputFile));
-      await tryThrow(
+      isOk = await tryAction(
         writeRenderV2({ templateFile, outputDir }),
         `writing the ${outputFile} to ${outputDir}`,
+        { fatal },
       );
     }
 
@@ -69,7 +79,7 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
         tasks[p] = true;
       });
 
-      await tryThrow(
+      isOk = await tryAction(
         writeRenderV2({
           outputDir,
           nunjucksRoot,
@@ -77,9 +87,10 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
           ctx: { tasks },
         }),
         `writing the ${outputFile} to ${outputDir}`,
+        { fatal },
       );
     }
   }
 
-  log.success("✅ Scripts setup completed");
+  if (isOk) log.success("✅ Scripts setup completed");
 }

@@ -2,11 +2,9 @@ import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   isDir,
-  isNonEmptyArray,
   promptIfFileExists,
   recursiveRender,
-  tryCatch,
-  tryThrow,
+  tryAction,
 } from "@monorepo-starter/utils";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -41,7 +39,10 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     )
     .showHelpAfterError();
 
-  if (isNonEmptyArray(injectedArgs)) {
+  const isRunningAsCli = !injectedArgs;
+  const fatal = isRunningAsCli;
+
+  if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
@@ -49,8 +50,10 @@ export async function genMoonConfig(injectedArgs?: string[]) {
 
   const args = program.opts();
 
+  let isOk: boolean | undefined;
+
   if (args.install) {
-    const isOk = installPackages("@moonrepo/cli", args.packageManager, true);
+    isOk = installPackages("@moonrepo/cli", args.packageManager, true);
     if (!isOk) log.warn("Could not install moonrepo as a package.");
   }
 
@@ -64,9 +67,10 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     }
   }
 
-  await tryThrow(
+  isOk = await tryAction(
     mkdir(outputDir, { recursive: true }),
     "creating the .moon folder",
+    { fatal },
   );
 
   const tasks: Record<string, boolean> = {};
@@ -75,7 +79,7 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     tasks[task] = true;
   }
 
-  const [_, error] = await tryCatch(
+  isOk = await tryAction(
     recursiveRender({
       templatesRoot: join(import.meta.dirname, "../templates/moon"),
       outputDir,
@@ -85,11 +89,8 @@ export async function genMoonConfig(injectedArgs?: string[]) {
       },
     }),
     "generating the files within .moon",
+    { fatal },
   );
 
-  if (error) {
-    console.error(error);
-  } else {
-    log.success("✅ Moon setup completed.");
-  }
+  if (isOk) log.success("✅ Moon setup completed.");
 }

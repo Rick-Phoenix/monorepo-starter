@@ -2,6 +2,7 @@
 import {{ plugin.name }} from "{{ plugin.packageName }}";
 {% endfor %}
 import { defineConfig } from "vitest";
+import { resolve } from "node:path"
 
 export default {
   plugins: [
@@ -11,7 +12,11 @@ export default {
   ],
   resolve: {
     alias: {
-      '@': '/src',
+      '@': resolve(import.meta.dirname, "../src"),
     },
   },
+
+  {% if fullSetup %}
+  test: { setupFiles: resolve(import.meta.dirname, "tests/tests.setup.ts") },
+  {% endif %}
 };

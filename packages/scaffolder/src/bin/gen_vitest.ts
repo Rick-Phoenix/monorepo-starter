@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { genVitestConfigCli } from "../cli/gen_vitest_config.js";
+import { genVitestConfig } from "../cli/gen_vitest_config.js";
 
-await genVitestConfigCli();
+await genVitestConfig();

@@ -12,14 +12,16 @@ import {
   tryWarn,
   tryWarnChildProcess,
   writeAllTemplates,
+  writeRenderV2,
 } from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
-import { genOxlintConfigCli } from "../cli/gen_oxlint_config.js";
+import { genEslintConfig } from "../cli/gen_eslint_config.js";
+import { genOxlintConfig } from "../cli/gen_oxlint_config.js";
 import { genMoonConfig } from "../cli/init_moon.js";
 import { initRepoCli } from "../cli/init_repo_cli.js";
+import { packageManagers } from "../lib/install_package.js";
 import {
   getLintPackageDeps,
   getPackagesWithLatestVersions,
@@ -27,9 +29,6 @@ import {
 } from "../lib/packages_list.js";
 
 const res = resolve;
-
-// Hardcoded for now
-const pkgManager = "pnpm";
 
 const cliArgs = initRepoCli();
 
@@ -45,6 +44,15 @@ const chosenLocation = cliArgs.directory || await text({
   message: "Where do you want to create the new monorepo?",
   defaultValue: projectName,
   placeholder: projectName,
+});
+
+const packageManager = cliArgs.packageManager || await select({
+  message: "What is your package manager?",
+  options: packageManagers.map((pm) => ({
+    label: pm,
+    value: pm,
+  })),
+  initialValue: "pnpm",
 });
 
 const installPath = res(process.cwd(), chosenLocation);
@@ -180,6 +188,7 @@ const templatesCtx = {
   lintConfig,
   lintConfigName,
   lintCommand,
+  packageJsonWorkspaces: packageManager !== "pnpm",
 };
 
 await tryThrow(
@@ -191,6 +200,17 @@ await tryThrow(
   "writing the files at the new monorepo's root",
 );
 
+if (packageManager === "pnpm") {
+  await tryThrow(
+    writeRenderV2({
+      templateFile: join(templatesDir, "configs/pnpm-workspace.yaml.j2"),
+      outputDir: installPath,
+      ctx: { catalog: cliArgs.catalog, catalogEntries },
+    }),
+    "writing the pnpm-workspace file",
+  );
+}
+
 if (cliArgs.moon) {
   await genMoonConfig([
     "-d",
@@ -199,7 +219,7 @@ if (cliArgs.moon) {
 }
 
 if (oxlint) {
-  await genOxlintConfigCli([
+  await genOxlintConfig([
     "--no-extend",
     "-d",
     installPath,
@@ -240,7 +260,7 @@ if (lintConfig) {
 
   if (!oxlint) args.push("--no-oxlint");
 
-  await genEslintConfigCli(args);
+  await genEslintConfig(args);
 }
 
 if (hookActions.length) {
@@ -255,17 +275,17 @@ if (hookActions.length) {
 }
 
 const installDeps = cliArgs.install ?? await confirm({
-  message: `Do you want to run '${pkgManager} install'?`,
+  message: `Do you want to run '${packageManager} install'?`,
   initialValue: false,
 });
 
 const installOk = installDeps
   ? tryWarnChildProcess(() =>
-    spawnSync(`${pkgManager} install`, {
+    spawnSync(`${packageManager} install`, {
       shell: true,
       stdio: "inherit",
       cwd: installPath,
-    }), `installing dependencies with ${pkgManager}`)
+    }), `installing dependencies with ${packageManager}`)
   : false;
 
 const gitInit = cliArgs.git ?? await confirm({
@@ -282,8 +302,11 @@ if (gitInit) {
     }), "creating a new git repo");
 
   if (hookActions.length && installOk) {
+    const execCmd = packageManager === "bun"
+      ? "bunx"
+      : `${packageManager} exec`;
     tryWarnChildProcess(() =>
-      spawnSync("pnpm exec husky", {
+      spawnSync(`${execCmd} husky`, {
         shell: true,
         stdio: "inherit",
         cwd: installPath,

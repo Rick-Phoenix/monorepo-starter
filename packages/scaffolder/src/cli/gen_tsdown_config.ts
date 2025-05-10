@@ -1,9 +1,8 @@
 import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
-  isNonEmptyArray,
   promptIfFileExists,
-  tryCatch,
+  tryAction,
   writeRenderV2,
 } from "@monorepo-starter/utils";
 import download from "download";
@@ -15,7 +14,7 @@ const pluginPresets = [
   { name: "copy", packageName: "rollup-plugin-copy" },
 ];
 
-export async function genTsdownConfigCli(injectedArgs?: string[]) {
+export async function genTsdownConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-d, --dir <directory>",
@@ -37,7 +36,10 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
     )
     .showHelpAfterError();
 
-  if (isNonEmptyArray(injectedArgs)) {
+  const isRunningAsCli = !injectedArgs;
+  const fatal = isRunningAsCli;
+
+  if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
@@ -48,7 +50,11 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
   const outputDir = resolve(args.dir || process.cwd());
 
   if (outputDir !== process.cwd()) {
-    await mkdir(outputDir, { recursive: true });
+    await tryAction(
+      mkdir(outputDir, { recursive: true }),
+      `creating ${outputDir}`,
+      { fatal },
+    );
   }
 
   const outputFile = join(outputDir, "tsdown.config.ts");
@@ -71,8 +77,10 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
 
   const packageNames = plugins.map((p) => p.packageName);
 
+  let isOk: boolean | undefined;
+
   if (args.install) {
-    const isOk = installPackages(
+    isOk = installPackages(
       ["tsdown", ...packageNames],
       args.packageManager,
       true,
@@ -96,14 +104,11 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
     action = writeRenderV2({ templateFile, outputDir, ctx: { plugins } });
   }
 
-  const [_, error] = await tryCatch(
-    action,
-    "generating the tsdown config file",
-  );
+  isOk = await tryAction(action, "generating the tsdown config file", {
+    fatal,
+  });
 
-  if (error) {
-    console.error(error);
-  } else {
+  if (isOk) {
     log.success("✅ Tsdown config generated.");
   }
 }

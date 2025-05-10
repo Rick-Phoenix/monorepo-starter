@@ -1,9 +1,8 @@
 import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
-  isNonEmptyArray,
   promptIfFileExists,
-  tryCatch,
+  tryAction,
   writeRenderV2,
 } from "@monorepo-starter/utils";
 import download from "download";
@@ -11,7 +10,7 @@ import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
-export async function genEslintConfigCli(injectedArgs?: string[]) {
+export async function genEslintConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-e, --extend <extended_config>",
@@ -65,7 +64,10 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
     .addOption(new Option("-p, --plugin <plugin...>"))
     .showHelpAfterError();
 
-  if (isNonEmptyArray(injectedArgs)) {
+  const isRunningAsCli = !injectedArgs;
+  const fatal = isRunningAsCli;
+
+  if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });
   } else {
     program.parse();
@@ -75,8 +77,13 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
   const outputDir = resolve(args.dir || process.cwd());
 
   if (outputDir !== process.cwd()) {
-    await mkdir(outputDir, { recursive: true });
+    await tryAction(
+      mkdir(outputDir, { recursive: true }),
+      `creating the the directory ${outputDir}`,
+      { fatal: true },
+    );
   }
+
   const outputFile = join(outputDir, "eslint.config.js");
 
   await promptIfFileExists(outputFile);
@@ -101,7 +108,10 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
       true,
     );
 
-    if (!isOk) process.exit(1);
+    if (!isOk) {
+      console.error("An error occurred while installing the packages.");
+      process.exit(1);
+    }
   }
 
   let action: Promise<unknown>;
@@ -139,14 +149,9 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
     });
   }
 
-  const [_, error] = await tryCatch(
-    action,
-    "generating the eslint config file",
-  );
+  const isOk = await tryAction(action, "generating the eslint config file", {
+    fatal,
+  });
 
-  if (error) {
-    console.error(error);
-  } else {
-    log.success("✅ Eslint config generated");
-  }
+  if (isOk) log.success("✅ Eslint config generated");
 }

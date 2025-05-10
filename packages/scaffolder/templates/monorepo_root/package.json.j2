@@ -3,6 +3,12 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
+  {% if packageJsonWorkspaces %}
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+  {% endif %}
   "scripts": {
     "lint-staged": "pnpm -r lint-staged",
     "lint": "pnpm -r lint"
