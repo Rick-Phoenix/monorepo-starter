@@ -1,6 +1,6 @@
 // @ts-check
 
-{% if kind === 'extended' or kind === 'svelte-extended' %}
+{% if kind === 'extended' %}
 import { createEslintConfig } from '{{ extend }}' 
 {% else %}
 import { antfu } from "@antfu/eslint-config";
@@ -14,22 +14,24 @@ import oxlint from "eslint-plugin-oxlint";
 
 /**
  * Creates an ESLint configuration.
- * @param {import('@antfu/eslint-config').OptionsConfig} options - The options specific to antfu's config function.
+ * @param {import('@antfu/eslint-config').OptionsConfig & { ignores?: string[] }} [ options ] - The options specific to antfu's config function.
  * @param {...import('@antfu/eslint-config').TypedFlatConfigItem} overrides - Additional override configurations. Each argument is a TypedFlatConfigItem.
  * @returns {import('eslint-flat-config-utils').FlatConfigComposer} An instance of FlatConfigComposer.
  */
 {% if kind === 'extended' %}
-export default createEslintConfig()
-{% elif kind === 'minimal' %}
-export default antfu()
-{%- elif kind === 'minimal-extensible' -%}
-export function createEslintConfig(options, ...overrides) {
-  return antfu({...options}, ...overrides)
-}
-
-export default createEslintConfig()
-{%- elif kind === 'opinionated' -%}
-
+export default createEslintConfig({
+{% if svelte %}
+  svelte: true,
+{% endif %}
+{% if multiProject %}
+  typescript: {
+    parserOptions: {
+      project: ["./tsconfig.json", "{{  secondTsconfig | default("./tsconfig.spec.json") }}"],
+    },
+  },
+{% endif %}
+})
+{% else %}
 function createEslintConfig(options, ...overrides) {
   return antfu(
     {
@@ -102,15 +104,8 @@ function createEslintConfig(options, ...overrides) {
   );
 }
 
-export default createEslintConfig()
-
-export { createEslintConfig };
-{% elif kind === 'svelte-extended' %}
 export default createEslintConfig({
-  svelte: true
-})
-{% elif kind === 'svelte-base' %}
-export default antfu({
-  svelte: true
+  typescript: {}
 })
 {% endif %}
+

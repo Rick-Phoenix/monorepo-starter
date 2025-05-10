@@ -4,7 +4,7 @@ import {
   isNonEmptyArray,
   promptIfFileExists,
   tryCatch,
-  writeRender,
+  writeRenderV2,
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
@@ -58,7 +58,7 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
     await mkdir(outputDir, { recursive: true });
   }
 
-  const outputFile = join(outputDir, "vitest.config.js");
+  const outputFile = join(outputDir, "vitest.config.ts");
 
   await promptIfFileExists(outputFile);
 
@@ -93,7 +93,6 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
       mkdir(join(outputDir, args.testsDir), { recursive: true }),
       "creating the tests directory",
     );
-    // eslint-disable-next-line no-console
     if (error) console.warn(error);
   }
 
@@ -103,7 +102,6 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
       "reading the package.json file",
     );
     if (error) {
-      // eslint-disable-next-line no-console
       console.warn(error);
     } else {
       packageJson.scripts = packageJson.scripts || {};
@@ -120,7 +118,6 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
         "writing the tests script to package.json",
       );
 
-      // eslint-disable-next-line no-console
       if (writeErr) console.warn(writeErr);
     }
   }
@@ -129,15 +126,15 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
 
   if (args.url) {
     action = download(args.url, outputDir, {
-      filename: "vitest.config.js",
+      filename: "vitest.config.ts",
     });
   } else {
     const templateFile = resolve(
       import.meta.dirname,
-      "../templates/configs/vitest.config.js.j2",
+      "../templates/configs/vitest.config.ts.j2",
     );
 
-    action = writeRender(templateFile, outputFile, { plugins });
+    action = writeRenderV2({ templateFile, outputDir, ctx: { plugins } });
   }
 
   const [_, error] = await tryCatch(
@@ -146,10 +143,8 @@ export async function genVitestConfigCli(injectedArgs?: string[]) {
   );
 
   if (error) {
-    // eslint-disable-next-line no-console
     console.error(error);
   } else {
-    // eslint-disable-next-line no-console
     log.success("✅ Vitest config generated.");
   }
 }

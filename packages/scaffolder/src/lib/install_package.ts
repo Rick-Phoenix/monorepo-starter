@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-export const packageManagers = ["pnpm", "yarn", "npm", "bun"] as const;
+export const packageManagers = ["pnpm", "bun"] as const;
 export type PackageManager = typeof packageManagers[number];
 
 export function installPackages(

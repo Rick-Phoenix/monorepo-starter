@@ -1,5 +1,6 @@
 import { log } from "@clack/prompts";
 import type { SpawnSyncReturns } from "node:child_process";
+import { error } from "node:console";
 
 // eslint-disable no-redeclare
 type Success<T> = [T, null];
@@ -20,8 +21,10 @@ export async function tryWarn<T>(
       processedError.message =
         `An error occurred while ${description}\n ${processedError.message}`;
     }
-    Error.captureStackTrace(processedError, tryCatch);
-    console.warn(processedError);
+    Error.captureStackTrace(processedError, tryWarn);
+    log.warn(
+      `⚠️ Non-fatal error occurred while ${description}:\n${error}`,
+    );
   }
 }
 

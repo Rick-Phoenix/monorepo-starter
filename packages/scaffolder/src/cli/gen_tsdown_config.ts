@@ -4,7 +4,7 @@ import {
   isNonEmptyArray,
   promptIfFileExists,
   tryCatch,
-  writeRender,
+  writeRenderV2,
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
@@ -51,7 +51,7 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
     await mkdir(outputDir, { recursive: true });
   }
 
-  const outputFile = join(outputDir, "tsdown.config.js");
+  const outputFile = join(outputDir, "tsdown.config.ts");
 
   await promptIfFileExists(outputFile);
 
@@ -85,15 +85,15 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
 
   if (args.url) {
     action = download(args.url, outputDir, {
-      filename: "tsdown.config.js",
+      filename: "tsdown.config.ts",
     });
   } else {
     const templateFile = resolve(
       import.meta.dirname,
-      "../templates/configs/tsdown.config.js.j2",
+      "../templates/configs/tsdown.config.ts.j2",
     );
 
-    action = writeRender(templateFile, outputFile, { plugins });
+    action = writeRenderV2({ templateFile, outputDir, ctx: { plugins } });
   }
 
   const [_, error] = await tryCatch(
@@ -102,10 +102,8 @@ export async function genTsdownConfigCli(injectedArgs?: string[]) {
   );
 
   if (error) {
-    // eslint-disable-next-line no-console
     console.error(error);
   } else {
-    // eslint-disable-next-line no-console
     log.success("✅ Tsdown config generated.");
   }
 }

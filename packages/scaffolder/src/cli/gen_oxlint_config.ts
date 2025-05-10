@@ -4,7 +4,7 @@ import {
   isNonEmptyArray,
   promptIfFileExists,
   tryCatch,
-  writeRender,
+  writeRenderV2,
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
@@ -87,7 +87,9 @@ export async function genOxlintConfigCli(injectedArgs?: string[]) {
       "../templates/configs/.oxlintrc.json.j2",
     );
     const { extend, kind } = args;
-    action = writeRender(templateFile, outputFile, { extend, kind });
+    action = writeRenderV2(
+      { templateFile, outputDir, ctx: { extend, kind } },
+    );
   }
 
   const [_, error] = await tryCatch(

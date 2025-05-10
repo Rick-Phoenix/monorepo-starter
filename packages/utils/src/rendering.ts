@@ -11,6 +11,11 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import nunjucks from "nunjucks";
 
+const nunjucksOpts = {
+  trimBlocks: true,
+  lstripBlocks: true,
+};
+
 export function writeRenderSync(
   templatePath: string,
   targetPath: string,
@@ -94,10 +99,10 @@ interface RecursiveRenderOptions {
 }
 
 export async function recursiveRender(options: RecursiveRenderOptions) {
-  const nj = nunjucks.configure(options.templatesRoot || options.templatesDir, {
-    trimBlocks: true,
-    lstripBlocks: true,
-  });
+  const nj = nunjucks.configure(
+    options.templatesRoot || options.templatesDir,
+    nunjucksOpts,
+  );
   const retainStructure = options.retainStructure ?? true;
   const files = await FastGlob("**/*.j2", {
     onlyFiles: true,
@@ -126,6 +131,37 @@ export async function recursiveRender(options: RecursiveRenderOptions) {
 
     const renderedText = nj.render(templateLocation, options.ctx);
 
-    await writeFile(join(outputDir, outputFilename), renderedText);
+    await tryThrow(
+      writeFile(join(outputDir, outputFilename), renderedText),
+      `writing the rendered template at ${outputFilename}`,
+    );
   }
+}
+
+interface WriteRenderOptions {
+  outputDir: string;
+  templateFile: string;
+  nunjucksRoot?: string;
+  ctx?: Record<string, unknown>;
+}
+
+export async function writeRenderV2(opts: WriteRenderOptions) {
+  const nj = nunjucks.configure(
+    opts.nunjucksRoot || opts.templateFile,
+    nunjucksOpts,
+  );
+
+  const { nunjucksRoot, templateFile, outputDir, ctx } = opts;
+  const filePath = nunjucksRoot
+    ? join(nunjucksRoot, templateFile)
+    : templateFile;
+
+  const outputFilename = basename(filePath).replace(/\.j2$/, "");
+
+  const renderedText = nj.render(filePath, ctx);
+
+  await tryThrow(
+    writeFile(join(outputDir, outputFilename), renderedText),
+    `writing the rendered template at ${outputFilename}`,
+  );
 }

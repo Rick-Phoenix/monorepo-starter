@@ -1,5 +1,7 @@
 import { Command, Option } from "@commander-js/extra-typings";
+import { packageManagers } from "../lib/install_package.js";
 import { packagesPresetChoices } from "../lib/packages_list.js";
+import { scriptsPresets } from "./gen_scripts.js";
 
 export function createPackageCli() {
   const program = new Command()
@@ -47,10 +49,29 @@ export function createPackageCli() {
       "-a, --add <package...>",
       "Extra packages to include as dependencies",
     )
+    .addOption(new Option("-s, --scripts [scripts...]").choices(scriptsPresets))
+    .option(
+      "--multi-project",
+      "Add a separate tsconfig file for files outside of src",
+    )
+    .option(
+      "--moon",
+      "Include a moon.yml file (with tasks for the scripts, if any are selected)",
+    )
+    .addOption(
+      new Option(
+        "-m, --package-manager <package_manager>",
+        "The package manager to use in the installation",
+      ).choices(packageManagers).default("pnpm").implies({ install: true }),
+    )
     .parse(process.argv)
     .showHelpAfterError();
 
   const options = program.opts();
+
+  if (options.catalog && options.packageManager !== "pnpm") {
+    program.error("The 'catalog' option is only available with pnpm.");
+  }
 
   return options;
 }

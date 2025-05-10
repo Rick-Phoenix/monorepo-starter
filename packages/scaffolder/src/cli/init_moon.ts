@@ -12,7 +12,7 @@ import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
-const tasksList = ["test", "build", "clean"];
+export const moonTaskPresets = ["test", "build", "clean"];
 
 export async function genMoonConfig(injectedArgs?: string[]) {
   const program = new Command()
@@ -25,7 +25,7 @@ export async function genMoonConfig(injectedArgs?: string[]) {
       new Option(
         "-t, --task <task...>",
         "A list of global tasks to add to .moon/tasks.yml",
-      ).choices(tasksList).default(tasksList),
+      ).choices(moonTaskPresets).default(moonTaskPresets),
     )
     .addOption(
       new Option(

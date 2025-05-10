@@ -4,7 +4,7 @@ import {
   isNonEmptyArray,
   promptIfFileExists,
   tryCatch,
-  writeRender,
+  writeRenderV2,
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
@@ -24,21 +24,28 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
     .addOption(
       new Option("-k, --kind <kind>", "The kind of config file to generate")
         .choices([
-          "minimal",
-          "minimal-extensible",
-          "opinionated",
+          "base",
           "extended",
-          "svelte-extended",
-          "svelte-base",
           "from-url",
         ])
-        .default("opinionated"),
+        .default("base"),
     )
     .addOption(
       new Option(
         "--oxlint-config <config_path>",
         "The path to the oxlint config to use with eslint-plugin-oxlint",
       ).default("../../.oxlintrc.json").implies({ oxlint: true }),
+    )
+    .addOption(
+      new Option("--multi-project", "Use multiple tsconfig files").implies({
+        kind: "extended",
+      }),
+    )
+    .addOption(
+      new Option(
+        "--second-tsconfig <tsconfig_name>",
+        "The name of the second tsconfig file to include in the projects array",
+      ).default("tsconfig.spec.json"),
     )
     .option("-o, --oxlint", "Include eslint-plugin-oxlint")
     .option("--no-prettier", "Do not include eslint-config-prettier")
@@ -80,10 +87,16 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
       plugins.push("eslint-plugin-oxlint");
     } else if (args.prettier) {
       plugins.push("eslint-config-prettier");
+    } else if (args.kind === "base") {
+      plugins.push("@antfu/eslint-config", "eslint-flat-config-utils");
     }
 
     const isOk = installPackages(
-      ["eslint", ...plugins],
+      [
+        "eslint",
+        "@eslint/config-inspector",
+        ...plugins,
+      ],
       args.packageManager,
       true,
     );
@@ -102,13 +115,27 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
       import.meta.dirname,
       "../templates/configs/eslint.config.js.j2",
     );
-    const { extend, kind, oxlint, oxlintConfig, prettier } = args;
-    action = writeRender(templateFile, outputFile, {
+    const {
       extend,
       kind,
       oxlint,
       oxlintConfig,
       prettier,
+      multiProject,
+      secondTsconfig,
+    } = args;
+    action = writeRenderV2({
+      outputDir,
+      templateFile,
+      ctx: {
+        extend,
+        kind,
+        oxlint,
+        oxlintConfig,
+        prettier,
+        multiProject,
+        secondTsconfig,
+      },
     });
   }
 
@@ -118,10 +145,8 @@ export async function genEslintConfigCli(injectedArgs?: string[]) {
   );
 
   if (error) {
-    // eslint-disable-next-line no-console
     console.error(error);
   } else {
-    // eslint-disable-next-line no-console
     log.success("✅ Eslint config generated");
   }
 }

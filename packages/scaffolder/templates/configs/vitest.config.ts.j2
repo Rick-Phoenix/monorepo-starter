@@ -1,11 +1,8 @@
-// @ts-check
-
 {% for plugin in plugins %}
 import {{ plugin.name }} from "{{ plugin.packageName }}";
 {% endfor %}
 import { defineConfig } from "vitest";
 
-/** @type {import('vitest/config').UserConfigExport} */ 
 export default {
   plugins: [
     {% for plugin in plugins %}

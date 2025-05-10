@@ -7,6 +7,7 @@ import { cancel, intro, log, outro } from "@clack/prompts";
 import {
   assertReadableWritableFile,
   confirm,
+  isNonEmptyArray,
   multiselect,
   objectIsEmpty,
   promptIfDirNotEmpty,
@@ -16,7 +17,7 @@ import {
   tryWarn,
   tryWarnChildProcess,
   writeAllTemplates,
-  writeRender,
+  writeRenderV2,
 } from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -26,6 +27,7 @@ import YAML from "yaml";
 import { createPackageCli } from "../cli/create_package_cli.js";
 import { genEslintConfigCli } from "../cli/gen_eslint_config.js";
 import { genOxlintConfigCli } from "../cli/gen_oxlint_config.js";
+import { genScriptsSetup } from "../cli/gen_scripts.js";
 import { genTsdownConfigCli } from "../cli/gen_tsdown_config.js";
 import { genVitestConfigCli } from "../cli/gen_vitest_config.js";
 import {
@@ -34,10 +36,7 @@ import {
   presetPackages,
 } from "../lib/packages_list.js";
 
-// Hardcoded for now
-const pkgManager = "pnpm";
-
-const cliArgs = createPackageCli();
+const { packageManager, ...cliArgs } = createPackageCli();
 
 const monorepoRoot = process.cwd();
 
@@ -51,7 +50,7 @@ async function initializePackage() {
 
   const projectName: string = rootPackageJson.name ||
     await text({
-      message: "What is the name of your monorepo?",
+      message: "Enter a name for your new monorepo:",
       placeholder: "myrepo",
     });
 
@@ -295,6 +294,28 @@ async function initializePackage() {
     "writing the files to the new package's root directory",
   );
 
+  if (cliArgs.multiProject) {
+    await tryWarn(
+      writeRenderV2({
+        templateFile: join(templatesDir, "configs/tsconfig.spec.json.j2"),
+        outputDir,
+      }),
+      "writing the tsconfig.spec.json file",
+    );
+  }
+
+  if (cliArgs.scripts) {
+    const flags: string[] = [];
+    if (cliArgs.moon) flags.push("--moon");
+    if (isNonEmptyArray(cliArgs.scripts)) {
+      cliArgs.scripts.forEach((s) => {
+        flags.push("--preset", s);
+      });
+    }
+
+    await tryWarn(genScriptsSetup(flags), "performing the scripts setup");
+  }
+
   if (eslintConfigSourceType) {
     if (eslintConfigSourceType === "new") {
       const oxlintArgs: string[] = [];
@@ -319,6 +340,7 @@ async function initializePackage() {
         "extended",
         "-e",
         eslintConfigSourceName,
+        ...(cliArgs.multiProject && ["--multi-project"] || []),
       ]);
     }
   }
@@ -386,23 +408,25 @@ async function initializePackage() {
     const templatePath = join(templatesDir, "modules/env_parsing.ts.j2");
     await mkdir(targetDir, { recursive: true });
     await tryWarn(
-      writeRender(templatePath, join(targetDir, "env_parsing.ts")),
+      writeRenderV2(
+        { outputDir: targetDir, templateFile: templatePath },
+      ),
       "writing the env parsing module",
     );
   }
 
   const installDeps = cliArgs.install ?? await confirm({
-    message: `Do you want to run '${pkgManager} install'?`,
+    message: `Do you want to run '${packageManager} install'?`,
     initialValue: true,
   });
 
   if (installDeps) {
     tryWarnChildProcess(() =>
-      spawnSync(`${pkgManager} install`, {
+      spawnSync(`${packageManager} install`, {
         stdio: "inherit",
         shell: true,
         cwd: outputDir,
-      }), `installing dependencies with ${pkgManager}`);
+      }), `installing dependencies with ${packageManager}`);
   }
 
   outro(
