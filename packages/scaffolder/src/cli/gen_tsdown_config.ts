@@ -3,7 +3,7 @@ import { Command, Option } from "@commander-js/extra-typings";
 import {
   promptIfFileExists,
   tryAction,
-  writeRenderV2,
+  writeRender,
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
@@ -101,7 +101,7 @@ export async function genTsdownConfig(injectedArgs?: string[]) {
       "../templates/configs/tsdown.config.ts.j2",
     );
 
-    action = writeRenderV2({ templateFile, outputDir, ctx: { plugins } });
+    action = writeRender({ templateFile, outputDir, ctx: { plugins } });
   }
 
   isOk = await tryAction(action, "generating the tsdown config file", {

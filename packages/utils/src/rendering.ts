@@ -1,13 +1,6 @@
-import {
-  getFileInfo,
-  throwErr,
-  tryThrow,
-  tryThrowSync,
-} from "@monorepo-starter/utils";
+import { promptIfFileExists, tryThrow } from "@monorepo-starter/utils";
 import FastGlob from "fast-glob";
-import console from "node:console";
-import { readFileSync, writeFileSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import nunjucks from "nunjucks";
 
@@ -16,103 +9,31 @@ const nunjucksOpts = {
   lstripBlocks: true,
 };
 
-export function writeRenderSync(
-  templatePath: string,
-  targetPath: string,
-  ctx: { [key: string]: unknown } = {},
-) {
-  const rawTemplate = readFileSync(templatePath, "utf8");
-
-  const renderedText = nunjucks.renderString(rawTemplate, ctx);
-
-  if (!renderedText.length) {
-    console.warn("⚠️ The output of the render was empty ⚠️");
-  }
-
-  tryThrowSync(
-    () => writeFileSync(targetPath, renderedText, "utf8"),
-    `writing the render at ${templatePath} to ${targetPath}`,
-  );
-}
-
-export async function writeRenderString(
-  templatePath: string,
-  targetPath: string,
-  ctx: { [key: string]: unknown } = {},
-) {
-  const rawTemplate = await readFile(templatePath, "utf8");
-
-  nunjucks.configure({
-    autoescape: false,
-    trimBlocks: true,
-    lstripBlocks: true,
-  });
-
-  const renderedText = nunjucks.renderString(rawTemplate, ctx);
-
-  if (!renderedText.length) {
-    console.warn("⚠️ The output of the render was empty ⚠️");
-  }
-
-  await tryThrow(
-    writeFile(targetPath, renderedText, "utf8"),
-    `writing the render at ${templatePath} to ${targetPath}`,
-  );
-}
-
-interface WriteRendersInDirOptions {
-  templatesDir: string;
-  targetDir: string;
-  ctx?: { [key: string]: unknown };
-}
-
-export async function writeAllTemplates(options: WriteRendersInDirOptions) {
-  const dirContent = await readdir(options.templatesDir);
-  await mkdir(options.targetDir, { recursive: true });
-  for (const contentRelPath of dirContent) {
-    const absolutePath = join(options.templatesDir, contentRelPath);
-    const { isFile, isDirectory } = await getFileInfo(absolutePath);
-    if (isFile) {
-      const templateFile = absolutePath;
-      const outputFilename = contentRelPath.replace(/.j2$/, "");
-      const targetPath = join(options.targetDir, outputFilename);
-      await writeRenderString(templateFile, targetPath, options.ctx);
-    } else if (isDirectory) {
-      const dir = absolutePath;
-      await writeAllTemplates({
-        ctx: options.ctx,
-        templatesDir: dir,
-        targetDir: join(options.targetDir, contentRelPath),
-      });
-    } else {
-      throwErr(`${contentRelPath} is not a valid file or directory.`);
-    }
-  }
-}
-
 interface RecursiveRenderOptions {
   templatesDir: string;
-  templatesRoot?: string;
+  nunjucksRoot?: string;
   outputDir: string;
   ctx?: { [key: string]: unknown };
   retainStructure?: boolean;
+  overwrite?: boolean;
 }
 
 export async function recursiveRender(options: RecursiveRenderOptions) {
   const nj = nunjucks.configure(
-    options.templatesRoot || options.templatesDir,
+    options.nunjucksRoot || options.templatesDir,
     nunjucksOpts,
   );
   const retainStructure = options.retainStructure ?? true;
+  const overwrite = options.overwrite ?? true;
   const files = await FastGlob("**/*.j2", {
     onlyFiles: true,
-    cwd: options.templatesRoot
-      ? join(options.templatesRoot, options.templatesDir)
+    cwd: options.nunjucksRoot
+      ? join(options.nunjucksRoot, options.templatesDir)
       : options.templatesDir,
   });
 
   const dirsToCreate = new Set<string>();
-  const { outputDir, templatesRoot, templatesDir } = options;
+  const { outputDir, nunjucksRoot, templatesDir } = options;
 
   for (const file of files) {
     const outputFilename = !retainStructure
@@ -127,12 +48,14 @@ export async function recursiveRender(options: RecursiveRenderOptions) {
       await mkdir(targetDir, { recursive: true });
     }
 
-    const templateLocation = templatesRoot ? join(templatesDir, file) : file;
+    const templateLocation = nunjucksRoot ? join(templatesDir, file) : file;
 
     const renderedText = nj.render(templateLocation, options.ctx);
 
+    const outputPath = join(outputDir, outputFilename);
+    if (!overwrite) await promptIfFileExists(outputPath);
     await tryThrow(
-      writeFile(join(outputDir, outputFilename), renderedText),
+      writeFile(outputPath, renderedText),
       `writing the rendered template at ${outputFilename}`,
     );
   }
@@ -143,13 +66,16 @@ interface WriteRenderOptions {
   templateFile: string;
   nunjucksRoot?: string;
   ctx?: Record<string, unknown>;
+  overwrite?: boolean;
 }
 
-export async function writeRenderV2(opts: WriteRenderOptions) {
+export async function writeRender(opts: WriteRenderOptions) {
   const nj = nunjucks.configure(
     opts.nunjucksRoot || opts.templateFile,
     nunjucksOpts,
   );
+
+  const overwrite = opts.overwrite ?? true;
 
   const { nunjucksRoot, templateFile, outputDir, ctx } = opts;
   const filePath = nunjucksRoot
@@ -160,8 +86,12 @@ export async function writeRenderV2(opts: WriteRenderOptions) {
 
   const renderedText = nj.render(filePath, ctx);
 
+  const outputPath = join(outputDir, outputFilename);
+
+  if (!overwrite) await promptIfFileExists(outputPath);
+
   await tryThrow(
-    writeFile(join(outputDir, outputFilename), renderedText),
+    writeFile(outputPath, renderedText),
     `writing the rendered template at ${outputFilename}`,
   );
 }

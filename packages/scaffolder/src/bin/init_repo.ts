@@ -6,13 +6,13 @@ import {
   confirm,
   multiselect,
   promptIfDirNotEmpty,
+  recursiveRender,
   select,
   text,
   tryThrow,
   tryWarn,
   tryWarnChildProcess,
-  writeAllTemplates,
-  writeRenderV2,
+  writeRender,
 } from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
@@ -192,17 +192,17 @@ const templatesCtx = {
 };
 
 await tryThrow(
-  writeAllTemplates({
+  recursiveRender({
     ctx: templatesCtx,
     templatesDir: join(templatesDir, "monorepo_root"),
-    targetDir: installPath,
+    outputDir: installPath,
   }),
   "writing the files at the new monorepo's root",
 );
 
 if (packageManager === "pnpm") {
   await tryThrow(
-    writeRenderV2({
+    writeRender({
       templateFile: join(templatesDir, "configs/pnpm-workspace.yaml.j2"),
       outputDir: installPath,
       ctx: { catalog: cliArgs.catalog, catalogEntries },
@@ -237,7 +237,7 @@ if (lintConfig) {
   );
 
   await tryThrow(
-    writeAllTemplates({
+    recursiveRender({
       ctx: {
         ...templatesCtx,
         lintConfigDeps: await getLintPackageDeps({
@@ -245,7 +245,7 @@ if (lintConfig) {
           catalog: cliArgs.catalog,
         }),
       },
-      targetDir,
+      outputDir: targetDir,
       templatesDir: lintPkgTemplatesDir,
     }),
     "writing the files for the lint config package",
@@ -265,9 +265,9 @@ if (lintConfig) {
 
 if (hookActions.length) {
   await tryWarn(
-    writeAllTemplates({
+    recursiveRender({
       templatesDir: join(templatesDir, "git_hooks"),
-      targetDir: join(installPath, ".husky"),
+      outputDir: join(installPath, ".husky"),
       ctx: templatesCtx,
     }),
     "creating the pre-commit hook file",

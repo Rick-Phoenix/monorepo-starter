@@ -81,7 +81,7 @@ export async function genMoonConfig(injectedArgs?: string[]) {
 
   isOk = await tryAction(
     recursiveRender({
-      templatesRoot: join(import.meta.dirname, "../templates/moon"),
+      nunjucksRoot: join(import.meta.dirname, "../templates/moon"),
       outputDir,
       templatesDir: "dot_moon",
       ctx: {

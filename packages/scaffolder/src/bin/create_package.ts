@@ -11,13 +11,13 @@ import {
   multiselect,
   objectIsEmpty,
   promptIfDirNotEmpty,
+  recursiveRender,
   select,
   text,
   tryThrow,
   tryWarn,
   tryWarnChildProcess,
-  writeAllTemplates,
-  writeRenderV2,
+  writeRender,
 } from "@monorepo-starter/utils";
 import { spawnSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -283,17 +283,17 @@ async function initializePackage() {
   };
 
   await tryThrow(
-    writeAllTemplates({
+    recursiveRender({
       ctx: templatesCtx,
       templatesDir: join(templatesDir, "new_pkg"),
-      targetDir: outputDir,
+      outputDir,
     }),
     "writing the files to the new package's root directory",
   );
 
   if (cliArgs.multiProject) {
     await tryWarn(
-      writeRenderV2({
+      writeRender({
         templateFile: join(templatesDir, "configs/tsconfig.spec.json.j2"),
         outputDir,
       }),
@@ -408,7 +408,7 @@ async function initializePackage() {
       "creating the src/lib directory",
     );
     await tryWarn(
-      writeRenderV2(
+      writeRender(
         { outputDir: targetDir, templateFile },
       ),
       "writing the env parsing module",

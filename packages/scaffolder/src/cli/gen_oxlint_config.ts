@@ -3,7 +3,7 @@ import { Command, Option } from "@commander-js/extra-typings";
 import {
   promptIfFileExists,
   tryAction,
-  writeRenderV2,
+  writeRender,
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
@@ -93,7 +93,7 @@ export async function genOxlintConfig(injectedArgs?: string[]) {
       "../templates/configs/.oxlintrc.json.j2",
     );
     const { extend, kind } = args;
-    action = writeRenderV2(
+    action = writeRender(
       { templateFile, outputDir, ctx: { extend, kind } },
     );
   }

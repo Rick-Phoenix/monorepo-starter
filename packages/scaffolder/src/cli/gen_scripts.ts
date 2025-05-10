@@ -3,7 +3,7 @@ import { Command, Option } from "@commander-js/extra-typings";
 import {
   promptIfFileExists,
   tryAction,
-  writeRenderV2,
+  writeRender,
 } from "@monorepo-starter/utils";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -61,7 +61,7 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
       );
       await promptIfFileExists(join(outputDir, outputFile));
       isOk = await tryAction(
-        writeRenderV2({ templateFile, outputDir }),
+        writeRender({ templateFile, outputDir }),
         `writing the ${outputFile} to ${outputDir}`,
         { fatal },
       );
@@ -80,7 +80,7 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
       });
 
       isOk = await tryAction(
-        writeRenderV2({
+        writeRender({
           outputDir,
           nunjucksRoot,
           templateFile,

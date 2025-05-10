@@ -348,7 +348,6 @@ export async function promptIfFileExists(path: string) {
         `deleting ${path}`,
       );
       if (error) {
-        // eslint-disable-next-line no-console
         console.error(error);
         process.exit(1);
       } else {
