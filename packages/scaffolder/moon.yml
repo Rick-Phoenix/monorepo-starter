@@ -5,7 +5,7 @@ dependsOn:
 
 workspace:
   inheritedTasks:
-    exclude: ["build"]
+    exclude: ["build", "test"]
 
 tasks:
   build:
@@ -19,3 +19,11 @@ tasks:
       - "package.json"
     outputs:
       - "dist"
+  test:
+    command: "vitest --config tests/vitest.config.ts run"
+    inputs:
+      - "src/**/*"
+      - "package.json"
+      - "tests/**/*"
+      - "tsconfig.json"
+      - "vitest.config.ts"

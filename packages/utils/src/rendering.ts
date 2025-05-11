@@ -1,13 +1,65 @@
 import { promptIfFileExists, tryThrow } from "@monorepo-starter/utils";
 import FastGlob from "fast-glob";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import nunjucks from "nunjucks";
 
 const nunjucksOpts = {
   trimBlocks: true,
   lstripBlocks: true,
 };
+
+interface NunjucksSource {
+  src: string;
+  path: string;
+  noCache?: boolean;
+}
+
+interface CustomLoaderOptions {
+  noCache?: boolean;
+  // Can potentially add extra options here
+}
+
+export class StandardFileSystemLoader {
+  private searchPaths: string[];
+  private noCache: boolean;
+
+  constructor(searchPaths: string | string[], opts?: CustomLoaderOptions) {
+    if (!searchPaths) {
+      throw new Error("FileSystemLoader: searchPaths must be specified");
+    }
+    this.searchPaths = Array.isArray(searchPaths) ? searchPaths : [searchPaths];
+    this.noCache = (opts && opts.noCache) || false;
+  }
+
+  public getSource(templateName: string): NunjucksSource | null {
+    if (!templateName) {
+      return null;
+    }
+
+    let fullPath: string | undefined;
+
+    for (const basePath of this.searchPaths) {
+      const resolvedPath = resolve(basePath, templateName);
+      if (existsSync(resolvedPath) && statSync(resolvedPath).isFile()) {
+        fullPath = resolvedPath;
+        break;
+      }
+    }
+
+    if (fullPath) {
+      const templateSource = readFileSync(fullPath, "utf-8");
+      return {
+        src: templateSource,
+        path: fullPath,
+        noCache: this.noCache,
+      };
+    }
+
+    return null;
+  }
+}
 
 interface RecursiveRenderOptions {
   templatesDir: string;
@@ -19,8 +71,12 @@ interface RecursiveRenderOptions {
 }
 
 export async function recursiveRender(options: RecursiveRenderOptions) {
-  const nj = nunjucks.configure(
+  const loader = new StandardFileSystemLoader(
     options.nunjucksRoot || options.templatesDir,
+  );
+  const nj = new nunjucks.Environment(
+    //@ts-expect-error Extra fields like on, emit and so on are not necessary
+    loader,
     nunjucksOpts,
   );
   const retainStructure = options.retainStructure ?? true;
@@ -70,8 +126,12 @@ interface WriteRenderOptions {
 }
 
 export async function writeRender(opts: WriteRenderOptions) {
-  const nj = nunjucks.configure(
+  const loader = new StandardFileSystemLoader(
     opts.nunjucksRoot || opts.templateFile,
+  );
+  const nj = new nunjucks.Environment(
+    //@ts-expect-error Extra fields like on, emit and so on are not necessary
+    loader,
     nunjucksOpts,
   );
 

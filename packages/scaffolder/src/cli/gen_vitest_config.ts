@@ -3,7 +3,6 @@ import { Command, Option } from "@commander-js/extra-typings";
 import {
   confirm,
   promptIfFileExists,
-  recursiveRender,
   showWarning,
   tryAction,
   tryCatch,
@@ -126,12 +125,15 @@ export async function genVitestConfig(injectedArgs?: string[]) {
 
     if (args.full) {
       isOk = await tryAction(
-        recursiveRender({
+        writeRender({
           outputDir: args.testsDir,
-          templatesDir: resolve(import.meta.dirname, "../templates/tests"),
+          templateFile: resolve(
+            import.meta.dirname,
+            "../templates/tests/tests.setup.ts.j2",
+          ),
           overwrite: false,
         }),
-        "writing the files to the tests folder",
+        "writing the tests.setup.ts file",
         { fatal },
       );
     }
