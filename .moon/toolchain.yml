@@ -1,15 +1,17 @@
 $schema: "https://moonrepo.dev/schemas/toolchain.json"
 
 bun:
-  syncProjectWorkspaceDependencies: false
+  syncProjectWorkspaceDependencies: true
+  inferTasksFromScripts: false
 
 node:
   packageManager: "pnpm"
+  syncProjectWorkspaceDependencies: true
   inferTasksFromScripts: false
 
 typescript:
+  createMissingConfig: false
   syncProjectReferences: true
   syncProjectReferencesToPaths: true
-  createMissingConfig: false
   includeProjectReferenceSources: false
   projectConfigFileName: "tsconfig.src.json"

@@ -313,7 +313,7 @@ async function initializePackage() {
       outputDir,
       ctx: { srcTsconfig },
       outputFilename: devTsconfig,
-      templateFile: join(tsConfigTemplatesDir, "tsconfig.dev.json"),
+      templateFile: join(tsConfigTemplatesDir, "tsconfig.dev.json.j2"),
     }),
     "writing the dev tsconfig file",
   );
@@ -322,7 +322,7 @@ async function initializePackage() {
     writeRender({
       outputDir,
       outputFilename: srcTsconfig,
-      templateFile: join(tsConfigTemplatesDir, "tsconfig.src.json"),
+      templateFile: join(tsConfigTemplatesDir, "tsconfig.src.json.j2"),
     }),
     "writing the src tsconfig file",
   );

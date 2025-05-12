@@ -3,27 +3,19 @@ $schema: "https://moonrepo.dev/schemas/project.json"
 dependsOn:
   - utils
 
-workspace:
-  inheritedTasks:
-    exclude: ["build", "test"]
+# workspace:
+#   inheritedTasks:
+#     exclude: ["build"]
 
 tasks:
   build:
     deps:
       - "^:build"
-    command: "tsdown"
+    script: "bunx tsdown"
     inputs:
       - "tsdown.config.ts"
-      - "src/**/*"
       - "templates/**/*"
-      - "package.json"
     outputs:
       - "dist"
-  test:
-    command: "vitest --config tests/vitest.config.ts run"
-    inputs:
-      - "src/**/*"
-      - "package.json"
-      - "tests/**/*"
-      - "tsconfig.json"
-      - "vitest.config.ts"
+    options:
+      mergeOutputs: replace

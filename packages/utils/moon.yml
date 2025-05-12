@@ -5,6 +5,7 @@ tasks:
     command: "bun ./scripts/barrel.ts"
     inputs:
       - "src/**/*"
+      - "scripts/barrel.ts"
     outputs:
       - "src/index.ts"
   build:

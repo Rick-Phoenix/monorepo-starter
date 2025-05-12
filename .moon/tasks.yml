@@ -1,25 +1,40 @@
 $schema: "https://moonrepo.dev/schemas/tasks.json"
 
-# Global tasks
+# ----- Global tasks ------------------------------------------------------------
 tasks:
   build:
     command: "tsc --build"
     inputs:
       - "src/**/*"
       - "tsconfig.json"
+      - "tsconfig.src.json"
       - "package.json"
+      - "/tsconfig.options.json"
     outputs:
-      - "dist"
-      - ".cache"
-  clean:
-    command: "rm -rf ./.cache && rm -rf ./.cache"
-    options:
-      cache: false
+      - ".cache/tsc"
   test:
-    command: "vitest run"
+    command: "vitest --config ./tests/vitest.config.ts run"
     inputs:
       - "src/**/*"
       - "package.json"
       - "tests/**/*"
       - "tsconfig.json"
-      - "vitest.config.ts"
+      - "tsconfig.dev.json"
+    deps:
+      - "^:build"
+  clean-cache:
+    command: "rm -rf ./.cache"
+    options:
+      cache: false
+  clean-tsc:
+    command: "rm -rf ./.cache/tsc"
+    options:
+      cache: false
+  clean-dist:
+    command: "rm -rf ./dist"
+    options:
+      cache: false
+  clean-all:
+    command: "rm -rf ./dist && rm -rf ./.cache"
+    options:
+      cache: false
