@@ -260,6 +260,7 @@ async function initializePackage() {
       catalog?: Record<string, string>;
     };
 
+    // eslint-disable-next-line ts/prefer-nullish-coalescing
     content.catalog = content.catalog || {};
     for (const [name, version] of Object.entries(catalogEntries)) {
       if (!content.catalog[name]) {
@@ -282,6 +283,8 @@ async function initializePackage() {
   const eslintCommand = eslintConfigSourceType ? "eslint" : "";
   const lintCommand = oxlintCommand.concat(separator).concat(eslintCommand);
 
+  const { rootTsconfig, devTsconfig, srcTsconfig } = cliArgs;
+
   const templatesCtx = {
     devDependencies,
     dependencies,
@@ -290,6 +293,9 @@ async function initializePackage() {
     packageDescription,
     eslintConfigSourceName,
     lintCommand,
+    rootTsconfig,
+    devTsconfig,
+    srcTsconfig,
   };
 
   await tryThrow(
@@ -299,6 +305,26 @@ async function initializePackage() {
       outputDir,
     }),
     "writing the files to the new package's root directory",
+  );
+
+  const tsConfigTemplatesDir = join(templatesDir, "configs/tsconfig");
+  await tryThrow(
+    writeRender({
+      outputDir,
+      ctx: { srcTsconfig },
+      outputFilename: devTsconfig,
+      templateFile: join(tsConfigTemplatesDir, "tsconfig.dev.json"),
+    }),
+    "writing the dev tsconfig file",
+  );
+
+  await tryThrow(
+    writeRender({
+      outputDir,
+      outputFilename: srcTsconfig,
+      templateFile: join(tsConfigTemplatesDir, "tsconfig.src.json"),
+    }),
+    "writing the src tsconfig file",
   );
 
   if (cliArgs.scripts) {

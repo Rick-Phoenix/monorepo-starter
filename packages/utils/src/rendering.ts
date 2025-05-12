@@ -124,6 +124,7 @@ interface WriteRenderOptions {
   nunjucksRoot?: string;
   ctx?: Record<string, unknown>;
   overwrite?: boolean;
+  outputFilename?: string;
 }
 
 export async function writeRender(opts: WriteRenderOptions) {
@@ -143,7 +144,8 @@ export async function writeRender(opts: WriteRenderOptions) {
     ? join(nunjucksRoot, templateFile)
     : templateFile;
 
-  const outputFilename = basename(filePath).replace(/\.j2$/, "");
+  const outputFilename = opts.outputFilename ||
+    basename(filePath).replace(/\.j2$/, "");
 
   const renderedText = nj.render(filePath, ctx);
 

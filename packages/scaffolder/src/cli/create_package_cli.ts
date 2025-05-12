@@ -60,6 +60,21 @@ export function createPackageCli() {
         "The package manager to use in the installation",
       ).choices(packageManagers).implies({ install: true }),
     )
+    .option(
+      "--root-tsconfig <tsconfig_name>",
+      "The name of the tsconfig file at the root to be extended",
+      "tsconfig.options.json",
+    )
+    .option(
+      "--src-tsconfig <name>",
+      "The name of the tsconfig file responsible for files inside src",
+      "tsconfig.src.json",
+    )
+    .option(
+      "--dev-tsconfig <name>",
+      "The name of the tsconfig file responsible for tests, scripts and config files",
+      "tsconfig.dev.json",
+    )
     .parse(process.argv)
     .showHelpAfterError();
 

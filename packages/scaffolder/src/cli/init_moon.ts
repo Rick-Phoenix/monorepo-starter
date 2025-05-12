@@ -35,7 +35,17 @@ export async function genMoonConfig(injectedArgs?: string[]) {
       new Option(
         "-p, --package-manager <package_manager>",
         "The package manager to use in the installation",
-      ).choices(packageManagers).default("pnpm").implies({ install: true }),
+      ).choices(packageManagers).default("pnpm"),
+    )
+    .option(
+      "--project-tsconfig <name>",
+      "The name of the tsconfig file at the project level",
+      "tsconfig.src.json",
+    )
+    .option(
+      "--root-options-tsconfig <name>",
+      "The name of the extensible tsconfig file at the root of the monorepo",
+      "tsconfig.options.json",
     )
     .showHelpAfterError();
 
@@ -79,6 +89,8 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     tasks[task] = true;
   }
 
+  const { rootOptionsTsconfig, projectTsconfig, packageManager } = args;
+
   isOk = await tryAction(
     recursiveRender({
       nunjucksRoot: join(import.meta.dirname, "../templates/moon"),
@@ -86,6 +98,9 @@ export async function genMoonConfig(injectedArgs?: string[]) {
       templatesDir: "dot_moon",
       ctx: {
         tasks,
+        rootOptionsTsconfig,
+        projectTsconfig,
+        packageManager,
       },
     }),
     "generating the files within .moon",

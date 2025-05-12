@@ -194,6 +194,8 @@ if (cliArgs.moon) {
   await genMoonConfig([
     "-d",
     installPath,
+    "-p",
+    packageManager,
   ]);
 }
 
