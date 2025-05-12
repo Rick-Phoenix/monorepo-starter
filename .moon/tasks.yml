@@ -11,6 +11,10 @@ fileGroups:
 # ----- Global tasks ------------------------------------------------------------
 
 tasks:
+  typecheck:
+    command: "tsc --noEmit"
+    inputs:
+      - "@group(build)"
   build:
     command: "tsc --build"
     inputs:
@@ -19,13 +23,13 @@ tasks:
       - ".cache/tsc"
 
   test:
-    command: "vitest --config ./tests/vitest.config.ts run"
+    command: "vitest --config ./tests/_vitest.config.ts run"
     inputs:
       - "@group(build)"
       - "tests/**/*"
       - "tsconfig.dev.json"
     deps:
-      - "^:build"
+      - "^:tsdown"
 
   tsdown:
     command: "tsdown"
@@ -36,6 +40,7 @@ tasks:
       - "dist"
     deps:
       - "^:build"
+      - "typecheck"
 
   pack:
     command: "pnpm pack --out '.cache/pack.tgz'"

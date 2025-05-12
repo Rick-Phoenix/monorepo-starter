@@ -19,11 +19,7 @@ import oxlint from "eslint-plugin-oxlint";
  * @returns {import('eslint-flat-config-utils').FlatConfigComposer} An instance of FlatConfigComposer.
  */
 {% if kind === 'extended' %}
-export default createEslintConfig({
-{% if svelte %}
-  svelte: true,
-{% endif %}
-})
+export default createEslintConfig({{ "{ svelte: true, }" if svelte }})
 {% else %}
 function createEslintConfig(options, ...overrides) {
   return antfu(

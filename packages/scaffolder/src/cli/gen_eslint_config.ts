@@ -37,12 +37,6 @@ export async function genEslintConfig(injectedArgs?: string[]) {
         "The path to the oxlint config to use with eslint-plugin-oxlint",
       ).default("../../.oxlintrc.json").implies({ oxlint: true }),
     )
-    .addOption(
-      new Option(
-        "--second-tsconfig <tsconfig_name>",
-        "The name of the second tsconfig file to include in the projects array",
-      ).default("tsconfig.spec.json"),
-    )
     .option("-o, --oxlint", "Include eslint-plugin-oxlint")
     .option("--no-prettier", "Do not include eslint-config-prettier")
     .addOption(
@@ -62,7 +56,7 @@ export async function genEslintConfig(injectedArgs?: string[]) {
     .showHelpAfterError();
 
   const isRunningAsCli = !injectedArgs;
-  const fatal = isRunningAsCli;
+  const fatal = process.env.NODE_ENV === "test" || isRunningAsCli;
 
   if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });
@@ -128,7 +122,6 @@ export async function genEslintConfig(injectedArgs?: string[]) {
       oxlint,
       oxlintConfig,
       prettier,
-      secondTsconfig,
     } = args;
     action = writeRender({
       outputDir,
@@ -139,7 +132,6 @@ export async function genEslintConfig(injectedArgs?: string[]) {
         oxlint,
         oxlintConfig,
         prettier,
-        secondTsconfig,
       },
     });
   }

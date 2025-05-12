@@ -1,10 +1,10 @@
 {% for plugin in plugins %}
 import {{ plugin.name }} from "{{ plugin.packageName }}";
 {% endfor %}
-import { defineConfig } from "vitest";
+import { defineConfig } from "vitest/config";
 import { resolve } from "node:path"
 
-export default {
+export default defineConfig({
   plugins: [
     {% for plugin in plugins %}
     {{ plugin.name }}(){{ "," if loop.last !== true }}
@@ -17,6 +17,6 @@ export default {
   },
 
   {% if fullSetup %}
-  test: { setupFiles: resolve(import.meta.dirname, "{{ setupFileRelPath }}") },
+  test: { setupFiles: [ resolve(import.meta.dirname, "{{ setupFileRelPath }}") ] },
   {% endif %}
-};
+});

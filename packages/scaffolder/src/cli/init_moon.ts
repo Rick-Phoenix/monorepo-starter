@@ -50,7 +50,7 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     .showHelpAfterError();
 
   const isRunningAsCli = !injectedArgs;
-  const fatal = isRunningAsCli;
+  const fatal = process.env.NODE_ENV === "test" || isRunningAsCli;
 
   if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });

@@ -1,4 +1,4 @@
-import FastGlob from "fast-glob";
+import { glob } from "fast-glob";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
@@ -82,7 +82,7 @@ export async function recursiveRender(options: RecursiveRenderOptions) {
   );
   const retainStructure = options.retainStructure ?? true;
   const overwrite = options.overwrite ?? true;
-  const files = await FastGlob("**/*.j2", {
+  const files = await glob("**/*.j2", {
     onlyFiles: true,
     cwd: options.nunjucksRoot
       ? join(options.nunjucksRoot, options.templatesDir)

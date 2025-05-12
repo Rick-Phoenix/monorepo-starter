@@ -42,7 +42,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     )
     .option(
       "--tests-dir [test_dir]",
-      "Create a directory for tests at the specified path (relative to cwd, defaults to ./tests)",
+      "Create a directory for tests at the specified path (relative to cwd, defaults to 'tests')",
     )
     .addOption(
       new Option(
@@ -53,7 +53,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     .showHelpAfterError();
 
   const isRunningAsCli = !injectedArgs;
-  const fatal = isRunningAsCli;
+  const fatal = process.env.NODE_ENV === "test" || isRunningAsCli;
 
   if (!isRunningAsCli) {
     program.parse(injectedArgs, { from: "user" });

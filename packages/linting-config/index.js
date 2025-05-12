@@ -63,6 +63,7 @@ function createEslintConfig(options, ...overrides) {
         "ts/strict-boolean-expressions": "off",
         "ts/unbound-method": "off",
         "prefer-template": "off",
+        "test/consistent-test-it": "off",
       },
     },
     ...overrides,
@@ -73,6 +74,10 @@ function createEslintConfig(options, ...overrides) {
       rules: {
         "no-console": "error",
       },
+    },
+    {
+      files: ["tests/**/*", "scripts/**/*"],
+      rules: { "no-console": "off" },
     },
   );
 }
