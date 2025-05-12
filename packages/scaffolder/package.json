@@ -1,5 +1,6 @@
 {
   "name": "@monorepo-starter/scaffolder",
+  "version": "0.0.1",
   "type": "module",
   "private": true,
   "author": "Rick-Phoenix",
@@ -52,6 +53,7 @@
     "yaml": "^2.7.1"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.1",
     "@eslint/config-inspector": "^1.0.2",
     "@monorepo-starter/linting-config": "workspace:*",
     "@types/bun": "^1.2.10",

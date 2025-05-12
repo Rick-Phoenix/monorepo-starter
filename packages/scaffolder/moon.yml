@@ -3,19 +3,7 @@ $schema: "https://moonrepo.dev/schemas/project.json"
 dependsOn:
   - utils
 
-# workspace:
-#   inheritedTasks:
-#     exclude: ["build"]
-
 tasks:
   build:
-    deps:
-      - "^:build"
-    script: "bunx tsdown"
     inputs:
-      - "tsdown.config.ts"
       - "templates/**/*"
-    outputs:
-      - "dist"
-    options:
-      mergeOutputs: replace

@@ -1,5 +1,6 @@
 {
   "name": "@monorepo-starter/utils",
+  "version": "0.0.1",
   "type": "module",
   "private": true,
   "author": "Rick-Phoenix",
@@ -24,16 +25,18 @@
     "@clack/prompts": "^0.10.1",
     "arktype": "^2.1.20",
     "latest-version": "^9.0.0",
-    "nunjucks": "^3.2.4"
+    "nunjucks": "^3.2.4",
+    "fast-glob": "^3.3.3"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.1",
     "@monorepo-starter/linting-config": "workspace:*",
     "@types/node": "^22.15.3",
     "@types/nunjucks": "^3.2.6",
     "eslint": "^9.23.0",
-    "fast-glob": "^3.3.3",
     "lint-staged": "^12.3.2",
     "oxlint": "^0.16.3",
+    "tsdown": "0.11.0-beta.4",
     "typescript": "^5.8.2"
   }
 }
