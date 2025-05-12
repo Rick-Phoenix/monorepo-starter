@@ -23,13 +23,6 @@ export default createEslintConfig({
 {% if svelte %}
   svelte: true,
 {% endif %}
-{% if multiProject %}
-  typescript: {
-    parserOptions: {
-      project: ["./tsconfig.json", "{{  secondTsconfig | default("./tsconfig.spec.json") }}"],
-    },
-  },
-{% endif %}
 })
 {% else %}
 function createEslintConfig(options, ...overrides) {

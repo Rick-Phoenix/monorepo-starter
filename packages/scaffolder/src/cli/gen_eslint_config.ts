@@ -38,11 +38,6 @@ export async function genEslintConfig(injectedArgs?: string[]) {
       ).default("../../.oxlintrc.json").implies({ oxlint: true }),
     )
     .addOption(
-      new Option("--multi-project", "Use multiple tsconfig files").implies({
-        kind: "extended",
-      }),
-    )
-    .addOption(
       new Option(
         "--second-tsconfig <tsconfig_name>",
         "The name of the second tsconfig file to include in the projects array",
@@ -133,7 +128,6 @@ export async function genEslintConfig(injectedArgs?: string[]) {
       oxlint,
       oxlintConfig,
       prettier,
-      multiProject,
       secondTsconfig,
     } = args;
     action = writeRender({
@@ -145,7 +139,6 @@ export async function genEslintConfig(injectedArgs?: string[]) {
         oxlint,
         oxlintConfig,
         prettier,
-        multiProject,
         secondTsconfig,
       },
     });

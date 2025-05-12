@@ -301,16 +301,6 @@ async function initializePackage() {
     "writing the files to the new package's root directory",
   );
 
-  if (cliArgs.multiProject) {
-    await tryWarn(
-      writeRender({
-        templateFile: join(templatesDir, "configs/tsconfig.spec.json.j2"),
-        outputDir,
-      }),
-      "writing the tsconfig.spec.json file",
-    );
-  }
-
   if (cliArgs.scripts) {
     const flags: string[] = [];
     if (cliArgs.moon) flags.push("--moon");
@@ -347,7 +337,6 @@ async function initializePackage() {
         "extended",
         "-e",
         eslintConfigSourceName,
-        ...(cliArgs.multiProject && ["--multi-project"] || []),
       ]);
     }
   }

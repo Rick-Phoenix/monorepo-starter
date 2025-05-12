@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": ".cache/tsc",
+    "emitDeclarationOnly": true,
+    "tsBuildInfoFile": ".cache/.tsbuildinfoSrc",
+    "paths": {
+      "@monorepo-starter/utils": [
+        "../utils/src/index.ts"
+      ],
+      "@monorepo-starter/utils/*": [
+        "../utils/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../utils/tsconfig.src.json"
+    }
+  ]
+}

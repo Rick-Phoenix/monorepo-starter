@@ -51,10 +51,6 @@ export function createPackageCli() {
     )
     .addOption(new Option("-s, --scripts [scripts...]").choices(scriptsPresets))
     .option(
-      "--multi-project",
-      "Add a separate tsconfig file for files outside of src",
-    )
-    .option(
       "--moon",
       "Include a moon.yml file (with tasks for the scripts, if any are selected)",
     )
