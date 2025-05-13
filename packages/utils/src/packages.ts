@@ -1,10 +1,11 @@
-import latestVersion from "latest-version";
+import pacote from "pacote";
+import { tryThrow } from "./error_handling.js";
 
 export async function getLatestVersionRange(pkgName: string) {
-  const version = await latestVersion(pkgName);
-  if (!version.length) {
-    // eslint-disable-next-line no-console
-    console.warn(`⚠️ Could not get a valid version for ${pkgName}`);
-  }
-  return `^${version}`;
+  const manifest = await tryThrow(
+    pacote.manifest(pkgName),
+    `getting the latest version for ${pkgName}`,
+  );
+
+  return `^${manifest.version}`;
 }

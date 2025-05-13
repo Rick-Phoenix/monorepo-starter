@@ -39,7 +39,7 @@ tasks:
     outputs:
       - "dist"
     deps:
-      - "^:build"
+      - "^:tsdown"
       - "typecheck"
 
   pack:

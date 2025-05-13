@@ -1,4 +1,4 @@
-import { glob } from "fast-glob";
+import glob from "fast-glob";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
