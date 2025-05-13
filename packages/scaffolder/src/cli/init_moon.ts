@@ -27,7 +27,7 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     )
     .addOption(
       new Option(
-        "--no-task",
+        "--no-tasks",
         "Do not add any global tasks",
       ).implies({ task: [] }),
     )

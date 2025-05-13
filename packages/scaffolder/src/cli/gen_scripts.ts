@@ -1,16 +1,16 @@
 import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
-  promptIfFileExists,
-  tryAction,
-  writeRender,
+    promptIfFileExists,
+    tryAction,
+    writeRender,
 } from "@monorepo-starter/utils";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 export const scriptsPresets = ["barrel"];
 
-export async function genScriptsSetup(injectedArgs?: string[]) {
+export async function genScripts(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-d, --dir <directory>",
@@ -29,6 +29,7 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
         "Generate a moon.yml file with the selected tasks",
       ),
     )
+    .option("-r, --root <path>", "The root of the package", process.cwd())
     .showHelpAfterError();
 
   const isRunningAsCli = !injectedArgs;
@@ -42,7 +43,7 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
 
   const args = program.opts();
 
-  const outputDir = resolve(args.dir);
+  const outputDir = resolve(args.root, args.dir);
 
   let isOk: boolean | undefined;
 
@@ -66,30 +67,32 @@ export async function genScriptsSetup(injectedArgs?: string[]) {
         { fatal },
       );
     }
+  }
 
-    if (args.moon) {
-      const nunjucksRoot = resolve(import.meta.dirname, "../templates/moon");
-      const outputFile = "moon.yml";
-      const outputDir = process.cwd();
-      await promptIfFileExists(join(outputDir, outputFile));
-      const templateFile = `${outputFile}.j2`;
-      const tasks: Record<string, boolean> = {};
+  if (args.moon) {
+    const nunjucksRoot = resolve(import.meta.dirname, "../templates/moon");
+    const outputFile = "moon.yml";
+    const outputDir = args.root;
+    await promptIfFileExists(join(outputDir, outputFile));
+    const templateFile = `${outputFile}.j2`;
+    const tasks: Record<string, boolean> = {};
 
+    if (args.preset) {
       args.preset.forEach((p) => {
         tasks[p] = true;
       });
+    } 
 
-      isOk = await tryAction(
-        writeRender({
-          outputDir,
-          nunjucksRoot,
-          templateFile,
-          ctx: { tasks },
-        }),
-        `writing the ${outputFile} to ${outputDir}`,
-        { fatal },
-      );
-    }
+    isOk = await tryAction(
+      writeRender({
+        outputDir,
+        nunjucksRoot,
+        templateFile,
+        ctx: { tasks },
+      }),
+      `writing the ${outputFile} to ${outputDir}`,
+      { fatal },
+    );
   }
 
   if (isOk) log.success("✅ Scripts setup completed");

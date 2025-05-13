@@ -3,6 +3,7 @@ import { fs as memfsInstance, vol } from "memfs";
 import { existsSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, it, test, vi } from "vitest";
+import YAML from "yaml";
 
 const fs_disk = await vi.importActual<typeof import("node:fs")>(
   "node:fs",
@@ -42,11 +43,86 @@ export function copyDirectoryToMemfs(
   }
 }
 
-export function checkJsonOutput(outputPath: string) {
-  const target = outputPath;
-  const outputFile = vol.toJSON(target)[target]!;
-  const outputData = JSON.parse(outputFile) as Record<string, string>;
-  return outputData;
+interface JsonCheckOpts {
+  action: Action;
+  globalOutFile?: string;
+  checks: {
+    outputFile?: string;
+    fieldToCheck: string;
+    expectedValue: unknown;
+    flags?: string[];
+  }[];
+}
+
+export function checkJsonOutput(opts: JsonCheckOpts) {
+  test.for(opts.checks)(
+    "outputs the correct json for $fieldToCheck",
+    async (check) => {
+      await opts.action(check.flags);
+      const outputPath = check.outputFile || opts.globalOutFile;
+      if (!outputPath) throw new Error("No output file has been specified.");
+      const outputFile = vol.toJSON(outputPath)[outputPath]!;
+      const outputData = JSON.parse(outputFile) as Record<string, unknown>;
+      const nestedFields = check.fieldToCheck.split(".");
+      let targetField: unknown = outputData;
+      for (const field of nestedFields) {
+        if (typeof targetField !== "object" || targetField === null) {
+          targetField = undefined;
+          break;
+        }
+        // @ts-expect-error Cannot know the exact type structure in advance
+        targetField = targetField[field];
+
+        if (targetField === undefined) break;
+      }
+      if (check.expectedValue === "object") {
+        expect(targetField).toBeInstanceOf(Object);
+      } else {
+        expect(targetField).toStrictEqual(check.expectedValue);
+      }
+    },
+  );
+}
+
+interface YamlCheckOpts {
+  action: Action;
+  globalOutFile?: string;
+  checks: {
+    outputFile?: string;
+    fieldToCheck: string;
+    expectedValue: unknown;
+    flags?: string[];
+  }[];
+}
+
+export function checkYamlOutput(opts: YamlCheckOpts) {
+  test.for(opts.checks)(
+    "outputs the correct yaml for $fieldToCheck",
+    async (check) => {
+      await opts.action(check.flags);
+      const outputPath = check.outputFile || opts.globalOutFile;
+      if (!outputPath) throw new Error("No output file has been specified.");
+      const outputFile = vol.toJSON(outputPath)[outputPath]!;
+      const outputData = YAML.parse(outputFile) as Record<string, unknown>;
+      const nestedFields = check.fieldToCheck.split(".");
+      let targetField: unknown = outputData;
+      for (const field of nestedFields) {
+        if (typeof targetField !== "object" || targetField === null) {
+          targetField = undefined;
+          break;
+        }
+        // @ts-expect-error Cannot know the exact type structure in advance
+        targetField = targetField[field];
+
+        if (targetField === undefined) break;
+      }
+      if (check.expectedValue === "object") {
+        expect(targetField).toBeInstanceOf(Object);
+      } else {
+        expect(targetField).toStrictEqual(check.expectedValue);
+      }
+    },
+  );
 }
 
 type Action = (flags: undefined | string[]) => Promise<unknown>;
@@ -54,64 +130,78 @@ type ActionWithArgs = (flags: string[]) => Promise<unknown>;
 
 interface CheckDirResolutionOpts {
   action: ActionWithArgs;
-  filename: string;
+  checks: { outputPath: string; dirFlag?: string; flags?: string[] }[];
 }
 
 export async function checkDirResolution(opts: CheckDirResolutionOpts) {
-  test.for([".", "somedir/someotherdir", "/absolutepath"])(
-    "follows the cwd change correctly",
-    async (dir) => {
-      await opts.action(["-d", dir]);
-      const out = resolve(dir, opts.filename);
-      expect(existsSync(out)).toBe(true);
-    },
-  );
+  for (const check of opts.checks) {
+    test.for([".", "somedir/someotherdir", "/absolutepath"])(
+      "follows the cwd change correctly",
+      async (dir) => {
+        await opts.action([check.dirFlag || "-d", dir, ...(check.flags || [])]);
+        const out = resolve(dir, check.outputPath);
+        expect(existsSync(out)).toBe(true);
+      },
+    );
+  }
 }
 
-interface CheckFlagsOpts {
+interface CheckSingleJsonOutput {
   flags: (undefined | string[])[];
-  outputPath: string;
+  outputFile: string;
   fieldToCheck: string;
   expectedValue: unknown;
   action: Action;
 }
 
-export async function checkFlags(opts: CheckFlagsOpts) {
-  test.for(opts.flags)("respects flags", async (flagGroup) => {
-    await opts.action(flagGroup);
-    const outputData = checkJsonOutput(opts.outputPath);
-    expect(outputData[opts.fieldToCheck]).toStrictEqual(opts.expectedValue);
-  });
+export function checkSingleJsonOutput(opts: CheckSingleJsonOutput) {
+  for (const flagGroup of opts.flags) {
+    checkJsonOutput({
+      action: opts.action,
+      checks: [
+        {
+          flags: flagGroup,
+          outputFile: opts.outputFile,
+          expectedValue: opts.expectedValue,
+          fieldToCheck: opts.fieldToCheck,
+        },
+      ],
+    });
+  }
 }
 
 interface CheckFileCreationOpts {
-  outputFiles: string | string[];
   action: Action;
-  flags?: string[];
-  logOutput?: string[];
+  checks: {
+    outputFiles: string | string[];
+    flags?: string[];
+    logOutput?: boolean;
+  }[];
 }
 
 export async function checkFileCreation(opts: CheckFileCreationOpts) {
-  if (typeof opts.outputFiles === "string") {
-    opts.outputFiles = [opts.outputFiles];
-  }
+  for (const check of opts.checks) {
+    if (typeof check.outputFiles === "string") {
+      check.outputFiles = [check.outputFiles];
+    }
 
-  test.for(opts.outputFiles)(
-    "creates the file '%s' successfully",
-    async (out) => {
-      await opts.action(opts.flags);
-      if (opts.logOutput && opts.logOutput.includes(out)) {
-        const output = vol.toJSON(out);
-        console.log(`🔍🔍 output for '${out}': 🔍🔍`, output);
-      }
-      expect(existsSync(out)).toBe(true);
-    },
-  );
+    test.for(check.outputFiles)(
+      "creates the file '%s' successfully",
+      async (out) => {
+        await opts.action(check.flags);
+        if (check.logOutput) {
+          const output = vol.toJSON(out);
+          console.log(`🔍🔍 output for '${out}': 🔍🔍`, output);
+        }
+        expect(existsSync(out)).toBe(true);
+      },
+    );
+  }
 }
 
 interface CheckTextContentOpts {
   action: Action;
-  instructions: {
+  checks: {
     flags?: string[];
     match: string;
     outFile?: string;
@@ -122,32 +212,30 @@ interface CheckTextContentOpts {
 }
 
 export async function checkTextContent(opts: CheckTextContentOpts) {
-  test.for(opts.instructions)(
+  test.for(opts.checks)(
     "matches the desired outcome",
-    async (instruction) => {
-      if (!opts.globalOutFile && !instruction.outFile) {
+    async (check) => {
+      if (!opts.globalOutFile && !check.outFile) {
         throwErr(
-          `Missing an out file to check for ${instruction.match}`,
+          `Missing an out file to check for ${check.match}`,
         );
       }
-      await opts.action(instruction.flags);
+      await opts.action(check.flags);
 
-      const outPath = instruction.outFile || opts.globalOutFile as string;
+      const outPath = check.outFile || opts.globalOutFile as string;
       const output = vol.toJSON(outPath)[outPath];
 
-      if (instruction.logOutput) {
+      if (check.logOutput) {
         console.log(
-          `🔍🔍 output for ${
-            instruction.flags?.join() || instruction.match
-          } 🔍🔍:`,
+          `🔍🔍 output for ${check.flags?.join() || check.match} 🔍🔍:`,
           output,
         );
       }
 
-      if (instruction.noMatch) {
-        expect(output).not.toMatch(instruction.match);
+      if (check.noMatch) {
+        expect(output).not.toMatch(check.match);
       } else {
-        expect(output).toMatch(instruction.match);
+        expect(output).toMatch(check.match);
       }
     },
   );

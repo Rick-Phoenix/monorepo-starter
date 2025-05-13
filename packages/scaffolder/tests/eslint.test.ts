@@ -1,34 +1,20 @@
-import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe } from "vitest";
 import { genEslintConfig } from "../src/cli/gen_eslint_config.js";
-import {
-  checkDirResolution,
-  checkFileCreation,
-  checkTextContent,
-} from "./lib/memfs.js";
+import { checkDirResolution, checkTextContent } from "./lib/memfs.js";
 
 const output = join(process.cwd(), "eslint.config.js");
 const action = genEslintConfig;
 
 describe("testing the gen-eslint cli", async () => {
-  await checkFileCreation({
-    outputFiles: output,
-    action,
-  });
-
-  it("resets the temporary volume after each test", () => {
-    expect(existsSync(output)).toBe(false);
-  });
-
   await checkDirResolution({
-    filename: "eslint.config.js",
+    checks: [{ outputPath: "eslint.config.js" }],
     action,
   });
 
   await checkTextContent({
     globalOutFile: output,
-    instructions: [
+    checks: [
       {
         match: "createEslintConfig",
       },

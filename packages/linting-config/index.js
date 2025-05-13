@@ -22,15 +22,6 @@ function createEslintConfig(options, ...overrides) {
       typescript: {
         tsconfigPath: "tsconfig.json",
         overridesTypeAware: {
-          "ts/prefer-nullish-coalescing": [
-            "warn",
-            {
-              ignorePrimitives: {
-                string: true,
-                boolean: true,
-              },
-            },
-          ],
           "ts/consistent-type-definitions": "off",
         },
       },
