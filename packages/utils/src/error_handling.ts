@@ -162,7 +162,7 @@ export function tryThrowSync<T>(action: () => T, description: string): T {
  */
 export async function tryThrow<T>(
   action: Promise<T>,
-  description: string,
+  description?: string,
 ): Promise<T> {
   const [result, error] = await tryCatch(action, description);
 
@@ -317,7 +317,7 @@ export function handleUnknownError(
 ) {
   const descriptionText = description ? ` while ${description}` : "";
   const unknownError = error instanceof Error ? error : new Error(
-    `❓ Unknown error${descriptionText}:\n${error}`,
+    `❓ Unknown error${descriptionText}:\n${String(error)}`,
   );
   Error.captureStackTrace(unknownError, handleUnknownError);
   if (rethrow) throw unknownError;

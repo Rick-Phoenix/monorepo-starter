@@ -179,26 +179,9 @@ export const presetPackages = [
     presets: ["fileSystem"],
   },
   {
-    name: "package-up",
-    presets: ["fileSystem"],
-  },
-  {
-    name: "path-type",
-    presets: ["fileSystem"],
-  },
-  {
     name: "@types/node",
     presets: ["fileSystem", "cli", "templating"],
     isDev: true,
-  },
-  { name: "read-package-up", presets: ["templating", "fileSystem"] },
-  {
-    name: "read-pkg",
-    presets: ["templating", "fileSystem"],
-  },
-  {
-    name: "write-json-file",
-    presets: ["templating", "filesystem"],
   },
   {
     name: "yaml",

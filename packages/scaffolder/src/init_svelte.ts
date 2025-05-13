@@ -1,15 +1,13 @@
 // eslint-disable no-console
 import { cancel, confirm, intro, outro, text } from "@clack/prompts";
-import { tryThrowSync } from "@monorepo-starter/utils";
+import { readPkgJson } from "@monorepo-starter/utils";
 import { type } from "arktype";
 import { file } from "bun";
-import { findUpSync } from "find-up";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join, resolve as res } from "node:path";
+import { join, resolve as res } from "node:path";
 import { render } from "nunjucks";
-import { readPackageSync } from "read-pkg";
 
 process.on("SIGINT", () => {
   console.warn("\nPackage initialization aborted.");
@@ -20,22 +18,13 @@ const curdir = import.meta.dirname;
 
 const string = type("string");
 
-const monorepoRoot = dirname(string.assert(
-  tryThrowSync(
-    () =>
-      findUpSync(["pnpm-workspace.yaml"], {
-        type: "file",
-        cwd: curdir,
-      }),
-    "Getting the path to the monorepo root",
-  ),
-));
+const monorepoRoot = "";
 
-const rootPackageJson = readPackageSync({ cwd: monorepoRoot });
+const rootPackageJson = await readPkgJson({ cwd: monorepoRoot });
 
 const monorepoName = rootPackageJson.name;
 
-if (!monorepoName.length) {
+if (!monorepoName?.length) {
   throw new Error(
     "Could not find the project name. Is package.json set up correctly?",
   );

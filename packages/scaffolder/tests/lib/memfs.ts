@@ -185,15 +185,17 @@ export async function checkFileCreation(opts: CheckFileCreationOpts) {
       check.outputFiles = [check.outputFiles];
     }
 
-    test.for(check.outputFiles)(
-      "creates the file '%s' successfully",
-      async (out) => {
+    it(
+      "creates the files successfully",
+      async () => {
         await opts.action(check.flags);
-        if (check.logOutput) {
-          const output = vol.toJSON(out);
-          console.log(`🔍🔍 output for '${out}': 🔍🔍`, output);
+        for (const outputFile of check.outputFiles) {
+          if (check.logOutput) {
+            const output = vol.toJSON(outputFile);
+            console.log(`🔍🔍 output for '${outputFile}': 🔍🔍`, output);
+          }
+          expect(existsSync(outputFile)).toBe(true);
         }
-        expect(existsSync(out)).toBe(true);
       },
     );
   }

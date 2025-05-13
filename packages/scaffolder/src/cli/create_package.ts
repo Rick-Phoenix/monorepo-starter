@@ -9,6 +9,7 @@ import {
   multiselect,
   objectIsEmpty,
   promptIfDirNotEmpty,
+  readPkgJson,
   recursiveRender,
   select,
   text,
@@ -20,7 +21,6 @@ import {
 import { spawnSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { readPackage } from "read-pkg";
 import YAML from "yaml";
 import { packageManagers } from "../lib/install_package.js";
 import {
@@ -35,20 +35,20 @@ import { genScripts } from "./gen_scripts.js";
 import { genTsdownConfig } from "./gen_tsdown_config.js";
 import { genVitestConfig } from "./gen_vitest_config.js";
 
-export async function initializePackage() {
-  const cliArgs = createPackageCli();
+export async function initializePackage(args?: string[]) {
+  const cliArgs = createPackageCli(args);
 
   const monorepoRoot = process.cwd();
 
   const rootPackageJson = await tryThrow(
-    readPackage({ cwd: monorepoRoot }),
+    readPkgJson({ cwd: monorepoRoot }),
     "reading the root's package.json file (are you launching this process in the root of your monorepo?)",
   );
   intro("📦 New package initialization 📦");
 
   const projectName: string = rootPackageJson.name ||
     await text({
-      message: "Enter a name for your new monorepo:",
+      message: "What is the name of your project?",
       placeholder: "myrepo",
     });
 
@@ -75,6 +75,11 @@ export async function initializePackage() {
 
   const outputDir = resolve(monorepoRoot, cliArgs.dir, packageName);
 
+  await tryThrow(
+    mkdir(outputDir, { recursive: true }),
+    `creating the folder at ${outputDir}`,
+  );
+
   const dirIsOk = await promptIfDirNotEmpty(outputDir);
 
   if (!dirIsOk) process.exit(0);
@@ -96,16 +101,18 @@ export async function initializePackage() {
     );
   }
 
-  const additionalPackages = await multiselect({
-    message:
-      "Do you want to install additional packages? (Select with spacebar)",
-    options: generalOptionalPackages.map((pac) => ({
-      label: pac.label || pac.name[0]!.toUpperCase() + pac.name.slice(1),
-      value: pac,
-    })),
-    initialValues: generalOptionalPackages.filter((p) => p.preSelected),
-    required: false,
-  });
+  const additionalPackages = cliArgs.additionalPackages
+    ? await multiselect({
+      message:
+        "Do you want to install additional packages? (Select with spacebar)",
+      options: generalOptionalPackages.map((pac) => ({
+        label: pac.label || pac.name[0]!.toUpperCase() + pac.name.slice(1),
+        value: pac,
+      })),
+      initialValues: generalOptionalPackages.filter((p) => p.preSelected),
+      required: false,
+    })
+    : [];
 
   const selectedPackages = new Set(additionalPackages.map((p) => p.name));
 
@@ -252,13 +259,16 @@ export async function initializePackage() {
   if (cliArgs.catalog && !objectIsEmpty(catalogEntries)) {
     const pnpmWorkspacePath = join(monorepoRoot, "pnpm-workspace.yaml");
     await assertReadableWritableFile(pnpmWorkspacePath);
-    const textContent = await readFile(pnpmWorkspacePath, "utf8");
-    const content = YAML.parse(textContent) as {
-      catalog?: Record<string, string>;
-    };
+    const textContent = await tryThrow(
+      readFile(pnpmWorkspacePath, "utf8"),
+      "reading the pnpm-workspace file",
+    );
 
-    // eslint-disable-next-line ts/prefer-nullish-coalescing
-    content.catalog = content.catalog || {};
+    const content = YAML.parse(textContent) as null | {
+      catalog?: Record<string, string>;
+    } || {};
+
+    content.catalog = content?.catalog || {};
     for (const [name, version] of Object.entries(catalogEntries)) {
       if (!content.catalog[name]) {
         content.catalog[name] = version;
@@ -372,19 +382,10 @@ export async function initializePackage() {
     });
 
     if (vitestSetup) {
-      const testsDir = cliArgs.testsDir ||
-        (cliArgs.defaultConfigs ? "tests" : await text({
-          message:
-            "Enter the path to the tests directory (relative to the package's root)",
-          initialValue: "tests",
-          placeholder: "tests",
-        }));
-
       await genVitestConfig([
         "-d",
         outputDir,
         "--tests-dir",
-        testsDir,
         "--script",
       ]);
     }

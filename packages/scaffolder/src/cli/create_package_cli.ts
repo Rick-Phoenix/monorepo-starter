@@ -3,7 +3,7 @@ import { packageManagers } from "../lib/install_package.js";
 import { packagesPresetChoices } from "../lib/packages_list.js";
 import { scriptsPresets } from "./gen_scripts.js";
 
-export function createPackageCli() {
+export function createPackageCli(injectedArgs?: string[]) {
   const program = new Command()
     .option("-n, --name <name>", "The name of the new package")
     .option("-e, --env", "Include a type-safe env parsing module")
@@ -33,15 +33,11 @@ export function createPackageCli() {
       "-c, --catalog",
       "Use the pnpm catalog for key packages (recommended)",
     )
-    .option(
-      "--tests-dir <tests_dir>",
-      "The relative path to the tests directory (from the package's root)",
-    )
     .option("--skip-configs", "Skip prompt for config files generation")
-    .option(
+    .addOption(new Option(
       "--default-configs",
       "Accept all defaults for config files generation",
-    )
+    ).implies({ skipConfigs: false }))
     .addOption(
       new Option("-p, --preset <preset...>").choices(packagesPresetChoices),
     )
@@ -61,6 +57,10 @@ export function createPackageCli() {
       ).choices(packageManagers).implies({ install: true }),
     )
     .option(
+      "--no-additional-packages",
+      "Skip the prompt for selecting additional packages",
+    )
+    .option(
       "--root-tsconfig <tsconfig_name>",
       "The name of the tsconfig file at the root to be extended",
       "tsconfig.options.json",
@@ -75,8 +75,13 @@ export function createPackageCli() {
       "The name of the tsconfig file responsible for tests, scripts and config files",
       "tsconfig.dev.json",
     )
-    .parse(process.argv)
     .showHelpAfterError();
+
+  if (injectedArgs) {
+    program.parse(injectedArgs, { from: "user" });
+  } else {
+    program.parse();
+  }
 
   const options = program.opts();
 

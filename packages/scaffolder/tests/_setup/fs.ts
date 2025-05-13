@@ -1,6 +1,12 @@
+import type {
+  FindPkgJsonOpts,
+  ReadPkgJsonOpts,
+  WriteJsonOpts,
+} from "@monorepo-starter/utils";
 import type FastGlob from "fast-glob";
 import { fs as memFs } from "memfs";
 import fs from "node:fs";
+import fsPromises from "node:fs/promises";
 import { vi } from "vitest";
 
 vi.mock("fs", () => ({ ...memFs, default: memFs }));
@@ -48,5 +54,29 @@ vi.mock("fast-glob", async () => {
     glob: mockedAsyncGlob,
     sync: mockedSyncGlob,
     globSync: mockedSyncGlob,
+  };
+});
+
+vi.mock("@monorepo-starter/utils", async () => {
+  const utilsActual = await vi.importActual<
+    typeof import("@monorepo-starter/utils")
+  >(
+    "@monorepo-starter/utils",
+  );
+  return {
+    ...utilsActual,
+    readPkgJson: async (opts: ReadPkgJsonOpts) => {
+      return utilsActual.readPkgJson({ ...opts, fs: fsPromises });
+    },
+    writeJsonFile: async (...args: WriteJsonOpts) => {
+      const [outPath, content, opts] = args;
+      return utilsActual.writeJsonFile(outPath, content, {
+        ...opts,
+        fs: fsPromises,
+      });
+    },
+    findPkgJson: async (opts: FindPkgJsonOpts) => {
+      return utilsActual.findPkgJson({ ...opts, fs: fsPromises });
+    },
   };
 });

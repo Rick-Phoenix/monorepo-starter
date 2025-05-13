@@ -2,17 +2,17 @@ import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   confirm,
+  findPkgJson,
   promptIfFileExists,
   showWarning,
   tryAction,
   tryCatch,
+  writeJsonFile,
   writeRender,
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
-import { readPackage } from "read-pkg";
-import { writeJsonFile } from "write-json-file";
+import { dirname, join, relative, resolve } from "node:path";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
 const pluginPresets = [
@@ -23,7 +23,8 @@ export async function genVitestConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
       "-d, --dir <directory>",
-      "The directory for the generated file (default is cwd)",
+      "The directory for the generated file",
+      process.cwd(),
     )
     .addOption(new Option("-p, --plugin <plugin...>"))
     .addOption(
@@ -67,7 +68,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     if (typeof args.testsDir !== "string") args.testsDir = "tests";
   }
 
-  const outputDir = resolve(args.dir || process.cwd());
+  const outputDir = resolve(args.dir);
   const configFileInRoot = outputDir === process.cwd();
   const outputFile = join(outputDir, "vitest.config.ts");
 
@@ -140,17 +141,19 @@ export async function genVitestConfig(injectedArgs?: string[]) {
   }
 
   if (args.script) {
-    const [packageJson, error] = await tryCatch(
-      readPackage({ normalize: false }),
+    const [result, error] = await tryCatch(
+      findPkgJson({ startDir: outputDir }),
     );
     if (error) {
       isOk = false;
       showWarning(error, "reading the package.json file", true);
     } else {
+      const [packageJson, packageJsonPath] = result;
+      const configPath = relative(dirname(packageJsonPath), outputFile);
       packageJson.scripts = packageJson.scripts || {};
 
-      const testCmd = !configFileInRoot
-        ? `vitest --config ${outputFile} run`
+      const testCmd = !configFileInRoot && configPath !== "vitest.config.ts"
+        ? `vitest --config ${configPath} run`
         : "vitest run";
 
       let canWriteScript = true;
@@ -167,9 +170,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
 
       if (canWriteScript) {
         isOk = await tryAction(
-          writeJsonFile("package.json", packageJson, {
-            detectIndent: true,
-          }),
+          writeJsonFile(packageJsonPath, packageJson),
           "writing the tests script to package.json",
           { fatal },
         );
