@@ -17,6 +17,8 @@ const baseFlags = [
   "--no-install",
   "--default-packages",
   "--git-hook",
+  "-a",
+  "vitest",
 ];
 
 describe("testing the init-repo cli", async () => {
@@ -37,6 +39,10 @@ describe("testing the init-repo cli", async () => {
           {
             expected: "catalog:",
             property: "devDependencies.husky",
+          },
+          {
+            property: "devDependencies.vitest",
+            expected: "catalog:",
           },
         ],
       },

@@ -26,6 +26,7 @@ import { packageManagers } from "../lib/install_package.js";
 import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
+  packagesMap,
   presetPackages,
 } from "../lib/packages_list.js";
 import { createPackageCli } from "./create_package_cli.js";
@@ -123,8 +124,8 @@ export async function initializePackage(args?: string[]) {
         pac.presets.forEach((pr) => {
           if (presetChoices.has(pr)) {
             if (!selectedPackages.has(pac.name)) {
-              additionalPackages.push(pac);
               selectedPackages.add(pac.name);
+              additionalPackages.push(pac);
             }
           }
         });
@@ -136,7 +137,8 @@ export async function initializePackage(args?: string[]) {
     cliArgs.add.forEach((p) => {
       if (!selectedPackages.has(p)) {
         selectedPackages.add(p);
-        additionalPackages.push({ name: p });
+        const packageData = packagesMap.get(p) || { name: p };
+        additionalPackages.push(packageData);
       }
     });
   }

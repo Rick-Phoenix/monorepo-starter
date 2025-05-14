@@ -91,6 +91,12 @@ const packages: Package[] = [
   },
 ];
 
+export const packagesMap = new Map<string, Package>();
+
+packages.forEach((p) => {
+  packagesMap.set(p.name, p);
+});
+
 export const optionalRootPackages: Package[] = packages.filter((p) =>
   p.presets?.includes("root")
 );

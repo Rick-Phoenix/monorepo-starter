@@ -61,6 +61,10 @@ export function initRepoCli(injectedArgs?: string[]) {
       new Option("--git-hook", "Add a pre-commit hook to use with husky")
         .implies({ git: true }),
     )
+    .option(
+      "-a, --add <package...>",
+      "Extra packages to include as dependencies",
+    )
     .option("--moon", "Add a full moonrepo config")
     .showHelpAfterError();
 

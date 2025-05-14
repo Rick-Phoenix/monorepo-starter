@@ -1,5 +1,5 @@
 // eslint-disable no-console
-import { intro, outro } from "@clack/prompts";
+import { intro, log, outro } from "@clack/prompts";
 import {
   confirm,
   multiselect,
@@ -20,6 +20,7 @@ import {
   getLintPackageDeps,
   getPackagesWithLatestVersions,
   optionalRootPackages,
+  packagesMap,
 } from "../lib/packages_list.js";
 import { genEslintConfig } from "./gen_eslint_config.js";
 import { genOxlintConfig } from "./gen_oxlint_config.js";
@@ -69,6 +70,12 @@ export async function initRepo(args?: string[]) {
 
   const defaultPackages = optionalRootPackages.filter((p) => p.preSelected);
 
+  if (cliArgs.add) {
+    log.success(
+      `✅ Added ${cliArgs.add.length} extra packages to the list of dependencies.`,
+    );
+  }
+
   const rootPackages = cliArgs.defaultPackages
     ? defaultPackages
     : await multiselect({
@@ -82,6 +89,16 @@ export async function initRepo(args?: string[]) {
     });
 
   const selectedPackages = new Set(rootPackages.map((p) => p.name));
+
+  if (cliArgs.add) {
+    cliArgs.add.forEach((p) => {
+      if (!selectedPackages.has(p)) {
+        selectedPackages.add(p);
+        const packageData = packagesMap.get(p) || { name: p };
+        rootPackages.push(packageData);
+      }
+    });
+  }
 
   const addGitHook = cliArgs.gitHook
     ? true
