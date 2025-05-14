@@ -26,7 +26,6 @@ describe("testing the gen-vitest cli", () => {
 
     checkFilesCreation({
       files: ["vitest.config.ts", "tests/tests.setup.ts"],
-      log: true,
     });
   });
 

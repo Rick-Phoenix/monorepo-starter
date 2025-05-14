@@ -183,7 +183,7 @@ export function checkTextContent(opts: CheckTextContentOpts) {
   const singleCheck = (check: TextCheck) => {
     if (check.log) {
       console.log(
-        `🔍🔍 output for ${outPath} 🔍🔍:`,
+        `🔍🔍 output for '${outPath}' 🔍🔍:`,
         output,
       );
     }
