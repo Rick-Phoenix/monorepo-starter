@@ -57,6 +57,10 @@ export function initRepoCli(injectedArgs?: string[]) {
       "--default-packages",
       "Install basic packages and skip the prompt to select more",
     )
+    .addOption(
+      new Option("--git-hook", "Add a pre-commit hook to use with husky")
+        .implies({ git: true }),
+    )
     .option("--moon", "Add a full moonrepo config")
     .showHelpAfterError();
 

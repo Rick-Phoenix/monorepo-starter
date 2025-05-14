@@ -81,7 +81,7 @@ export async function recursiveRender(options: RecursiveRenderOptions) {
     nunjucksOpts,
   );
   const retainStructure = options.retainStructure ?? true;
-  const overwrite = options.overwrite ?? true;
+  const overwrite = options.overwrite;
   const files = await glob("**/*.j2", {
     onlyFiles: true,
     cwd: options.nunjucksRoot
@@ -137,9 +137,7 @@ export async function writeRender(opts: WriteRenderOptions) {
     nunjucksOpts,
   );
 
-  const overwrite = opts.overwrite ?? true;
-
-  const { nunjucksRoot, templateFile, outputDir, ctx } = opts;
+  const { nunjucksRoot, templateFile, outputDir, ctx, overwrite } = opts;
   const filePath = nunjucksRoot
     ? join(nunjucksRoot, templateFile)
     : templateFile;

@@ -15,16 +15,16 @@ import {
 import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { genEslintConfig } from "./cli/gen_eslint_config.js";
-import { genOxlintConfig } from "./cli/gen_oxlint_config.js";
-import { genMoonConfig } from "./cli/init_moon.js";
-import { initRepoCli } from "./cli/init_repo_cli.js";
-import { packageManagers } from "./lib/install_package.js";
+import { packageManagers } from "../lib/install_package.js";
 import {
   getLintPackageDeps,
   getPackagesWithLatestVersions,
   optionalRootPackages,
-} from "./lib/packages_list.js";
+} from "../lib/packages_list.js";
+import { genEslintConfig } from "./gen_eslint_config.js";
+import { genOxlintConfig } from "./gen_oxlint_config.js";
+import { genMoonConfig } from "./init_moon.js";
+import { initRepoCli } from "./init_repo_cli.js";
 
 const res = resolve;
 
@@ -63,7 +63,7 @@ export async function initRepo(args?: string[]) {
   }
 
   await tryThrow(
-    mkdir(installPath),
+    mkdir(installPath, { recursive: true }),
     "creating the root directory for the new monorepo",
   );
 
@@ -83,41 +83,28 @@ export async function initRepo(args?: string[]) {
 
   const selectedPackages = new Set(rootPackages.map((p) => p.name));
 
-  const addGitHook = selectedPackages.has("husky")
+  const addGitHook = cliArgs.gitHook
+    ? true
+    : selectedPackages.has("husky")
     ? await confirm({
       message: "Do you want to create a pre-commit hook for husky?",
       initialValue: true,
     })
     : false;
 
-  const hooksOptions = [];
+  const hookActions = [];
 
   if (addGitHook) {
     if (selectedPackages.has("husky")) {
-      hooksOptions.push({
-        value: "lintStaged",
-        label: "Lint-staged",
-        hint: "Runs linting checks on committed files",
-      });
+      hookActions.push(
+        "lintStaged",
+      );
     }
 
     if (selectedPackages.has("@infisical/cli")) {
-      hooksOptions.push({
-        label: "Infisical scan",
-        value: "infisical",
-        hint: "Runs automatic checks for potential secrets leaks",
-      });
+      hookActions.push("infisical");
     }
   }
-
-  const hookActions = hooksOptions.length
-    ? await multiselect({
-      message: "What do you want to add to the pre-commit hook?",
-      options: hooksOptions,
-      initialValues: ["lintStaged"],
-      cursorAt: "infisical",
-    })
-    : [];
 
   const lintConfig = cliArgs.lint ?? await confirm({
     message: "Do you want to add an internal linting config package?",
@@ -150,7 +137,7 @@ export async function initRepo(args?: string[]) {
 
   for (const [name, path] of Object.entries(rootDirs)) {
     await tryThrow(
-      mkdir(path),
+      mkdir(path, { recursive: true }),
       `creating the directory for ${name} at ${path}`,
     );
   }
@@ -192,6 +179,7 @@ export async function initRepo(args?: string[]) {
       ctx: templatesCtx,
       templatesDir: join(templatesDir, "monorepo_root"),
       outputDir: installPath,
+      overwrite: false,
     }),
     "writing the files at the new monorepo's root",
   );

@@ -1,7 +1,7 @@
 import { vol } from "memfs";
 import { join } from "node:path";
 import { beforeEach, describe, it } from "vitest";
-import { initializePackage } from "../src/create_package.js";
+import { initializePackage } from "../src/cli/create_package.js";
 import {
   checkDirResolutionCli,
   checkFilesCreation,

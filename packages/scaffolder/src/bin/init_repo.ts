@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { initRepo } from "../init_repo.js";
+import { initRepo } from "../cli/init_repo.js";
 
 await initRepo();

@@ -78,6 +78,9 @@ vi.mock("@monorepo-starter/utils", async () => {
     findPkgJson: async (opts: FindPkgJsonOpts) => {
       return utilsActual.findPkgJson({ ...opts, fs: fsPromises });
     },
+    tryWarnChildProcess: () => {
+      return true;
+    },
   };
 });
 
@@ -93,6 +96,7 @@ vi.mock("@clack/prompts", async () => {
     outro: () => undefined,
     intro: () => undefined,
     log: {
+      ...clackActual.log,
       success: () => undefined,
       info: () => undefined,
     },

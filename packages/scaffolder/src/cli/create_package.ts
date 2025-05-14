@@ -22,18 +22,18 @@ import { spawnSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import YAML from "yaml";
-import { createPackageCli } from "./cli/create_package_cli.js";
-import { genEslintConfig } from "./cli/gen_eslint_config.js";
-import { genOxlintConfig } from "./cli/gen_oxlint_config.js";
-import { genScripts } from "./cli/gen_scripts.js";
-import { genTsdownConfig } from "./cli/gen_tsdown_config.js";
-import { genVitestConfig } from "./cli/gen_vitest_config.js";
-import { packageManagers } from "./lib/install_package.js";
+import { packageManagers } from "../lib/install_package.js";
 import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
   presetPackages,
-} from "./lib/packages_list.js";
+} from "../lib/packages_list.js";
+import { createPackageCli } from "./create_package_cli.js";
+import { genEslintConfig } from "./gen_eslint_config.js";
+import { genOxlintConfig } from "./gen_oxlint_config.js";
+import { genScripts } from "./gen_scripts.js";
+import { genTsdownConfig } from "./gen_tsdown_config.js";
+import { genVitestConfig } from "./gen_vitest_config.js";
 
 export async function initializePackage(args?: string[]) {
   const cliArgs = createPackageCli(args);
