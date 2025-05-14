@@ -1,0 +1,21 @@
+import { defineConfig } from "vitest/config";
+import { resolve } from "node:path"
+
+export default defineConfig({
+  plugins: [
+  ],
+  resolve: {
+    alias: {
+      '@': resolve(import.meta.dirname, "../src"),
+    },
+  },
+
+  test: { 
+    setupFiles: [ 
+      resolve(import.meta.dirname, "_setup/_tests_setup.ts"),
+    ], 
+    globals: true,
+    environment: "node",
+    silent: "passed-only",
+  },
+});

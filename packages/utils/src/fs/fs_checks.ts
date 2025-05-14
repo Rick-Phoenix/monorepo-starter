@@ -1,7 +1,7 @@
 import { cancel } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
 import fs, { constants, rm } from "node:fs/promises";
-import { basename } from "node:path";
+import { basename, relative, resolve } from "node:path";
 import { stringType } from "../arktype.js";
 import { throwErr, tryCatch } from "../error_handling/error_handling.js";
 import { confirm, select } from "../prompts.js";
@@ -360,5 +360,40 @@ export async function promptIfFileExists(path: string) {
     //
   } else {
     return true;
+  }
+}
+
+export function isAboveCwd(path: string) {
+  const resolvedPath = resolve(path);
+  const isAboveCwd = relative(process.cwd(), resolvedPath).startsWith("..");
+  return isAboveCwd;
+}
+
+export async function promptIfPathIsAboveCwd(path: string) {
+  const isAboveCwd_ = isAboveCwd(path);
+  if (isAboveCwd_) {
+    const confirmation = await confirm({
+      message:
+        "⚠️ The path you selected is above the cwd, do you want to continue? ⚠️",
+      initialValue: false,
+    });
+
+    if (!confirmation) {
+      cancel("Operation aborted.");
+      process.exit(0);
+    }
+  }
+
+  return true;
+}
+
+export async function throwIfPathIsAboveCwd(path: string, description: string) {
+  const isAboveCwd_ = isAboveCwd(path);
+  if (isAboveCwd_) {
+    const error = new Error(
+      `❌ Cannot use a path above cwd for ${description}`,
+    );
+    Error.captureStackTrace(error, throwIfPathIsAboveCwd);
+    throw error;
   }
 }
