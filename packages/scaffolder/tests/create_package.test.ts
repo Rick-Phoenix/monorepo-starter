@@ -1,12 +1,13 @@
 import { vol } from "memfs";
 import { join } from "node:path";
-import { beforeEach, describe } from "vitest";
-import { initializePackage } from "../src/cli/create_package.js";
+import { beforeEach, describe, it } from "vitest";
+import { initializePackage } from "../src/create_package.js";
 import {
-  checkDirResolution,
-  checkFileCreation,
+  checkDirResolutionCli,
+  checkFilesCreation,
   checkJsonOutput,
   checkYamlOutput,
+  type YamlOrJsonCheckOpts,
 } from "./lib/memfs.js";
 
 const packageName = "testPackage";
@@ -33,99 +34,77 @@ beforeEach(async () => {
 });
 
 describe("testing the create-package cli", async () => {
-  await checkDirResolution({
+  checkDirResolutionCli({
     action,
-    checks: [
-      {
-        outputPath: `${packageName}/package.json`,
-        flags: baseFlags,
-      },
-    ],
+    outputPath: `${packageName}/package.json`,
+    flags: baseFlags,
   });
 
-  await checkFileCreation({
-    action,
-    checks: [
-      {
-        flags: baseFlags,
-        outputFiles: packageJson,
-      },
-      {
-        flags: baseFlags.concat(["--env"]),
-        outputFiles: join(outputDir, "src/lib/env.ts"),
-      },
-      {
-        flags: baseFlags.concat(["--scripts", "barrel", "--moon"]),
-        outputFiles: [
-          join(outputDir, "scripts/barrel.ts"),
-          join(outputDir, "moon.yml"),
-        ],
-      },
-      {
-        flags: baseFlags.concat([
-          "--dev-tsconfig",
-          "tsconfig.spec.json",
-          "--src-tsconfig",
-          "tsconfig.build.json",
-        ]),
-        outputFiles: [
-          join(outputDir, "tsconfig.spec.json"),
-          join(outputDir, "tsconfig.build.json"),
-        ],
-      },
-      {
-        flags: baseFlags.concat([
-          "-a",
-          "tsdown",
-          "-a",
-          "vitest",
-          "--default-configs",
-        ]),
-        outputFiles: [
-          join(outputDir, "tsdown.config.ts"),
-          join(outputDir, "vitest.config.ts"),
-        ],
-      },
-    ],
-  });
+  it("creates the config files", async () => {
+    const flags = baseFlags.concat([
+      "--scripts",
+      "barrel",
+      "--moon",
+      "--env",
+      "--dev-tsconfig",
+      "tsconfig.spec.json",
+      "--src-tsconfig",
+      "tsconfig.build.json",
+      "--root-tsconfig",
+      "tsconfig.root.json",
+      "-a",
+      "tsdown",
+      "-a",
+      "vitest",
+      "--default-configs",
+      "--catalog",
+    ]);
 
-  checkJsonOutput({
-    action,
-    checks: [
+    await action(flags);
+
+    checkFilesCreation({
+      files: [
+        join(outputDir, "scripts/barrel.ts"),
+        join(outputDir, "moon.yml"),
+        packageJson,
+        join(outputDir, "src/lib/env.ts"),
+        join(outputDir, "tsconfig.spec.json"),
+        join(outputDir, "tsconfig.build.json"),
+        join(outputDir, "tsdown.config.ts"),
+        join(outputDir, "vitest.config.ts"),
+      ],
+    });
+
+    const jsonChecks: YamlOrJsonCheckOpts[] = [
       {
-        flags: baseFlags.concat(["--root-tsconfig", "tsconfig.root.json"]),
         outputFile: join(outputDir, "tsconfig.json"),
-        fieldToCheck: "extends",
-        expectedValue: "../../tsconfig.root.json",
+        property: "extends",
+        expected: "../../tsconfig.root.json",
       },
       {
-        flags: baseFlags.concat([
-          "-a",
-          "vitest",
-          "--default-configs",
-        ]),
         outputFile: packageJson,
-        fieldToCheck: "scripts.test",
-        expectedValue: "vitest run",
+        property: "scripts.test",
+        expected: "vitest run",
       },
-    ],
-  });
+    ];
 
-  checkYamlOutput({
-    action,
-    checks: [
+    jsonChecks.forEach((c) => checkJsonOutput(c));
+
+    const yamlChecks: YamlOrJsonCheckOpts[] = [
       {
-        flags: baseFlags.concat(["--catalog"]),
         outputFile: join(process.cwd(), "pnpm-workspace.yaml"),
-        fieldToCheck: "catalog",
-        expectedValue: "object",
+        property: "catalog",
+        expected: "object",
+        kind: "typeof",
       },
       {
-        flags: baseFlags.concat(["--scripts", "barrel", "--moon"]),
         outputFile: join(outputDir, "moon.yml"),
-        fieldToCheck: "tasks.barrel",
-        expectedValue: "object",
+        property: "tasks.barrel",
+        expected: "object",
+        kind: "typeof",
       },
-    ],
+    ];
+
+    yamlChecks.forEach((c) => checkYamlOutput(c));
   });
 });

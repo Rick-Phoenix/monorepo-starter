@@ -13,5 +13,6 @@ export default defineConfig({
     setupFiles: [resolve(import.meta.dirname, "_tests_setup.ts")],
     globals: true,
     environment: "node",
+    silent: "passed-only",
   },
 });

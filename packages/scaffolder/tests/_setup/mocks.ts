@@ -80,3 +80,21 @@ vi.mock("@monorepo-starter/utils", async () => {
     },
   };
 });
+
+vi.mock("@clack/prompts", async () => {
+  const clackActual = await vi.importActual<
+    typeof import("@clack/prompts")
+  >(
+    "@clack/prompts",
+  );
+
+  return {
+    ...clackActual,
+    outro: () => undefined,
+    intro: () => undefined,
+    log: {
+      success: () => undefined,
+      info: () => undefined,
+    },
+  };
+});

@@ -1,7 +1,7 @@
 import { vol } from "memfs";
 import { join } from "node:path";
 import { beforeEach, vi } from "vitest";
-import "./_setup/fs.js";
+import "./_setup/mocks.js";
 import { copyDirectoryToMemfs } from "./lib/memfs.js";
 
 export function resetVol() {

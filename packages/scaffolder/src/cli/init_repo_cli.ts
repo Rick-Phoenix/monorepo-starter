@@ -2,7 +2,7 @@ import { Command, Option } from "@commander-js/extra-typings";
 import { packageManagers } from "../lib/install_package.js";
 import { eslintConfigChoices } from "./gen_eslint_config.js";
 
-export function initRepoCli() {
+export function initRepoCli(injectedArgs?: string[]) {
   const program = new Command()
     .option("-n, --name <name>", "The name for the monorepo")
     .option(
@@ -53,9 +53,18 @@ export function initRepoCli() {
         "The package manager to use for installing dependencies",
       ).choices(packageManagers),
     )
+    .option(
+      "--default-packages",
+      "Install basic packages and skip the prompt to select more",
+    )
     .option("--moon", "Add a full moonrepo config")
-    .parse(process.argv)
     .showHelpAfterError();
+
+  if (injectedArgs) {
+    program.parse(injectedArgs, { from: "user" });
+  } else {
+    program.parse();
+  }
 
   const options = program.opts();
 

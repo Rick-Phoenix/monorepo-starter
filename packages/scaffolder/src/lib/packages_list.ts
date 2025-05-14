@@ -10,30 +10,6 @@ interface Package {
   presets?: readonly string[];
 }
 
-export const optionalRootPackages: Package[] = [
-  {
-    name: "@infisical/cli",
-    isDev: true,
-    catalog: true,
-  },
-  {
-    name: "husky",
-    isDev: true,
-    catalog: true,
-    preSelected: true,
-  },
-  {
-    name: "tsdown",
-    isDev: true,
-    catalog: true,
-  },
-  {
-    name: "rolldown",
-    isDev: true,
-    catalog: true,
-  },
-];
-
 const packages: Package[] = [
   { name: "dotenv", isDev: true, catalog: true },
   { name: "dotenv-expand", isDev: true, catalog: true },
@@ -42,15 +18,29 @@ const packages: Package[] = [
     isDev: true,
     catalog: true,
     preSelected: true,
+    presets: ["base"],
   },
-  { name: "eslint", isDev: true, catalog: true, preSelected: true },
+  {
+    name: "eslint",
+    isDev: true,
+    catalog: true,
+    preSelected: true,
+    presets: ["base"],
+  },
   {
     name: "@eslint/config-inspector",
     label: "Eslint-config-inspector",
     isDev: true,
     preSelected: true,
+    presets: ["base"],
   },
-  { name: "oxlint", isDev: true, catalog: true, preSelected: true },
+  {
+    name: "oxlint",
+    isDev: true,
+    catalog: true,
+    preSelected: true,
+    presets: ["base"],
+  },
   {
     name: "vitest",
     isDev: true,
@@ -76,10 +66,37 @@ const packages: Package[] = [
     isDev: false,
     catalog: true,
   },
+  {
+    name: "tsdown",
+    isDev: true,
+    catalog: true,
+  },
+  {
+    name: "rolldown",
+    isDev: true,
+    catalog: true,
+  },
+  {
+    name: "@infisical/cli",
+    isDev: true,
+    catalog: true,
+    presets: ["root"],
+  },
+  {
+    name: "husky",
+    isDev: true,
+    catalog: true,
+    preSelected: true,
+    presets: ["root"],
+  },
 ];
 
-export const generalOptionalPackages = packages.concat(
-  optionalRootPackages.filter((p) => p.name !== "husky"),
+export const optionalRootPackages: Package[] = packages.filter((p) =>
+  p.presets?.includes("root")
+);
+
+export const generalOptionalPackages = packages.filter((p) =>
+  p.name !== "husky"
 );
 
 interface PackageJsonDependencies {
