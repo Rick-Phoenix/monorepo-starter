@@ -1,12 +1,6 @@
-import type {
-  FindPkgJsonOpts,
-  ReadPkgJsonOpts,
-  WriteJsonOpts,
-} from "@monorepo-starter/utils";
 import type FastGlob from "fast-glob";
-import { fs as memFs } from "memfs";
+import { fs as memFs, vol } from "memfs";
 import fs from "node:fs";
-import fsPromises from "node:fs/promises";
 import { vi } from "vitest";
 
 vi.mock("fs", () => ({ ...memFs, default: memFs }));
@@ -63,21 +57,15 @@ vi.mock("@monorepo-starter/utils", async () => {
   >(
     "@monorepo-starter/utils",
   );
+
+  const { writeJsonFile, findPkgJson, readPkgJson } = utilsActual
+    .createMemfsHandlers(vol);
+
   return {
     ...utilsActual,
-    readPkgJson: async (opts: ReadPkgJsonOpts) => {
-      return utilsActual.readPkgJson({ ...opts, fs: fsPromises });
-    },
-    writeJsonFile: async (...args: WriteJsonOpts) => {
-      const [outPath, content, opts] = args;
-      return utilsActual.writeJsonFile(outPath, content, {
-        ...opts,
-        fs: fsPromises,
-      });
-    },
-    findPkgJson: async (opts: FindPkgJsonOpts) => {
-      return utilsActual.findPkgJson({ ...opts, fs: fsPromises });
-    },
+    readPkgJson,
+    writeJsonFile,
+    findPkgJson,
     tryWarnChildProcess: () => {
       return true;
     },

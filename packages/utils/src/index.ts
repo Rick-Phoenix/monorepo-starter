@@ -13,5 +13,6 @@ export * from './error_handling.js';
 export * from './objects.js';
 export * from './type_checking.js';
 export * from './find.js';
+export * from './testing/fs_handlers.js';
 export * from './testing/checks.js';
 export * from './types/utils.js';
