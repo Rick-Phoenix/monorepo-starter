@@ -1,14 +1,16 @@
 import {
+  type CheckKind,
   checkOutput,
-  type CheckProperty,
   type ExcludeAll,
+  getValue,
   maybeArrayIncludes,
+  type OutputCheck,
   throwErr,
 } from "@monorepo-starter/utils";
 import { fs as memfsInstance, vol } from "memfs";
 import { existsSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { expect, test, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 import YAML from "yaml";
 
 const fs_disk = await vi.importActual<typeof import("node:fs")>(
@@ -49,7 +51,10 @@ export function copyDirectoryToMemfs(
   }
 }
 
-type YamlOrJsonCheck = Omit<CheckProperty, "value" | "kind">;
+type YamlOrJsonCheck = Omit<OutputCheck, "value" | "kind"> & {
+  property: string;
+  kind?: CheckKind;
+};
 
 export type YamlOrJsonCheckOpts =
   & {
@@ -71,10 +76,21 @@ export function checkJsonOutput(opts: YamlOrJsonCheckOpts) {
   }
   if (opts.checks) {
     for (const check of opts.checks) {
-      checkOutput({ ...check, value: outputData, kind: "property" });
+      const value = getValue(outputData, check.property);
+      const { kind, expected, negateResult } = check;
+      //@ts-expect-error Cannot know the type in advance
+      checkOutput({
+        kind: kind || "strictEqual",
+        expected,
+        negateResult,
+        value,
+      });
     }
   } else {
-    checkOutput({ ...opts, value: outputData, kind: "property" });
+    const value = getValue(outputData, opts.property);
+    const { kind, expected, negateResult } = opts;
+    //@ts-expect-error Cannot know the type in advance
+    checkOutput({ kind: kind || "strictEqual", expected, negateResult, value });
   }
 }
 
@@ -87,10 +103,21 @@ export function checkYamlOutput(opts: YamlOrJsonCheckOpts) {
   }
   if (opts.checks) {
     for (const check of opts.checks) {
-      checkOutput({ ...check, value: outputData, kind: "property" });
+      const value = getValue(outputData, check.property);
+      const { kind, expected, negateResult } = check;
+      //@ts-expect-error Cannot know the type in advance
+      checkOutput({
+        kind: kind || "strictEqual",
+        expected,
+        negateResult,
+        value,
+      });
     }
   } else {
-    checkOutput({ ...opts, value: outputData, kind: "property" });
+    const value = getValue(outputData, opts.property);
+    const { kind, expected, negateResult } = opts;
+    //@ts-expect-error Cannot know the type in advance
+    checkOutput({ kind: kind || "strictEqual", expected, negateResult, value });
   }
 }
 
@@ -103,24 +130,25 @@ interface CheckDirResolutionOpts {
   flags?: string[];
 }
 
-export function checkDirResolution(opts: CheckDirResolutionOpts) {
-  test.for([".", "somedir/someotherdir", "/absolutepath"])(
-    "follows the cwd change correctly",
-    async (dir) => {
+export function checkDirResolutionCli(opts: CheckDirResolutionOpts) {
+  const dirs = [".", "somedir/someotherdir", "/absolutepath"];
+  for (const dir of dirs) {
+    it(`resolves the dir '${dir}' correctly`, async () => {
       await opts.action([opts.dirFlag || "-d", dir, ...(opts.flags || [])]);
       const out = resolve(dir, opts.outputPath);
       expect(existsSync(out)).toBe(true);
-    },
-  );
+    });
+  }
 }
 
 interface CheckFileCreationOpts {
-  files: string[];
+  files: string[] | string;
   log?: boolean | string[];
 }
 
-export function checkFileCreation(opts: CheckFileCreationOpts) {
-  for (const outputFile of opts.files) {
+export function checkFilesCreation(opts: CheckFileCreationOpts) {
+  const files = Array.isArray(opts.files) ? opts.files : [opts.files];
+  for (const outputFile of files) {
     const outputPath = resolve(outputFile);
     if (
       opts.log === true ||
@@ -133,32 +161,54 @@ export function checkFileCreation(opts: CheckFileCreationOpts) {
   }
 }
 
-interface CheckTextContentOpts {
-  outFile: string;
+interface TextCheck {
   match: string | RegExp;
   negateResult?: boolean;
   log?: boolean;
 }
 
+type CheckTextContentOpts =
+  & {
+    outputFile: string;
+  }
+  & (
+    | TextCheck & { checks?: never }
+    | { checks: TextCheck[] } & ExcludeAll<TextCheck>
+  );
+
 export function checkTextContent(opts: CheckTextContentOpts) {
-  const outPath = resolve(opts.outFile);
+  const outPath = resolve(opts.outputFile);
   const output = vol.toJSON(outPath)[outPath]!;
 
-  if (opts.log) {
-    console.log(
-      `🔍🔍 output for ${outPath} 🔍🔍:`,
-      output,
+  const singleCheck = (check: TextCheck) => {
+    if (check.log) {
+      console.log(
+        `🔍🔍 output for ${outPath} 🔍🔍:`,
+        output,
+      );
+    }
+
+    const { negateResult, match } = check;
+
+    checkOutput({
+      negateResult,
+      expected: match,
+      kind: "match",
+      value: output,
+    });
+  };
+
+  if (opts.checks) {
+    opts.checks.forEach((c) =>
+      singleCheck({ log: c.log, negateResult: c.negateResult, match: c.match })
     );
+  } else {
+    singleCheck({
+      log: opts.log,
+      negateResult: opts.negateResult,
+      match: opts.match,
+    });
   }
-
-  const { negateResult, match } = opts;
-
-  checkOutput({
-    negateResult,
-    expected: match,
-    kind: "match",
-    value: output,
-  });
 }
 
 interface CheckDirsCreationOpts {

@@ -1,33 +1,24 @@
 import { join } from "node:path";
-import { describe } from "vitest";
+import { describe, it } from "vitest";
 import { genTsdownConfig } from "../src/cli/gen_tsdown_config.js";
-import { checkDirResolution, checkTextContent } from "./lib/memfs.js";
+import { checkDirResolutionCli, checkTextContent } from "./lib/memfs.js";
 
 const output = join(process.cwd(), "tsdown.config.ts");
 const action = genTsdownConfig;
 
 describe("testing the gen-tsdown cli", async () => {
-  await checkDirResolution({
-    checks: [
-      {
-        outputPath: "tsdown.config.ts",
-      },
-    ],
+  checkDirResolutionCli({
+    outputPath: "tsdown.config.ts",
     action,
   });
 
-  await checkTextContent({
-    globalOutFile: output,
-    checks: [
-      {
-        match: 'import copy from "rollup-plugin-copy"',
-        flags: ["-p", "copy"],
-      },
-      {
-        match: 'import unknownPlugin from "unknownPlugin"',
-        flags: ["-p", "unknownPlugin"],
-      },
-    ],
-    action,
+  it("outputs the config file", async () => {
+    await action(["-p", "copy", "-p", "unknownPlugin"]);
+    const checks = [
+      'import copy from "rollup-plugin-copy"',
+      'import unknownPlugin from "unknownPlugin"',
+    ];
+
+    checks.forEach((c) => checkTextContent({ match: c, outputFile: output }));
   });
 });

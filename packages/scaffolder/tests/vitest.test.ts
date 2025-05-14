@@ -1,40 +1,37 @@
-import { join, resolve } from "node:path";
-import { describe } from "vitest";
+import { join } from "node:path";
+import { describe, it } from "vitest";
 import { genVitestConfig } from "../src/cli/gen_vitest_config.js";
 import {
-  checkDirResolution,
+  checkDirResolutionCli,
   checkDirsCreation,
+  checkFilesCreation,
   checkTextContent,
 } from "./lib/memfs.js";
 
-const output = join(process.cwd(), "vitest.config.ts");
+const outputFile = join(process.cwd(), "vitest.config.ts");
 const action = genVitestConfig;
 
-describe("testing the gen-vitest cli", async () => {
-  await checkDirResolution({
-    checks: [
-      {
-        outputPath: "vitest.config.ts",
-      },
-    ],
-    action,
+describe("testing the gen-vitest cli", () => {
+  it("generates the tests dir and the setup files", async () => {
+    await action(["--tests-dir", "--full"]);
+    checkDirsCreation({
+      dirs: ["tests"],
+    });
+
+    checkTextContent({
+      outputFile,
+      match:
+        'setupFiles: [ resolve(import.meta.dirname, "tests/tests.setup.ts") ]',
+    });
+
+    checkFilesCreation({
+      files: ["vitest.config.ts", "tests/tests.setup.ts"],
+      log: true,
+    });
   });
 
-  await checkDirsCreation({
-    action,
-    flags: ["--tests-dir"],
-    dirs: resolve(process.cwd(), "tests"),
-  });
-
-  await checkTextContent({
-    globalOutFile: output,
-    checks: [
-      {
-        match:
-          'setupFiles: [ resolve(import.meta.dirname, "tests/tests.setup.ts") ]',
-        flags: ["--full", "--tests-dir"],
-      },
-    ],
+  checkDirResolutionCli({
+    outputPath: "vitest.config.ts",
     action,
   });
 });

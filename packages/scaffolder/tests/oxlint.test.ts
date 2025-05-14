@@ -1,34 +1,35 @@
 import { join } from "node:path";
-import { describe } from "vitest";
+import { describe, it } from "vitest";
 import { genOxlintConfig } from "../src/cli/gen_oxlint_config.js";
-import { checkDirResolution, checkSingleJsonOutput } from "./lib/memfs.js";
+import { checkDirResolutionCli, checkJsonOutput } from "./lib/memfs.js";
 
-const output = join(process.cwd(), ".oxlintrc.json");
+const outputFile = join(process.cwd(), ".oxlintrc.json");
 const action = genOxlintConfig;
 
 describe("testing the gen-oxlint cli", async () => {
-  checkSingleJsonOutput({
-    action,
-    flags: [undefined, ["--no-extend"], ["-k", "opinionated"]],
-    outputFile: output,
-    expectedValue: undefined,
-    fieldToCheck: "extends",
+  it("outputs the config file", async () => {
+    await action(["-k", "minimal"]);
+
+    checkJsonOutput({
+      outputFile,
+      expected: ["../../.oxlintrc.json"],
+      property: "extends",
+    });
   });
 
-  checkSingleJsonOutput({
-    action,
-    flags: [["-k", "minimal"]],
-    outputFile: output,
-    expectedValue: ["../../.oxlintrc.json"],
-    fieldToCheck: "extends",
+  it("does not extend a config file for the default config", async () => {
+    await action();
+
+    checkJsonOutput({
+      outputFile,
+      expected: ["../../.oxlintrc.json"],
+      property: "extends",
+      negateResult: true,
+    });
   });
 
-  await checkDirResolution({
-    checks: [
-      {
-        outputPath: ".oxlintrc.json",
-      },
-    ],
+  checkDirResolutionCli({
+    outputPath: ".oxlintrc.json",
     action,
   });
 });

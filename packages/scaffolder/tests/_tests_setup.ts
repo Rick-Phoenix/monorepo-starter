@@ -4,7 +4,7 @@ import { beforeEach, vi } from "vitest";
 import "./_setup/fs.js";
 import { copyDirectoryToMemfs } from "./lib/memfs.js";
 
-beforeEach(() => {
+export function resetVol() {
   const templatesDir = join(import.meta.dirname, "../templates");
   const srcTemplatesDir = join(
     import.meta.dirname,
@@ -16,7 +16,9 @@ beforeEach(() => {
     templatesDir,
     srcTemplatesDir,
   );
-});
+}
+
+beforeEach(resetVol);
 
 vi.mock("../src/lib/install_package.js", async () => {
   const installPackageModule = await vi.importActual<

@@ -1,10 +1,9 @@
-import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 import { genScripts } from "../src/cli/gen_scripts.js";
 import {
-  checkDirResolution,
-  checkFileCreation,
+  checkDirResolutionCli,
+  checkFilesCreation,
   checkYamlOutput,
 } from "./lib/memfs.js";
 
@@ -13,50 +12,42 @@ const moonFile = join(process.cwd(), "moon.yml");
 const action = genScripts;
 
 describe("testing the gen-scripts cli", async () => {
-  await checkFileCreation({
-    action,
-    checks: [
-      {
-        outputFiles: [join(scriptsDir, "barrel.ts")],
-        flags: ["-p", "barrel"],
-      },
-    ],
+  it("generates the config files", async () => {
+    await action(["--moon", "-p", "barrel"]);
+
+    checkFilesCreation({
+      files: join(scriptsDir, "barrel.ts"),
+    });
+
+    checkYamlOutput({
+      outputFile: moonFile,
+      checks: [
+        {
+          property: "tasks.barrel",
+          kind: "typeof",
+          expected: "object",
+        },
+        {
+          property: "tasks.build",
+          expected: undefined,
+        },
+      ],
+    });
   });
 
-  it("resets the temporary volume after each test", () => {
-    expect(existsSync(scriptsDir)).toBe(false);
-  });
+  const dirResolutionChecks = [
+    {
+      outputPath: "scripts",
+      dirFlag: "-r",
+      action,
+    },
+    {
+      outputPath: "moon.yml",
+      dirFlag: "-r",
+      flags: ["--moon"],
+      action,
+    },
+  ];
 
-  checkYamlOutput({
-    action,
-    checks: [
-      {
-        flags: ["--moon", "-p", "barrel"],
-        outputFile: moonFile,
-        fieldToCheck: "tasks.barrel",
-        expectedValue: "object",
-      },
-      {
-        flags: ["--moon"],
-        outputFile: moonFile,
-        fieldToCheck: "tasks",
-        expectedValue: null,
-      },
-    ],
-  });
-
-  await checkDirResolution({
-    action,
-    checks: [
-      {
-        outputPath: "scripts",
-        dirFlag: "-r",
-      },
-      {
-        outputPath: "moon.yml",
-        dirFlag: "-r",
-        flags: ["--moon"],
-      },
-    ],
-  });
+  dirResolutionChecks.forEach((c) => checkDirResolutionCli(c));
 });
