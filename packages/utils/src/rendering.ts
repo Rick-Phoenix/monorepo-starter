@@ -118,14 +118,20 @@ export async function recursiveRender(options: RecursiveRenderOptions) {
   }
 }
 
-interface WriteRenderOptions {
-  outputDir: string;
-  templateFile: string;
-  nunjucksRoot?: string;
-  ctx?: Record<string, unknown>;
-  overwrite?: boolean;
-  outputFilename?: string;
-}
+type WriteRenderOptions =
+  & {
+    templateFile: string;
+    nunjucksRoot?: string;
+    ctx?: Record<string, unknown>;
+    overwrite?: boolean;
+  }
+  & (
+    { outputPath: string; outputFilename?: never; outputDir?: never } | {
+      outputFilename?: string;
+      outputDir: string;
+      outputPath?: never;
+    }
+  );
 
 export async function writeRender(opts: WriteRenderOptions) {
   const loader = new StandardFileSystemLoader(
@@ -137,7 +143,7 @@ export async function writeRender(opts: WriteRenderOptions) {
     nunjucksOpts,
   );
 
-  const { nunjucksRoot, templateFile, outputDir, ctx, overwrite } = opts;
+  const { nunjucksRoot, templateFile, ctx, overwrite } = opts;
   const filePath = nunjucksRoot
     ? join(nunjucksRoot, templateFile)
     : templateFile;
@@ -147,12 +153,16 @@ export async function writeRender(opts: WriteRenderOptions) {
 
   const renderedText = nj.render(filePath, ctx);
 
-  const outputPath = join(outputDir, outputFilename);
+  const outputPath = opts.outputPath || join(opts.outputDir!, outputFilename);
+
+  const outputDir = dirname(outputPath);
+
+  await mkdir(outputDir, { recursive: true });
 
   if (!overwrite) await promptIfFileExists(outputPath);
 
   await tryThrow(
     writeFile(outputPath, renderedText),
-    `writing the rendered template at ${outputFilename}`,
+    `writing the rendered template at '${outputPath}'`,
   );
 }

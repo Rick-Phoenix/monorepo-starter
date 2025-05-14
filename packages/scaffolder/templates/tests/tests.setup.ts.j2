@@ -1,21 +1,12 @@
-import { afterAll, beforeAll, vi } from "vitest";
+import { afterAll, beforeAll, afterEach, beforeEach, vi } from "vitest";
 
-beforeAll(() => {
-  vi.mock("../src/lib/env", () => {
-    return {
-      default: {
-        NODE_ENV: "test",
-        PORT: 3000,
-        DATABASE_URL: "",
-        LOG_LEVEL: "info",
-        GITHUB_CLIENT_ID: "",
-        GITHUB_CLIENT_SECRET: "",
-        GITHUB_CALLBACK_URI: "",
-        SESSION_ENCRYPTION_KEY: "",
-      },
-    };
-  });
-});
+beforeAll(() => {});
 
 afterAll(() => {});
+
+beforeEach(() => {})
+
+afterEach(() => {})
+
+
 

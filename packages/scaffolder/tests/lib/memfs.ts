@@ -68,7 +68,7 @@ const {
   checkYamlOutput,
   checkJsonOutput,
   checkTextContent,
-} = createFsTestSuite({ vol });
+} = createFsTestSuite({ vol, expect });
 
 export {
   checkDirsCreation,

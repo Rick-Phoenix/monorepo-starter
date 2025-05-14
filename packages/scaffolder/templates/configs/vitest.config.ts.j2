@@ -16,7 +16,17 @@ export default defineConfig({
     },
   },
 
-  {% if fullSetup %}
-  test: { setupFiles: [ resolve(import.meta.dirname, "{{ setupFileRelPath }}") ] },
-  {% endif %}
+  test: { 
+    setupFiles: [ 
+      {% if setupFileRelPath %}
+      resolve(import.meta.dirname, "{{ setupFileRelPath }}"),
+      {% endif %}
+      {% for path in presetsRelPaths %}
+      resolve(import.meta.dirname, "{{ path }}"),  
+      {% endfor %}
+    ], 
+    globals: true,
+    environment: "node",
+    silent: "passed-only",
+  },
 });
