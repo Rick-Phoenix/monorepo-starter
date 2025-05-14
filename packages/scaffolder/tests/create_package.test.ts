@@ -92,9 +92,9 @@ describe("testing the create-package cli", async () => {
 
     const yamlChecks: YamlOrJsonCheckOpts[] = [
       {
-        outputFile: join(process.cwd(), "pnpm-workspace.yaml"),
-        property: "catalog",
-        expected: "object",
+        outputFile: "pnpm-workspace.yaml",
+        property: "catalog.vitest",
+        expected: "string",
         kind: "typeof",
       },
       {
