@@ -387,7 +387,6 @@ export async function initializePackage(args?: string[]) {
       await genVitestConfig([
         "-d",
         outputDir,
-        "--tests-dir",
         "--script",
       ]);
     }

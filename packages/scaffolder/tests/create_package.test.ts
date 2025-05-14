@@ -26,18 +26,18 @@ const baseFlags = [
   "--no-env",
 ];
 
-beforeEach(async () => {
-  vol.fromJSON({
-    [join(process.cwd(), "package.json")]: `{"name": "testproj"}`,
-    [join(process.cwd(), "pnpm-workspace.yaml")]: ``,
-  });
-});
-
 describe("testing the create-package cli", async () => {
   checkDirResolutionCli({
     action,
     outputPath: `${packageName}/package.json`,
     flags: baseFlags,
+  });
+
+  beforeEach(async () => {
+    vol.fromJSON({
+      [join(process.cwd(), "package.json")]: `{"name": "testproj"}`,
+      [join(process.cwd(), "pnpm-workspace.yaml")]: ``,
+    });
   });
 
   it("creates the config files", async () => {

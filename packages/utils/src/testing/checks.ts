@@ -153,88 +153,88 @@ export function createFsTestSuite(
   const vol = opts.vol;
   const expect = opts.expect;
   const { existsSync, statSync } = createFsFromVolume(vol);
-  return {
-    checkOutput(check: OutputCheck) {
-      const { expected, value, negateResult } = check;
-      const kind = check.kind || "strictEqual";
+  const checkOutput = (check: OutputCheck) => {
+    const { expected, value, negateResult } = check;
+    const kind = check.kind || "strictEqual";
 
-      if (kind === "strictEqual") {
-        if (negateResult) {
-          expect(value).not.toStrictEqual(expected);
-        } else {
-          expect(value).toStrictEqual(expected);
-        }
-      } else if (kind === "match") {
-        if (negateResult) {
-          expect(value).not.toMatch(expected as string);
-        } else {
-          expect(value).toMatch(expected as string);
-        }
-      } else if (kind === "typeof") {
-        if (negateResult) {
-          expect(value).not.toBeTypeOf(expected as Primitive);
-        } else {
-          expect(value).toBeTypeOf(expected as Primitive);
-        }
-      } else if (kind === "matchObject") {
-        if (negateResult) {
-          expect(value).not.toMatchObject(expected as object);
-        } else {
-          expect(value).toMatchObject(expected as object);
-        }
-      } else if (kind === "instanceOf") {
-        if (negateResult) {
-          expect(value).not.toBeInstanceOf(expected);
-        } else {
-          expect(value).toBeInstanceOf(expected);
-        }
-      } else if (kind === "property") {
-        const { property } = check as CheckProperty;
-        if (negateResult) {
-          expect(value).not.toHaveProperty(property, expected);
-        } else {
-          expect(value).toHaveProperty(property, expected);
-        }
-      } else if (kind === "contain") {
-        if (negateResult) {
-          expect(value).not.toContain(expected);
-        } else {
-          expect(value).toContain(expected);
-        }
-      } else if (kind === "containEqual") {
-        if (negateResult) {
-          expect(value).not.toContainEqual(expected);
-        } else {
-          expect(value).toContainEqual(expected);
-        }
-      } else if (kind === "truthy") {
-        if (negateResult) {
-          expect(value).not.toBeTruthy();
-        } else {
-          expect(value).toBeTruthy();
-        }
-      } else if (kind === "length") {
-        if (negateResult) {
-          expect(value).not.toHaveLength(expected as number);
-        } else {
-          expect(value).toHaveLength(expected as number);
-        }
-      } else if (kind === "greaterThan") {
-        if (negateResult) {
-          expect(value).not.toBeGreaterThan(expected as number);
-        } else {
-          expect(value).toBeGreaterThan(expected as number);
-        }
-      } else if (kind === "greaterThanOrEqual") {
-        if (negateResult) {
-          expect(value).not.toBeGreaterThanOrEqual(expected as number);
-        } else {
-          expect(value).toBeGreaterThanOrEqual(expected as number);
-        }
+    if (kind === "strictEqual") {
+      if (negateResult) {
+        expect(value).not.toStrictEqual(expected);
+      } else {
+        expect(value).toStrictEqual(expected);
       }
-    },
+    } else if (kind === "match") {
+      if (negateResult) {
+        expect(value).not.toMatch(expected as string);
+      } else {
+        expect(value).toMatch(expected as string);
+      }
+    } else if (kind === "typeof") {
+      if (negateResult) {
+        expect(value).not.toBeTypeOf(expected as Primitive);
+      } else {
+        expect(value).toBeTypeOf(expected as Primitive);
+      }
+    } else if (kind === "matchObject") {
+      if (negateResult) {
+        expect(value).not.toMatchObject(expected as object);
+      } else {
+        expect(value).toMatchObject(expected as object);
+      }
+    } else if (kind === "instanceOf") {
+      if (negateResult) {
+        expect(value).not.toBeInstanceOf(expected);
+      } else {
+        expect(value).toBeInstanceOf(expected);
+      }
+    } else if (kind === "property") {
+      const { property } = check as CheckProperty;
+      if (negateResult) {
+        expect(value).not.toHaveProperty(property, expected);
+      } else {
+        expect(value).toHaveProperty(property, expected);
+      }
+    } else if (kind === "contain") {
+      if (negateResult) {
+        expect(value).not.toContain(expected);
+      } else {
+        expect(value).toContain(expected);
+      }
+    } else if (kind === "containEqual") {
+      if (negateResult) {
+        expect(value).not.toContainEqual(expected);
+      } else {
+        expect(value).toContainEqual(expected);
+      }
+    } else if (kind === "truthy") {
+      if (negateResult) {
+        expect(value).not.toBeTruthy();
+      } else {
+        expect(value).toBeTruthy();
+      }
+    } else if (kind === "length") {
+      if (negateResult) {
+        expect(value).not.toHaveLength(expected as number);
+      } else {
+        expect(value).toHaveLength(expected as number);
+      }
+    } else if (kind === "greaterThan") {
+      if (negateResult) {
+        expect(value).not.toBeGreaterThan(expected as number);
+      } else {
+        expect(value).toBeGreaterThan(expected as number);
+      }
+    } else if (kind === "greaterThanOrEqual") {
+      if (negateResult) {
+        expect(value).not.toBeGreaterThanOrEqual(expected as number);
+      } else {
+        expect(value).toBeGreaterThanOrEqual(expected as number);
+      }
+    }
+  };
+  return {
+    checkOutput,
     checkJsonOutput(opts: YamlOrJsonCheckOpts) {
-      const checkOutput = this.checkOutput;
       const outputPath = resolve(opts.outputFile);
       const outputFile = vol.toJSON(outputPath)[outputPath]!;
       const outputData = JSON.parse(outputFile) as Record<string, unknown>;
@@ -267,7 +267,6 @@ export function createFsTestSuite(
       }
     },
     checkYamlOutput(opts: YamlOrJsonCheckOpts) {
-      const checkOutput = this.checkOutput;
       const outputPath = resolve(opts.outputFile);
       const outputFile = vol.toJSON(outputPath)[outputPath]!;
       const outputData = YAML.parse(outputFile) as Record<string, unknown>;
@@ -315,7 +314,6 @@ export function createFsTestSuite(
       }
     },
     checkTextContent(opts: CheckTextContentOpts) {
-      const checkOutput = this.checkOutput;
       const outPath = resolve(opts.outputFile);
       const output = vol.toJSON(outPath)[outPath]!;
 

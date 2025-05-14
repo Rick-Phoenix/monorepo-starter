@@ -3,7 +3,6 @@ import { Command, Option } from "@commander-js/extra-typings";
 import {
   confirm,
   findPkgJson,
-  promptIfFileExists,
   showWarning,
   tryAction,
   tryCatch,
@@ -19,22 +18,17 @@ const pluginPresets = [
   { name: "", packageName: "" },
 ];
 
+const setupPresets = ["env", "fs"];
+
 export async function genVitestConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
-      "-d, --dir <directory>",
-      "The directory for the generated file",
-      process.cwd(),
-    )
-    .addOption(new Option("-p, --plugin <plugin...>"))
-    .addOption(
-      new Option("-u, --url <url>", "The url for the config file to download")
-        .implies({
-          kind: "from-url",
-        }),
+      "-d, --dir <dir>",
+      "The directory to use for the config file",
+      ".",
     )
     .option("-i, --install", "Install vitest and the selected plugins")
-    .option("-s, --script", "Add vitest as the test script")
+    .option("-s, --script", "Add vitest as the test script in package.json")
     .addOption(
       new Option(
         "-m, --package-manager <package_manager>",
@@ -42,14 +36,22 @@ export async function genVitestConfig(injectedArgs?: string[]) {
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
     .option(
-      "--tests-dir [test_dir]",
-      "Create a directory for tests at the specified path (relative to cwd, defaults to 'tests')",
+      "--tests-dir <path>",
+      "Create a directory for tests at the specified path",
+      "tests",
     )
+    .option(
+      "--setup-file <path>",
+      "The path to the setup file (relative to testsDir)",
+      "_setup/_tests_setup.ts",
+    )
+    .addOption(new Option("--preset <preset...>").choices(setupPresets))
+    .addOption(new Option("-p, --plugin <plugin...>"))
     .addOption(
-      new Option(
-        "--full",
-        "Create a full setup, including a tests directory and a setup file",
-      ),
+      new Option("-u, --url <url>", "The url for the config file to download")
+        .implies({
+          kind: "from-url",
+        }),
     )
     .showHelpAfterError();
 
@@ -64,32 +66,14 @@ export async function genVitestConfig(injectedArgs?: string[]) {
 
   const args = program.opts();
 
-  if (args.testsDir === true || args.full) {
-    if (typeof args.testsDir !== "string") args.testsDir = "tests";
-  }
-
   const outputDir = resolve(args.dir);
-  const configFileInRoot = outputDir === process.cwd();
   const outputFile = join(outputDir, "vitest.config.ts");
+  const srcRelPath = relative(outputDir, "src");
+  const setupFilePath = resolve(args.testsDir, args.setupFile);
+  const setupFileRelPath = relative(outputDir, setupFilePath);
+  const setupDir = dirname(setupFilePath);
 
   let isOk: boolean | undefined;
-
-  if (!configFileInRoot) {
-    isOk = await tryAction(
-      mkdir(outputDir, { recursive: true }),
-      `creating ${outputDir}`,
-      { fatal },
-    );
-  }
-
-  const setupFileRelPath = relative(
-    outputDir,
-    resolve(args.testsDir || "", "tests.setup.ts"),
-  );
-
-  const srcRelPath = relative(outputDir, "src");
-
-  await promptIfFileExists(outputFile);
 
   const plugins = args.plugin
     ? args.plugin.map((plugin) => {
@@ -117,68 +101,23 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     if (!isOk) process.exit(1);
   }
 
-  if (args.testsDir) {
-    isOk = await tryAction(
-      mkdir(args.testsDir, { recursive: true }),
-      "creating the tests directory",
-      { fatal },
-    );
+  isOk = await tryAction(
+    mkdir(args.testsDir, { recursive: true }),
+    "creating the tests directory",
+    { fatal },
+  );
 
-    if (args.full) {
-      isOk = await tryAction(
-        writeRender({
-          outputDir: args.testsDir,
-          templateFile: resolve(
-            import.meta.dirname,
-            "../templates/tests/tests.setup.ts.j2",
-          ),
-          overwrite: false,
-        }),
-        "writing the tests.setup.ts file",
-        { fatal },
-      );
-    }
-  }
-
-  if (args.script) {
-    const [result, error] = await tryCatch(
-      findPkgJson({ startDir: outputDir }),
-    );
-    if (error) {
-      isOk = false;
-      showWarning(error, "reading the package.json file", true);
-    } else {
-      const [packageJson, packageJsonPath] = result;
-      const configPath = relative(dirname(packageJsonPath), outputFile);
-      packageJson.scripts = packageJson.scripts || {};
-
-      const testCmd = !configFileInRoot && configPath !== "vitest.config.ts"
-        ? `vitest --config ${configPath} run`
-        : "vitest run";
-
-      let canWriteScript = true;
-
-      if (packageJson.scripts.test) {
-        canWriteScript = await confirm({
-          message:
-            "You already have a test script, do you want to override it?",
-          initialValue: false,
-        });
-      } else {
-        packageJson.scripts.test = testCmd;
-      }
-
-      if (canWriteScript) {
-        isOk = await tryAction(
-          writeJsonFile(packageJsonPath, packageJson),
-          "writing the tests script to package.json",
-          { fatal },
-        );
-      } else {
-        log.info("Skipped writing the tests script.");
-      }
-    }
-  }
+  isOk = await tryAction(
+    writeRender({
+      outputPath: setupFilePath,
+      templateFile: resolve(
+        import.meta.dirname,
+        "../templates/tests/tests.setup.ts.j2",
+      ),
+    }),
+    "writing the tests setup file",
+    { fatal },
+  );
 
   let action: Promise<unknown>;
 
@@ -192,14 +131,30 @@ export async function genVitestConfig(injectedArgs?: string[]) {
       "../templates/configs/vitest.config.ts.j2",
     );
 
+    const presets = args.preset || [];
+    const presetsRelPaths = [];
+
+    for (const preset of presets) {
+      const presetRelPath = relative(outputDir, join(setupDir, `${preset}.ts`));
+      presetsRelPaths.push(presetRelPath);
+      const templateFile = resolve(
+        import.meta.dirname,
+        `../templates/tests/presets/${preset}.ts.j2`,
+      );
+      await writeRender({
+        outputDir: setupDir,
+        templateFile,
+      });
+    }
+
     action = writeRender({
       templateFile,
       outputDir,
       ctx: {
         plugins,
-        fullSetup: args.full,
         setupFileRelPath,
         srcRelPath,
+        presetsRelPaths,
       },
     });
   }
@@ -209,6 +164,46 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     "generating the vitest config file",
     { fatal },
   );
+
+  if (args.script) {
+    const [result, error] = await tryCatch(
+      findPkgJson({ startDir: outputDir }),
+    );
+    if (error) {
+      isOk = false;
+      showWarning(error, "reading the package.json file", true);
+    } else {
+      const [packageJson, packageJsonPath] = result;
+      const configPath = relative(dirname(packageJsonPath), outputFile);
+      packageJson.scripts = packageJson.scripts || {};
+
+      const testCmd = configPath !== "vitest.config.ts"
+        ? `vitest --config ${configPath} run`
+        : "vitest run";
+
+      let canWriteScript = true;
+
+      if (packageJson.scripts.test) {
+        canWriteScript = await confirm({
+          message:
+            "⚠️ You already have a test script, do you want to overwrite it? ⚠️",
+          initialValue: false,
+        });
+      }
+
+      packageJson.scripts.test = testCmd;
+
+      if (canWriteScript) {
+        isOk = await tryAction(
+          writeJsonFile(packageJsonPath, packageJson),
+          "writing the tests script to package.json",
+          { fatal },
+        );
+      } else {
+        log.info("Skipped writing the tests script.");
+      }
+    }
+  }
 
   if (isOk) log.success("✅ Vitest config generated.");
 }

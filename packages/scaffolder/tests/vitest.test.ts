@@ -1,31 +1,60 @@
+import { vol } from "memfs";
 import { join } from "node:path";
-import { describe, it } from "vitest";
+import { beforeEach, describe, it } from "vitest";
 import { genVitestConfig } from "../src/cli/gen_vitest_config.js";
 import {
   checkDirResolutionCli,
-  checkDirsCreation,
   checkFilesCreation,
+  checkJsonOutput,
   checkTextContent,
 } from "./lib/memfs.js";
 
-const outputFile = join(process.cwd(), "vitest.config.ts");
 const action = genVitestConfig;
 
 describe("testing the gen-vitest cli", () => {
+  beforeEach(() => {
+    vol.fromJSON({
+      [join(process.cwd(), "package.json")]: '{"scripts": {}}',
+    });
+  });
   it("generates the tests dir and the setup files", async () => {
-    await action(["--tests-dir", "--full"]);
-    checkDirsCreation({
-      dirs: ["tests"],
+    const testsDir = "src/__test__";
+    const setupFile = "setup/test_setup_file.ts";
+    const outputFile = join(testsDir, "vitest.config.ts");
+    await action([
+      "-d",
+      testsDir,
+      "--tests-dir",
+      testsDir,
+      "--setup-file",
+      setupFile,
+      "--preset",
+      "fs",
+      "--script",
+    ]);
+
+    checkTextContent({
+      outputFile,
+      match: `resolve(import.meta.dirname, "${setupFile}")`,
     });
 
     checkTextContent({
       outputFile,
-      match:
-        'setupFiles: [ resolve(import.meta.dirname, "tests/tests.setup.ts") ]',
+      match: `resolve(import.meta.dirname, "setup/fs.ts")`,
+    });
+
+    checkJsonOutput({
+      outputFile: "package.json",
+      property: "scripts.test",
+      expected: "vitest --config src/__test__/vitest.config.ts run",
     });
 
     checkFilesCreation({
-      files: ["vitest.config.ts", "tests/tests.setup.ts"],
+      files: [
+        outputFile,
+        join(testsDir, "setup/fs.ts"),
+        join(testsDir, setupFile),
+      ],
     });
   });
 
