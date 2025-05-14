@@ -30,6 +30,8 @@ describe("testing the gen-vitest cli", () => {
       setupFile,
       "--preset",
       "fs",
+      "--preset",
+      "fast-glob",
       "--script",
     ]);
 
@@ -53,6 +55,7 @@ describe("testing the gen-vitest cli", () => {
       files: [
         outputFile,
         join(testsDir, "setup/fs.ts"),
+        join(testsDir, "setup/fast-glob.ts"),
         join(testsDir, setupFile),
       ],
     });

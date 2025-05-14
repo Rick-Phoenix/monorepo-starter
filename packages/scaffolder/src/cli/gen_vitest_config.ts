@@ -18,7 +18,7 @@ const pluginPresets = [
   { name: "", packageName: "" },
 ];
 
-const setupPresets = ["env", "fs"];
+const setupPresets = ["env", "fs", "fast-glob", "clack"];
 
 export async function genVitestConfig(injectedArgs?: string[]) {
   const program = new Command()

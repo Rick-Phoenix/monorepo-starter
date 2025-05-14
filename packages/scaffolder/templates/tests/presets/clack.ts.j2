@@ -1,0 +1,20 @@
+import { vi } from "vitest";
+
+vi.mock("@clack/prompts", async () => {
+  const clackActual = await vi.importActual<
+    typeof import("@clack/prompts")
+  >(
+    "@clack/prompts",
+  );
+
+  return {
+    ...clackActual,
+    outro: () => undefined,
+    intro: () => undefined,
+    log: {
+      ...clackActual.log,
+      success: () => undefined,
+      info: () => undefined,
+    },
+  };
+});

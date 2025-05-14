@@ -1,3 +1,4 @@
+import { createFsFromVolume, type Volume } from "memfs";
 import fs from "node:fs/promises";
 import { resolve } from "node:path";
 import type { PackageJson } from "type-fest";
@@ -62,4 +63,56 @@ export async function findPkgJson<T = Record<string, unknown>>(
   );
 
   return [packageJson, packageJsonPath] as const;
+}
+
+export function createJsonHandlers(vol: Volume) {
+  const volFs = createFsFromVolume(vol);
+  const readPkgJson = async <T = Record<string, unknown>>(
+    opts?: Omit<ReadPkgJsonOpts, "fs">,
+  ) => {
+    const filePath = opts?.filePath ||
+      resolve(opts?.cwd || process.cwd(), "package.json");
+    const fsInstance = volFs.promises;
+    const rawText = await fsInstance.readFile(filePath, "utf8") as string;
+
+    return JSON.parse(rawText) as PackageJson & T;
+  };
+
+  const writeJsonFile = async (
+    outPath: string,
+    content: unknown,
+  ) => {
+    const jsonText = JSON.stringify(content, null, 2);
+    const fsInstance = volFs.promises;
+    await tryThrow(
+      fsInstance.writeFile(outPath, jsonText),
+      `writing the json file at '${outPath}'`,
+    );
+  };
+
+  const findPkgJson = async <T = Record<string, unknown>>(
+    opts: Omit<FindPkgJsonOpts, "fs">,
+  ) => {
+    const limit = opts.limit || 3;
+
+    const fsInstance = volFs.promises;
+
+    const packageJsonPath = await tryThrow(
+      //@ts-expect-error Missing property "glob" is not used so it is safe
+      findUp({ ...opts, fs: fsInstance, limit, name: "package.json" }),
+    );
+
+    const packageJson = await tryThrow(
+      readPkgJson<T>({ filePath: packageJsonPath }),
+      `reading the package.json file at ${packageJsonPath}`,
+    );
+
+    return [packageJson, packageJsonPath] as const;
+  };
+
+  return {
+    findPkgJson,
+    readPkgJson,
+    writeJsonFile,
+  };
 }
