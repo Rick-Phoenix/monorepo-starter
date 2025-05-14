@@ -1,5 +1,8 @@
 import os from "node:os";
-import { posixUnsafePathRegex, windowsUnsafePathRegex } from "./regex.js";
+import {
+  posixUnsafePathRegex,
+  windowsUnsafePathRegex,
+} from "../strings/regex.js";
 
 export function isRunningInBrowser() {
   return (

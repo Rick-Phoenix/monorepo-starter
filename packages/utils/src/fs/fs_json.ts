@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import { resolve } from "node:path";
 import type { PackageJson } from "type-fest";
-import { tryThrow } from "./error_handling.js";
+import { tryThrow } from "../error_handling/error_handling.js";
 import { findUp } from "./find.js";
 
 export type FsInstance = typeof import("node:fs/promises");

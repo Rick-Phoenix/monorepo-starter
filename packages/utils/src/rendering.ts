@@ -3,8 +3,8 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import nunjucks from "nunjucks";
-import { tryThrow } from "./error_handling.js";
-import { promptIfFileExists } from "./paths.js";
+import { tryThrow } from "./error_handling/error_handling.js";
+import { promptIfFileExists } from "./fs/fs_checks.js";
 
 const nunjucksOpts = {
   trimBlocks: true,

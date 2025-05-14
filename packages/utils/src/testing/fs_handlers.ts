@@ -2,10 +2,10 @@ import type { Volume } from "memfs";
 import { createFsFromVolume } from "memfs";
 import { resolve } from "node:path";
 import type { PackageJson } from "type-fest";
-import { tryThrow } from "../error_handling.js";
-import type { FindUpOpts } from "../find.js";
-import { findUp } from "../find.js";
-import type { FindPkgJsonOpts, ReadPkgJsonOpts } from "../json.js";
+import { tryThrow } from "../error_handling/error_handling.js";
+import type { FindUpOpts } from "../fs/find.js";
+import { findUp } from "../fs/find.js";
+import type { FindPkgJsonOpts, ReadPkgJsonOpts } from "../fs/fs_json.js";
 
 export function createMemfsHandlers(vol: Volume) {
   const volFs = createFsFromVolume(vol);

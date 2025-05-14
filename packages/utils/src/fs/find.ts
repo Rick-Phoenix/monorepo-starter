@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import { resolve } from "node:path";
-import { tryThrow } from "./error_handling.js";
-import type { FsInstance } from "./json.js";
+import { tryThrow } from "../error_handling/error_handling.js";
+import type { FsInstance } from "./fs_json.js";
 
 export interface FindUpOpts {
   startDir?: string;

@@ -2,14 +2,14 @@ import { cancel } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
 import fs, { constants, rm } from "node:fs/promises";
 import { basename } from "node:path";
-import { stringType } from "./arktype.js";
-import { throwErr, tryCatch } from "./error_handling.js";
-import { confirm, select } from "./prompts.js";
+import { stringType } from "../arktype.js";
+import { throwErr, tryCatch } from "../error_handling/error_handling.js";
+import { confirm, select } from "../prompts.js";
 import {
   isENOENTError,
   isENOTDIRError,
   isPermissionError,
-} from "./type_checking.js";
+} from "../type_checking/type_checking.js";
 
 export async function assertReadableWritableFile(path: string) {
   const { exists, isFile, isReadable, isWritable } = await getFileInfo(path);

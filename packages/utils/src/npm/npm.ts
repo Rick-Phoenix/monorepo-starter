@@ -1,5 +1,5 @@
 import pacote from "pacote";
-import { tryThrow } from "./error_handling.js";
+import { tryThrow } from "../error_handling/error_handling.js";
 
 export async function getLatestVersionRange(pkgName: string) {
   const manifest = await tryThrow(

@@ -1,8 +1,8 @@
 import { createFsFromVolume, type Volume } from "memfs";
 import { resolve } from "node:path";
 import YAML from "yaml";
-import { maybeArrayIncludes } from "../array.js";
-import { getValue } from "../objects.js";
+import { maybeArrayIncludes } from "../arrays/arrays.js";
+import { getValue } from "../objects/objects.js";
 import type { ExcludeAll } from "../types/utils.js";
 
 type Primitive =
