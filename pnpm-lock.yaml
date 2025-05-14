@@ -235,6 +235,9 @@ importers:
       pacote:
         specifier: ^21.0.0
         version: 21.0.0
+      yaml:
+        specifier: ^2.7.1
+        version: 2.7.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.1

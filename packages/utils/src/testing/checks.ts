@@ -1,4 +1,10 @@
+import { createFsFromVolume, type Volume } from "memfs";
+import { resolve } from "node:path";
 import { expect } from "vitest";
+import YAML from "yaml";
+import { maybeArrayIncludes } from "../array.js";
+import { getValue } from "../objects.js";
+import type { ExcludeAll } from "../types/utils.js";
 
 type Primitive =
   | "bigint"
@@ -201,4 +207,181 @@ export function checkOutput(check: OutputCheck) {
       expect(value).toBeGreaterThanOrEqual(expected as number);
     }
   }
+}
+
+type YamlOrJsonCheck = Omit<OutputCheck, "value" | "kind"> & {
+  property: string;
+  kind?: CheckKind;
+};
+
+export type YamlOrJsonCheckOpts =
+  & {
+    log?: boolean;
+    outputFile: string;
+  }
+  & (
+    | { checks: YamlOrJsonCheck[] }
+      & ExcludeAll<YamlOrJsonCheck>
+    | (YamlOrJsonCheck & { checks?: never })
+  );
+
+export function createFsTestSuite(
+  opts: {
+    vol: Volume;
+  },
+) {
+  const vol = opts.vol;
+  const { existsSync, statSync } = createFsFromVolume(vol);
+  return {
+    checkJsonOutput(opts: YamlOrJsonCheckOpts) {
+      const outputPath = resolve(opts.outputFile);
+      const outputFile = vol.toJSON(outputPath)[outputPath]!;
+      const outputData = JSON.parse(outputFile) as Record<string, unknown>;
+      if (opts.log) {
+        // eslint-disable-next-line no-console
+        console.log(`🔍🔍 output for '${outputPath}':🔍🔍`, outputData);
+      }
+      if (opts.checks) {
+        for (const check of opts.checks) {
+          const value = getValue(outputData, check.property);
+          const { kind, expected, negateResult } = check;
+          //@ts-expect-error Cannot know the type in advance
+          checkOutput({
+            kind: kind || "strictEqual",
+            expected,
+            negateResult,
+            value,
+          });
+        }
+      } else {
+        const value = getValue(outputData, opts.property);
+        const { kind, expected, negateResult } = opts;
+        //@ts-expect-error Cannot know the type in advance
+        checkOutput({
+          kind: kind || "strictEqual",
+          expected,
+          negateResult,
+          value,
+        });
+      }
+    },
+    checkYamlOutput(opts: YamlOrJsonCheckOpts) {
+      const outputPath = resolve(opts.outputFile);
+      const outputFile = vol.toJSON(outputPath)[outputPath]!;
+      const outputData = YAML.parse(outputFile) as Record<string, unknown>;
+      if (opts.log) {
+        // eslint-disable-next-line no-console
+        console.log(`🔍🔍 output for '${outputPath}':🔍🔍`, outputData);
+      }
+      if (opts.checks) {
+        for (const check of opts.checks) {
+          const value = getValue(outputData, check.property);
+          const { kind, expected, negateResult } = check;
+          //@ts-expect-error Cannot know the type in advance
+          checkOutput({
+            kind: kind || "strictEqual",
+            expected,
+            negateResult,
+            value,
+          });
+        }
+      } else {
+        const value = getValue(outputData, opts.property);
+        const { kind, expected, negateResult } = opts;
+        //@ts-expect-error Cannot know the type in advance
+        checkOutput({
+          kind: kind || "strictEqual",
+          expected,
+          negateResult,
+          value,
+        });
+      }
+    },
+    checkFilesCreation(opts: CheckFileCreationOpts) {
+      const files = Array.isArray(opts.files) ? opts.files : [opts.files];
+      for (const outputFile of files) {
+        const outputPath = resolve(outputFile);
+        if (
+          opts.log === true ||
+          (maybeArrayIncludes(opts.log, outputFile))
+        ) {
+          const output = vol.toJSON(outputPath)[outputPath];
+          // eslint-disable-next-line no-console
+          console.log(`🔍🔍 output for '${outputPath}': 🔍🔍`, output);
+        }
+        expect(existsSync(outputPath)).toBe(true);
+      }
+    },
+    checkTextContent(opts: CheckTextContentOpts) {
+      const outPath = resolve(opts.outputFile);
+      const output = vol.toJSON(outPath)[outPath]!;
+
+      const singleCheck = (check: TextCheck) => {
+        if (check.log) {
+          // eslint-disable-next-line no-console
+          console.log(
+            `🔍🔍 output for '${outPath}' 🔍🔍:`,
+            output,
+          );
+        }
+
+        const { negateResult, match } = check;
+
+        checkOutput({
+          negateResult,
+          expected: match,
+          kind: "match",
+          value: output,
+        });
+      };
+
+      if (opts.checks) {
+        opts.checks.forEach((c) =>
+          singleCheck({
+            log: c.log,
+            negateResult: c.negateResult,
+            match: c.match,
+          })
+        );
+      } else {
+        singleCheck({
+          log: opts.log,
+          negateResult: opts.negateResult,
+          match: opts.match,
+        });
+      }
+    },
+    checkDirsCreation(opts: CheckDirsCreationOpts) {
+      const dirs = typeof opts.dirs === "string" ? [opts.dirs] : opts.dirs;
+      dirs.forEach((dir) => {
+        const dirPath = resolve(dir);
+        const check = statSync(dirPath).isDirectory();
+        expect(check).toBe(true);
+      });
+    },
+  };
+}
+
+export interface CheckFileCreationOpts {
+  files: string[] | string;
+  log?: boolean | string[];
+}
+
+export interface TextCheck {
+  match: string | RegExp;
+  negateResult?: boolean;
+  log?: boolean;
+}
+
+type CheckTextContentOpts =
+  & {
+    outputFile: string;
+  }
+  & (
+    | TextCheck & { checks?: never }
+    | { checks: TextCheck[] } & ExcludeAll<TextCheck>
+  );
+
+export interface CheckDirsCreationOpts {
+  dirs: string | string[];
 }

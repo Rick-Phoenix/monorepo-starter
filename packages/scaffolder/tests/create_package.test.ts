@@ -1,3 +1,4 @@
+import type { YamlOrJsonCheckOpts } from "@monorepo-starter/utils";
 import { vol } from "memfs";
 import { join } from "node:path";
 import { beforeEach, describe, it } from "vitest";
@@ -7,7 +8,6 @@ import {
   checkFilesCreation,
   checkJsonOutput,
   checkYamlOutput,
-  type YamlOrJsonCheckOpts,
 } from "./lib/memfs.js";
 
 const packageName = "testPackage";
