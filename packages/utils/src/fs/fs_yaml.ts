@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import YAML from "yaml";
 import { tryThrow } from "../error_handling/error_handling.js";
+import { getLatestVersionRange } from "../npm/npm.js";
 import { findUp } from "./find.js";
 import type { FsPromisesInstance } from "./fs_json.js";
 
@@ -17,7 +18,7 @@ export async function readYamlFile<T = Record<string, unknown>>(
   const fsInstance = opts?.fs || fs;
 
   const rawText = await tryThrow(
-    fsInstance.readFile(filePath, "utf8"),
+    fsInstance.readFile(resolve(filePath), "utf8"),
     `reading ${filePath}`,
   );
   const parsedYaml = await tryThrow(
@@ -38,7 +39,8 @@ export async function writeYamlFile(
 ) {
   const yamlText = YAML.stringify(content, null, 2);
   const fsInstance = opts?.fs || fs;
-  await fsInstance.mkdir(dirname(outPath), { recursive: true });
+  const resolvedPath = resolve(outPath);
+  await fsInstance.mkdir(dirname(resolvedPath), { recursive: true });
   await tryThrow(
     fsInstance.writeFile(outPath, yamlText, "utf8"),
     `writing the yaml file at '${outPath}'`,
@@ -96,4 +98,69 @@ export async function findPnpmWorkspace<T = Record<string, unknown>>(
   );
 
   return [pnpmWorkspace, pnpmWorkspacePath] as const;
+}
+
+export interface UpdatePnpmCatalogOpts {
+  filePath: string;
+  exclude?: string[];
+  include?: string[];
+  add?: string[];
+  catalogs?: string[] | "all";
+  noMainCatalog?: boolean;
+  fs?: FsPromisesInstance;
+}
+
+export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
+  const { exclude, include, add, noMainCatalog } = opts;
+  const fsInstance = opts.fs || fs;
+  const filePath = resolve(opts.filePath);
+
+  const pnpmWorkspace = await readPnpmWorkspace({ filePath, fs: fsInstance });
+
+  if (!pnpmWorkspace || !pnpmWorkspace.catalog) {
+    throw new Error(
+      "Could not read the catalog entry in the pnpm-workspace file.",
+    );
+  }
+
+  async function updateVersions(catalog: Record<string, string>) {
+    const entries = Object.keys(
+      catalog,
+    );
+
+    for (const entry of entries) {
+      if (
+        (!exclude && !include) ||
+        (exclude && !exclude.includes(entry)) ||
+        (include && include.includes(entry))
+      ) {
+        const updatedVersion = await getLatestVersionRange(entry);
+        catalog[entry] = updatedVersion;
+      }
+    }
+
+    if (add) {
+      for (const newPkg of add) {
+        const updatedVersion = await getLatestVersionRange(newPkg);
+        catalog[newPkg] = updatedVersion;
+      }
+    }
+
+    return catalog;
+  }
+
+  if (!noMainCatalog) {
+    pnpmWorkspace.catalog = await updateVersions(pnpmWorkspace.catalog);
+  }
+
+  if (opts.catalogs) {
+    const catalogs = pnpmWorkspace.catalogs;
+    for (const [catalogName, catalogEntries] of Object.entries(catalogs)) {
+      if (opts.catalogs === "all" || opts.catalogs.includes(catalogName)) {
+        catalogs[catalogName] = await updateVersions(catalogEntries);
+      }
+    }
+  }
+
+  await writeYamlFile(filePath, pnpmWorkspace, { fs: fsInstance });
 }

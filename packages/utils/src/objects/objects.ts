@@ -1,4 +1,4 @@
-export function keyValue<T extends object>(object: T) {
+export function objEntries<T extends object>(object: T) {
   return Object.entries(object) as T[keyof T];
 }
 

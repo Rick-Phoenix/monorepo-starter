@@ -108,11 +108,11 @@ export function createMemfsHandlers(vol: Volume) {
     return readJsonFile<T>({ ...opts, fs: volFsPromises });
   };
 
-  const writeYamlFileWrapper = async (opts: {
-    outPath: string;
-    content: unknown;
-  }) => {
-    return writeYamlFile(opts.outPath, opts.content, { fs: volFsPromises });
+  const writeYamlFileWrapper = async (
+    outPath: string,
+    content: unknown,
+  ) => {
+    return writeYamlFile(outPath, content, { fs: volFsPromises });
   };
 
   const readYamlFileWrapper = async <T = Record<string, unknown>>(
@@ -122,13 +122,13 @@ export function createMemfsHandlers(vol: Volume) {
   };
 
   const readPnpmWorkspaceWrapper = async <T = Record<string, unknown>>(
-    opts: Omit<ReadPnpmWorkspaceOpts, "fs">,
+    opts?: Omit<ReadPnpmWorkspaceOpts, "fs">,
   ) => {
     return readPnpmWorkspace<T>({ ...opts, fs: volFsPromises });
   };
 
   const findPnpmWorkspaceWrapper = async <T = Record<string, unknown>>(
-    opts: Omit<FindPnpmWorkspaceOpts, "fs">,
+    opts?: Omit<FindPnpmWorkspaceOpts, "fs">,
   ) => {
     return findPnpmWorkspace<T>({ ...opts, fs: volFsPromises });
   };
