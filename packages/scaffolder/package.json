@@ -20,7 +20,10 @@
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint -c '../../.oxlintrc.json' && eslint"
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": [
+      "oxlint --config '../../.oxlintrc.json'",
+      "eslint"
+    ]
   },
   "files": [
     "dist"

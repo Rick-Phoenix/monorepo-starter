@@ -63,7 +63,6 @@ export async function findUp(
   );
 
   const currentDirname = basename(currentPath);
-  console.log("🔍🔍 currentDirname: 🔍🔍", currentDirname);
 
   if (
     (!opts.dirMarker ||
