@@ -1,5 +1,7 @@
-import { createFsTestSuite, throwErr } from "@monorepo-starter/utils";
-import type { Volume } from "memfs";
+import {
+  copyDirectoryToMemfs,
+  createFsTestSuite,
+} from "@monorepo-starter/utils";
 import { vol } from "memfs";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -10,10 +12,10 @@ const fs_disk = await vi.importActual<typeof import("node:fs")>(
 );
 
 export function resetVol() {
-  const templatesDir = join(import.meta.dirname, "../templates");
+  const templatesDir = join(import.meta.dirname, "../../templates");
   const srcTemplatesDir = join(
     import.meta.dirname,
-    "../src/templates",
+    "../../src/templates",
   );
 
   vol.reset();
@@ -25,52 +27,6 @@ export function resetVol() {
       vol,
     },
   );
-}
-
-interface RecursiveCopyToMemfsOpts {
-  fs: typeof import("node:fs");
-  vol: Volume;
-  sourceDirOnDisk: string;
-  targetDirInMemfs: string;
-}
-
-export function copyDirectoryToMemfs(
-  opts: RecursiveCopyToMemfsOpts,
-): void {
-  const { fs: fs_disk, vol: memfsInstance, sourceDirOnDisk, targetDirInMemfs } =
-    opts;
-  if (!fs_disk.existsSync(sourceDirOnDisk)) {
-    throwErr(`Source directory NOT FOUND on disk: ${sourceDirOnDisk}`);
-  }
-  if (!fs_disk.statSync(sourceDirOnDisk).isDirectory()) {
-    throwErr(`Source directory is not a directory: ${sourceDirOnDisk}`);
-  }
-
-  memfsInstance.mkdirSync(targetDirInMemfs, { recursive: true });
-
-  const entries = fs_disk.readdirSync(sourceDirOnDisk, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const currentSourcePath = join(sourceDirOnDisk, entry.name);
-    const currentTargetPathInMemfs = join(
-      targetDirInMemfs,
-      entry.name,
-    );
-
-    if (entry.isDirectory()) {
-      copyDirectoryToMemfs({
-        ...opts,
-        sourceDirOnDisk: currentSourcePath,
-        targetDirInMemfs: currentTargetPathInMemfs,
-      });
-    } else if (entry.isFile()) {
-      const fileContent = fs_disk.readFileSync(currentSourcePath);
-      memfsInstance.writeFileSync(
-        currentTargetPathInMemfs,
-        fileContent,
-      );
-    }
-  }
 }
 
 type Action = (flags: undefined | string[]) => Promise<unknown>;

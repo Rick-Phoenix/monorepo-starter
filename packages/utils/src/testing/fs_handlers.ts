@@ -1,5 +1,7 @@
 import type { Volume } from "memfs";
 import { createFsFromVolume } from "memfs";
+import { join } from "node:path";
+import { throwErr } from "../error_handling/error_handling.js";
 import type { FindUpOpts } from "../fs/find.js";
 import { findUp } from "../fs/find.js";
 import {
@@ -15,6 +17,52 @@ import type {
   WriteRenderOptions,
 } from "../rendering.js";
 import { recursiveRender, writeRender } from "../rendering.js";
+
+export interface RecursiveCopyToMemfsOpts {
+  fs: typeof import("node:fs");
+  vol: Volume;
+  sourceDirOnDisk: string;
+  targetDirInMemfs: string;
+}
+
+export function copyDirectoryToMemfs(
+  opts: RecursiveCopyToMemfsOpts,
+): void {
+  const { fs: fs_disk, vol: memfsInstance, sourceDirOnDisk, targetDirInMemfs } =
+    opts;
+  if (!fs_disk.existsSync(sourceDirOnDisk)) {
+    throwErr(`Source directory NOT FOUND on disk: ${sourceDirOnDisk}`);
+  }
+  if (!fs_disk.statSync(sourceDirOnDisk).isDirectory()) {
+    throwErr(`Source directory is not a directory: ${sourceDirOnDisk}`);
+  }
+
+  memfsInstance.mkdirSync(targetDirInMemfs, { recursive: true });
+
+  const entries = fs_disk.readdirSync(sourceDirOnDisk, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const currentSourcePath = join(sourceDirOnDisk, entry.name);
+    const currentTargetPathInMemfs = join(
+      targetDirInMemfs,
+      entry.name,
+    );
+
+    if (entry.isDirectory()) {
+      copyDirectoryToMemfs({
+        ...opts,
+        sourceDirOnDisk: currentSourcePath,
+        targetDirInMemfs: currentTargetPathInMemfs,
+      });
+    } else if (entry.isFile()) {
+      const fileContent = fs_disk.readFileSync(currentSourcePath);
+      memfsInstance.writeFileSync(
+        currentTargetPathInMemfs,
+        fileContent,
+      );
+    }
+  }
+}
 
 export function createMemfsHandlers(vol: Volume) {
   // Safe as long as missing methods like glob are not used
