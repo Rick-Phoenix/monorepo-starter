@@ -8,10 +8,21 @@ import {
   findPkgJson,
   type FindPkgJsonOpts,
   type FsPromisesInstance,
+  readJsonFile,
+  type ReadJsonFileOpts,
   readPkgJson,
   type ReadPkgJsonOpts,
   writeJsonFile,
 } from "../fs/fs_json.js";
+import {
+  findPnpmWorkspace,
+  type FindPnpmWorkspaceOpts,
+  readPnpmWorkspace,
+  type ReadPnpmWorkspaceOpts,
+  readYamlFile,
+  type ReadYamlFileOpts,
+  writeYamlFile,
+} from "../fs/fs_yaml.js";
 import type {
   RecursiveRenderOptions,
   WriteRenderOptions,
@@ -91,11 +102,47 @@ export function createMemfsHandlers(vol: Volume) {
     return findPkgJson<T>({ ...opts, fs: volFsPromises });
   };
 
+  const readJsonFileWrapper = async <T = Record<string, unknown>>(
+    opts: Omit<ReadJsonFileOpts, "fs">,
+  ) => {
+    return readJsonFile<T>({ ...opts, fs: volFsPromises });
+  };
+
+  const writeYamlFileWrapper = async (opts: {
+    outPath: string;
+    content: unknown;
+  }) => {
+    return writeYamlFile(opts.outPath, opts.content, { fs: volFsPromises });
+  };
+
+  const readYamlFileWrapper = async <T = Record<string, unknown>>(
+    opts: Omit<ReadYamlFileOpts, "fs">,
+  ) => {
+    return readYamlFile<T>({ ...opts, fs: volFsPromises });
+  };
+
+  const readPnpmWorkspaceWrapper = async <T = Record<string, unknown>>(
+    opts: Omit<ReadPnpmWorkspaceOpts, "fs">,
+  ) => {
+    return readPnpmWorkspace<T>({ ...opts, fs: volFsPromises });
+  };
+
+  const findPnpmWorkspaceWrapper = async <T = Record<string, unknown>>(
+    opts: Omit<FindPnpmWorkspaceOpts, "fs">,
+  ) => {
+    return findPnpmWorkspace<T>({ ...opts, fs: volFsPromises });
+  };
+
   return {
     findPkgJson: findPkgJsonWrapper,
     readPkgJson: readPkgJsonWrapper,
     writeJsonFile: writeJsonFileWrapper,
     findUp: findUpWrapper,
+    readJsonFile: readJsonFileWrapper,
+    writeYamlFile: writeYamlFileWrapper,
+    readYamlFile: readYamlFileWrapper,
+    readPnpmWorkspace: readPnpmWorkspaceWrapper,
+    findPnpmWorkspace: findPnpmWorkspaceWrapper,
   };
 }
 

@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import type { PackageJson } from "type-fest";
 import { tryThrow } from "../error_handling/error_handling.js";
 import { findUp } from "./find.js";
@@ -19,9 +19,36 @@ export async function readPkgJson<T = Record<string, unknown>>(
   const filePath = opts?.filePath ||
     resolve(opts?.cwd || process.cwd(), "package.json");
   const fsInstance = opts?.fs || fs;
-  const rawText = await fsInstance.readFile(filePath, "utf8");
+  const packageJson = await readJsonFile<PackageJson & T>({
+    filePath,
+    fs: fsInstance,
+  });
 
-  return JSON.parse(rawText) as PackageJson & T;
+  return packageJson;
+}
+
+export interface ReadJsonFileOpts {
+  filePath: string;
+  fs?: FsPromisesInstance;
+}
+
+export async function readJsonFile<T = Record<string, unknown>>(
+  opts: ReadJsonFileOpts,
+) {
+  const { filePath } = opts;
+  const fsInstance = opts?.fs || fs;
+
+  const rawText = await tryThrow(
+    fsInstance.readFile(filePath, "utf8"),
+    `reading ${filePath}`,
+  );
+  const parsedJson = await tryThrow(
+    // eslint-disable-next-line ts/no-unsafe-argument
+    JSON.parse(rawText),
+    `parsing the json in ${basename(filePath)}`,
+  );
+
+  return parsedJson as T;
 }
 
 export type WriteJsonOpts = Parameters<typeof writeJsonFile>;

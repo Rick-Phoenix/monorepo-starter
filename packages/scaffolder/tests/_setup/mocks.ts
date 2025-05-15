@@ -58,7 +58,7 @@ vi.mock("@monorepo-starter/utils", async () => {
     "@monorepo-starter/utils",
   );
 
-  const { writeJsonFile, findPkgJson, readPkgJson } = utilsActual
+  const { writeJsonFile, findPkgJson, readPkgJson, readJsonFile } = utilsActual
     .createMemfsHandlers(vol);
 
   const { writeRender, recursiveRender } = utilsActual
@@ -71,6 +71,7 @@ vi.mock("@monorepo-starter/utils", async () => {
     readPkgJson,
     writeJsonFile,
     findPkgJson,
+    readJsonFile,
     tryWarnChildProcess: () => {
       return true;
     },

@@ -99,6 +99,16 @@ describe("testing the fs handlers", async () => {
       expect(dir).toBe(process.cwd());
     });
 
+    it("finds a named file", async () => {
+      const file = await findUp({
+        name: "package.json",
+        type: "file",
+        startDir: nestedPath,
+      });
+
+      expect(file).toBe(r("package.json"));
+    });
+
     it("respects the limit", async () => {
       const dir = findUp({
         fileMarker: "package.json",
