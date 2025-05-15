@@ -82,7 +82,7 @@ export function createMemfsHandlers(vol: Volume) {
   };
 
   const findUpWrapper = async (opts: Omit<FindUpOpts, "fs">) => {
-    return findUp({ ...opts, fs: volFsPromises });
+    return findUp({ ...opts, fs: volFsPromises } as FindUpOpts);
   };
 
   const findPkgJsonWrapper = async <T = Record<string, unknown>>(

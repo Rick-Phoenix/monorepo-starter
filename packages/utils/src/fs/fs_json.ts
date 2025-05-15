@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import type { PackageJson } from "type-fest";
 import { tryThrow } from "../error_handling/error_handling.js";
 import { findUp } from "./find.js";
@@ -33,6 +33,7 @@ export async function writeJsonFile(
 ) {
   const jsonText = JSON.stringify(content, null, 2);
   const fsInstance = opts?.fs || fs;
+  await fsInstance.mkdir(dirname(outPath), { recursive: true });
   await tryThrow(
     fsInstance.writeFile(outPath, jsonText, "utf8"),
     `writing the json file at '${outPath}'`,
@@ -44,6 +45,7 @@ export interface FindPkgJsonOpts {
   limit?: number;
   fs?: FsPromisesInstance;
   dirMarker?: string;
+  excludeDirs?: string[];
 }
 
 export async function findPkgJson<T = Record<string, unknown>>(
