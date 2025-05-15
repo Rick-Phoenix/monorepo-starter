@@ -6,7 +6,7 @@ export function objectIsEmpty<T extends object>(object: T) {
   return Object.keys(object).length === 0;
 }
 
-export function getValue(source: unknown, field: string) {
+export function getValue<T = unknown>(source: unknown, field: string) {
   const fieldSegments = field.split(".");
 
   let targetField = source;
@@ -32,5 +32,5 @@ export function getValue(source: unknown, field: string) {
     }
   }
 
-  return targetField;
+  return targetField as T;
 }
