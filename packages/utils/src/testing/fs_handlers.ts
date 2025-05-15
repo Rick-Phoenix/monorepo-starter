@@ -1,64 +1,66 @@
 import type { Volume } from "memfs";
 import { createFsFromVolume } from "memfs";
-import { resolve } from "node:path";
-import type { PackageJson } from "type-fest";
-import { tryThrow } from "../error_handling/error_handling.js";
 import type { FindUpOpts } from "../fs/find.js";
 import { findUp } from "../fs/find.js";
-import type { FindPkgJsonOpts, ReadPkgJsonOpts } from "../fs/fs_json.js";
+import {
+  findPkgJson,
+  type FindPkgJsonOpts,
+  type FsPromisesInstance,
+  readPkgJson,
+  type ReadPkgJsonOpts,
+  writeJsonFile,
+} from "../fs/fs_json.js";
+import type {
+  RecursiveRenderOptions,
+  WriteRenderOptions,
+} from "../rendering.js";
+import { recursiveRender, writeRender } from "../rendering.js";
 
 export function createMemfsHandlers(vol: Volume) {
-  const volFs = createFsFromVolume(vol);
-  const readPkgJson = async <T = Record<string, unknown>>(
+  // Safe as long as missing methods like glob are not used
+  const volFsPromises = createFsFromVolume(vol)
+    .promises as unknown as FsPromisesInstance;
+  const readPkgJsonWrapper = async <T = Record<string, unknown>>(
     opts?: Omit<ReadPkgJsonOpts, "fs">,
   ) => {
-    const filePath = opts?.filePath ||
-      resolve(opts?.cwd || process.cwd(), "package.json");
-    const fsInstance = volFs.promises;
-    const rawText = await fsInstance.readFile(filePath, "utf8") as string;
-
-    return JSON.parse(rawText) as PackageJson & T;
+    return readPkgJson<T>({ ...opts, fs: volFsPromises });
   };
 
-  const writeJsonFile = async (
+  const writeJsonFileWrapper = async (
     outPath: string,
     content: unknown,
   ) => {
-    const jsonText = JSON.stringify(content, null, 2);
-    const fsInstance = volFs.promises;
-    await tryThrow(
-      fsInstance.writeFile(outPath, jsonText),
-      `writing the json file at '${outPath}'`,
-    );
+    return writeJsonFile(outPath, content, { fs: volFsPromises });
   };
 
   const findUpWrapper = async (opts: Omit<FindUpOpts, "fs">) => {
-    //@ts-expect-error Missing property "glob" is not used so it is safe
-    return findUp({ ...opts, fs: volFs.promises });
+    return findUp({ ...opts, fs: volFsPromises });
   };
 
-  const findPkgJson = async <T = Record<string, unknown>>(
+  const findPkgJsonWrapper = async <T = Record<string, unknown>>(
     opts: Omit<FindPkgJsonOpts, "fs">,
   ) => {
-    const limit = opts.limit || 3;
-
-    const packageJsonPath = await tryThrow(
-      //@ts-expect-error Missing property "glob" is not used so it is safe
-      findUp({ ...opts, limit, name: "package.json", fs: volFs.promises }),
-    );
-
-    const packageJson = await tryThrow(
-      readPkgJson<T>({ filePath: packageJsonPath }),
-      `reading the package.json file at ${packageJsonPath}`,
-    );
-
-    return [packageJson, packageJsonPath] as const;
+    return findPkgJson<T>({ ...opts, fs: volFsPromises });
   };
 
   return {
-    findPkgJson,
-    readPkgJson,
-    writeJsonFile,
+    findPkgJson: findPkgJsonWrapper,
+    readPkgJson: readPkgJsonWrapper,
+    writeJsonFile: writeJsonFileWrapper,
     findUp: findUpWrapper,
+  };
+}
+
+export function createMockedNunjucksHandlers(vol: Volume) {
+  const fsInstance = createFsFromVolume(vol);
+  return {
+    writeRender: async (opts: Omit<WriteRenderOptions, "fs">) => {
+      //@ts-expect-error Missing properties like glob are not used so it's safe
+      return writeRender({ ...opts, fs: fsInstance });
+    },
+    recursiveRender: async (opts: Omit<RecursiveRenderOptions, "fs">) => {
+      //@ts-expect-error Missing properties like glob are not used so it's safe
+      return recursiveRender({ ...opts, fs: fsInstance });
+    },
   };
 }

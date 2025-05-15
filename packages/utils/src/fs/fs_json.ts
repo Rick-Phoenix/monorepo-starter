@@ -4,11 +4,12 @@ import type { PackageJson } from "type-fest";
 import { tryThrow } from "../error_handling/error_handling.js";
 import { findUp } from "./find.js";
 
-export type FsInstance = typeof import("node:fs/promises");
+export type FsPromisesInstance = typeof import("node:fs/promises");
+export type FsInstance = typeof import("node:fs");
 
 export interface ReadPkgJsonOpts {
   cwd?: string;
-  fs?: FsInstance;
+  fs?: FsPromisesInstance;
   filePath?: string;
 }
 
@@ -28,7 +29,7 @@ export type WriteJsonOpts = Parameters<typeof writeJsonFile>;
 export async function writeJsonFile(
   outPath: string,
   content: unknown,
-  opts?: { fs?: FsInstance },
+  opts?: { fs?: FsPromisesInstance },
 ) {
   const jsonText = JSON.stringify(content, null, 2);
   const fsInstance = opts?.fs || fs;
@@ -41,7 +42,7 @@ export async function writeJsonFile(
 export interface FindPkgJsonOpts {
   startDir?: string;
   limit?: number;
-  fs?: FsInstance;
+  fs?: FsPromisesInstance;
   dirMarker?: string;
 }
 

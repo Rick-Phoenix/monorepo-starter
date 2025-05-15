@@ -61,8 +61,13 @@ vi.mock("@monorepo-starter/utils", async () => {
   const { writeJsonFile, findPkgJson, readPkgJson } = utilsActual
     .createMemfsHandlers(vol);
 
+  const { writeRender, recursiveRender } = utilsActual
+    .createMockedNunjucksHandlers(vol);
+
   return {
     ...utilsActual,
+    writeRender,
+    recursiveRender,
     readPkgJson,
     writeJsonFile,
     findPkgJson,

@@ -1,12 +1,13 @@
 import glob from "fast-glob";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import fs from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import nunjucks from "nunjucks";
 import { tryThrow } from "./error_handling/error_handling.js";
 import { promptIfFileExists } from "./fs/fs_checks.js";
+import type { FsInstance } from "./fs/fs_json.js";
 
-const nunjucksOpts = {
+const defaultNunjucksOpts = {
   trimBlocks: true,
   lstripBlocks: true,
 };
@@ -19,12 +20,13 @@ interface NunjucksSource {
 
 interface CustomLoaderOptions {
   noCache?: boolean;
-  // Can potentially add extra options here
+  fs?: FsInstance;
 }
 
 export class StandardFileSystemLoader {
   private searchPaths: string[];
   private noCache: boolean;
+  private fs: FsInstance;
 
   constructor(searchPaths: string | string[], opts?: CustomLoaderOptions) {
     if (!searchPaths) {
@@ -32,6 +34,7 @@ export class StandardFileSystemLoader {
     }
     this.searchPaths = Array.isArray(searchPaths) ? searchPaths : [searchPaths];
     this.noCache = (opts && opts.noCache) || false;
+    this.fs = opts?.fs || fs;
   }
 
   public getSource(templateName: string): NunjucksSource | null {
@@ -40,6 +43,8 @@ export class StandardFileSystemLoader {
     }
 
     let fullPath: string | undefined;
+
+    const { existsSync, statSync, readFileSync } = this.fs;
 
     for (const basePath of this.searchPaths) {
       const resolvedPath = resolve(basePath, templateName);
@@ -62,23 +67,25 @@ export class StandardFileSystemLoader {
   }
 }
 
-interface RecursiveRenderOptions {
+export interface RecursiveRenderOptions {
   templatesDir: string;
   nunjucksRoot?: string;
   outputDir: string;
   ctx?: { [key: string]: unknown };
   retainStructure?: boolean;
   overwrite?: boolean;
+  fs?: FsInstance;
 }
 
 export async function recursiveRender(options: RecursiveRenderOptions) {
   const loader = new StandardFileSystemLoader(
     options.nunjucksRoot || options.templatesDir,
+    { fs: options.fs },
   );
   const nj = new nunjucks.Environment(
     //@ts-expect-error Extra fields like on, emit and so on are not necessary
     loader,
-    nunjucksOpts,
+    defaultNunjucksOpts,
   );
   const retainStructure = options.retainStructure ?? true;
   const overwrite = options.overwrite;
@@ -87,6 +94,7 @@ export async function recursiveRender(options: RecursiveRenderOptions) {
     cwd: options.nunjucksRoot
       ? join(options.nunjucksRoot, options.templatesDir)
       : options.templatesDir,
+    fs: options.fs || fs,
   });
 
   const dirsToCreate = new Set<string>();
@@ -118,12 +126,13 @@ export async function recursiveRender(options: RecursiveRenderOptions) {
   }
 }
 
-type WriteRenderOptions =
+export type WriteRenderOptions =
   & {
     templateFile: string;
     nunjucksRoot?: string;
     ctx?: Record<string, unknown>;
     overwrite?: boolean;
+    fs?: FsInstance;
   }
   & (
     { outputPath: string; outputFilename?: never; outputDir?: never } | {
@@ -136,11 +145,12 @@ type WriteRenderOptions =
 export async function writeRender(opts: WriteRenderOptions) {
   const loader = new StandardFileSystemLoader(
     opts.nunjucksRoot || opts.templateFile,
+    { fs: opts.fs },
   );
   const nj = new nunjucks.Environment(
     //@ts-expect-error Extra fields like on, emit and so on are not necessary
     loader,
-    nunjucksOpts,
+    defaultNunjucksOpts,
   );
 
   const { nunjucksRoot, templateFile, ctx, overwrite } = opts;
@@ -165,4 +175,15 @@ export async function writeRender(opts: WriteRenderOptions) {
     writeFile(outputPath, renderedText),
     `writing the rendered template at '${outputPath}'`,
   );
+}
+
+export function createNunjucksHandlers(fs: FsInstance) {
+  return {
+    writeRender: async (opts: Omit<WriteRenderOptions, "fs">) => {
+      return writeRender({ ...opts, fs } as WriteRenderOptions);
+    },
+    recursiveRender: async (opts: Omit<RecursiveRenderOptions, "fs">) => {
+      return recursiveRender({ ...opts, fs });
+    },
+  };
 }

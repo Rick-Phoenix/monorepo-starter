@@ -1,12 +1,12 @@
 import fs from "node:fs/promises";
 import { resolve } from "node:path";
 import { tryThrow } from "../error_handling/error_handling.js";
-import type { FsInstance } from "./fs_json.js";
+import type { FsPromisesInstance } from "./fs_json.js";
 
 export interface FindUpOpts {
   startDir?: string;
   limit?: number;
-  fs?: FsInstance;
+  fs?: FsPromisesInstance;
   currentIteration?: number;
   pathsSearched?: string[];
   fileMarker?: string;
