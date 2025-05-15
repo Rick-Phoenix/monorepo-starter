@@ -1,18 +1,27 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { defineConfig } from "vitest/config";
+
+const j = join;
+const r = resolve;
+
+const dir = import.meta.dirname;
+const setupDir = r(dir, "./_setup");
 
 export default defineConfig({
   plugins: [],
   resolve: {
     alias: {
-      "@": resolve(import.meta.dirname, "../src"),
+      "@": r(dir, "../src"),
     },
   },
 
   test: {
-    setupFiles: [resolve(import.meta.dirname, "_tests_setup.ts")],
+    setupFiles: [j(setupDir, "mocks.ts"), j(dir, "_tests_setup.ts")],
     globals: true,
     environment: "node",
     silent: "passed-only",
+    sequence: {
+      setupFiles: "list",
+    },
   },
 });

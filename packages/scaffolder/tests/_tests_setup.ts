@@ -1,22 +1,5 @@
-import { vol } from "memfs";
-import { join } from "node:path";
 import { beforeEach, vi } from "vitest";
-import "./_setup/mocks.js";
-import { copyDirectoryToMemfs } from "./lib/memfs.js";
-
-export function resetVol() {
-  const templatesDir = join(import.meta.dirname, "../templates");
-  const srcTemplatesDir = join(
-    import.meta.dirname,
-    "../src/templates",
-  );
-
-  vol.reset();
-  copyDirectoryToMemfs(
-    templatesDir,
-    srcTemplatesDir,
-  );
-}
+import { resetVol } from "./lib/memfs.js";
 
 beforeEach(resetVol);
 

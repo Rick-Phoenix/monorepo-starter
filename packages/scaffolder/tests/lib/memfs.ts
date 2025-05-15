@@ -1,5 +1,6 @@
 import { createFsTestSuite, throwErr } from "@monorepo-starter/utils";
-import { fs as memfsInstance, vol } from "memfs";
+import type { Volume } from "memfs";
+import { vol } from "memfs";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, it, vi } from "vitest";
@@ -8,10 +9,36 @@ const fs_disk = await vi.importActual<typeof import("node:fs")>(
   "node:fs",
 );
 
+export function resetVol() {
+  const templatesDir = join(import.meta.dirname, "../templates");
+  const srcTemplatesDir = join(
+    import.meta.dirname,
+    "../src/templates",
+  );
+
+  vol.reset();
+  copyDirectoryToMemfs(
+    {
+      sourceDirOnDisk: templatesDir,
+      targetDirInMemfs: srcTemplatesDir,
+      fs: fs_disk,
+      vol,
+    },
+  );
+}
+
+interface RecursiveCopyToMemfsOpts {
+  fs: typeof import("node:fs");
+  vol: Volume;
+  sourceDirOnDisk: string;
+  targetDirInMemfs: string;
+}
+
 export function copyDirectoryToMemfs(
-  sourceDirOnDisk: string,
-  targetDirInMemfs: string,
+  opts: RecursiveCopyToMemfsOpts,
 ): void {
+  const { fs: fs_disk, vol: memfsInstance, sourceDirOnDisk, targetDirInMemfs } =
+    opts;
   if (!fs_disk.existsSync(sourceDirOnDisk)) {
     throwErr(`Source directory NOT FOUND on disk: ${sourceDirOnDisk}`);
   }
@@ -31,7 +58,11 @@ export function copyDirectoryToMemfs(
     );
 
     if (entry.isDirectory()) {
-      copyDirectoryToMemfs(currentSourcePath, currentTargetPathInMemfs);
+      copyDirectoryToMemfs({
+        ...opts,
+        sourceDirOnDisk: currentSourcePath,
+        targetDirInMemfs: currentTargetPathInMemfs,
+      });
     } else if (entry.isFile()) {
       const fileContent = fs_disk.readFileSync(currentSourcePath);
       memfsInstance.writeFileSync(
