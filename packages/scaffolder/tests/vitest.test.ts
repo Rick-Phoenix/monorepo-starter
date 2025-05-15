@@ -1,5 +1,5 @@
 import { vol } from "memfs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { beforeEach, describe, it } from "vitest";
 import { genVitestConfig } from "../src/cli/gen_vitest_config.js";
 import {
@@ -37,12 +37,12 @@ describe("testing the gen-vitest cli", () => {
 
     checkTextContent({
       outputFile,
-      match: `resolve(import.meta.dirname, "${setupFile}")`,
+      match: `j(setupDir, "${basename(setupFile)}")`,
     });
 
     checkTextContent({
       outputFile,
-      match: `resolve(import.meta.dirname, "setup/fs.ts")`,
+      match: `j(setupDir, "fs.ts")`,
     });
 
     checkJsonOutput({
