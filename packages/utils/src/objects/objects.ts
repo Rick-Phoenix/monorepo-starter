@@ -1,5 +1,5 @@
 export function keyValue<T extends object>(object: T) {
-  return Object.entries(object);
+  return Object.entries(object) as T[keyof T];
 }
 
 export function objectIsEmpty<T extends object>(object: T) {
@@ -16,8 +16,20 @@ export function getValue(source: unknown, field: string) {
       targetField = undefined;
       break;
     }
-    // @ts-expect-error Cannot know the exact type structure in advance
-    targetField = targetField[segment];
+
+    if (!segment.startsWith("[")) {
+      const stringPart = segment.split("[")[0];
+      // @ts-expect-error Cannot know the exact type structure in advance
+      targetField = targetField[stringPart];
+    }
+
+    const numIndices = segment.match(/(?<=\[.*)\d/g);
+    if (numIndices) {
+      numIndices.forEach((i) => {
+        // @ts-expect-error Cannot know the exact type structure in advance
+        targetField = targetField[+i];
+      });
+    }
   }
 
   return targetField;

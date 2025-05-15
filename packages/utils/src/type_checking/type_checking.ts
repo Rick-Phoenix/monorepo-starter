@@ -10,19 +10,10 @@ export function isRunningInBrowser() {
   );
 }
 
-/**
- * Asserts that the caught value is a non-null object.
- * If it's not (e.g., a primitive string, number, null), it throws a new Error
- * that includes the original value's string representation.
- * After calling this, TypeScript allows using optional chaining `?.` on the value.
- *
- * @param value - The value caught in a catch block (typically unknown).
- * @throws {Error} If the value is not a non-null object.
- */
 export function assertIsObject(
   value: unknown,
 ): value is Record<keyof any, unknown> {
-  if (typeof value !== "object" || value === null) {
+  if (!value || Array.isArray(value) || typeof value !== "object") {
     throw new Error(`Caught value is not an object: ${String(value)}`);
   }
 
@@ -84,7 +75,6 @@ export function getUnsafePathChar(name: string) {
     : posixUnsafePathRegex;
   const matchResult = unsafeCharsRegex.exec(name);
 
-  // Check the result
   if (matchResult === null) {
     return null;
   } else {
