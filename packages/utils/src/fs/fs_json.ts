@@ -39,7 +39,7 @@ export async function readJsonFile<T = Record<string, unknown>>(
   const fsInstance = opts?.fs || fs;
 
   const rawText = await tryThrow(
-    fsInstance.readFile(filePath, "utf8"),
+    fsInstance.readFile(resolve(filePath), "utf8"),
     `reading ${filePath}`,
   );
   const parsedJson = await tryThrow(
@@ -60,7 +60,8 @@ export async function writeJsonFile(
 ) {
   const jsonText = JSON.stringify(content, null, 2);
   const fsInstance = opts?.fs || fs;
-  await fsInstance.mkdir(dirname(outPath), { recursive: true });
+  const resolvedPath = resolve(outPath);
+  await fsInstance.mkdir(dirname(resolvedPath), { recursive: true });
   await tryThrow(
     fsInstance.writeFile(outPath, jsonText, "utf8"),
     `writing the json file at '${outPath}'`,
