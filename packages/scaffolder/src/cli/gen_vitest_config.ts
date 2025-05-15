@@ -11,7 +11,7 @@ import {
 } from "@monorepo-starter/utils";
 import download from "download";
 import { mkdir } from "node:fs/promises";
-import { dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
 const pluginPresets = [
@@ -70,7 +70,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
   const outputFile = join(outputDir, "vitest.config.ts");
   const srcRelPath = relative(outputDir, "src");
   const setupFilePath = resolve(args.testsDir, args.setupFile);
-  const setupFileRelPath = relative(outputDir, setupFilePath);
+  const setupFileRelPath = basename(setupFilePath);
   const setupDir = dirname(setupFilePath);
 
   let isOk: boolean | undefined;
@@ -135,7 +135,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
     const presetsRelPaths = [];
 
     for (const preset of presets) {
-      const presetRelPath = relative(outputDir, join(setupDir, `${preset}.ts`));
+      const presetRelPath = `${preset}.ts`;
       presetsRelPaths.push(presetRelPath);
       const templateFile = resolve(
         import.meta.dirname,
@@ -155,6 +155,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
         setupFileRelPath,
         srcRelPath,
         presetsRelPaths,
+        setupDir: relative(outputDir, setupDir),
       },
     });
   }

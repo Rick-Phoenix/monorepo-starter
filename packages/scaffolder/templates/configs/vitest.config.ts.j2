@@ -2,7 +2,13 @@
 import {{ plugin.name }} from "{{ plugin.packageName }}";
 {% endfor %}
 import { defineConfig } from "vitest/config";
-import { resolve } from "node:path"
+import { resolve, join } from "node:path";
+
+const j = join;
+const r = resolve;
+
+const dir = import.meta.dirname;
+const setupDir = r(dir, "{{ setupDir }}");
 
 export default defineConfig({
   plugins: [
@@ -12,21 +18,24 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': resolve(import.meta.dirname, "{{ srcRelPath }}"),
+      '@': r(dir, "{{ srcRelPath }}"),
     },
   },
 
   test: { 
     setupFiles: [ 
-      {% if setupFileRelPath %}
-      resolve(import.meta.dirname, "{{ setupFileRelPath }}"),
-      {% endif %}
       {% for path in presetsRelPaths %}
-      resolve(import.meta.dirname, "{{ path }}"),  
+      j(setupDir, "{{ path }}"),  
       {% endfor %}
+      {% if setupFileRelPath %}
+      j(setupDir, "{{ setupFileRelPath }}"),
+      {% endif %}
     ], 
     globals: true,
     environment: "node",
     silent: "passed-only",
+    sequence: {
+      setupFiles: "list",
+    },
   },
 });
