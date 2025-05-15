@@ -13,6 +13,7 @@
     "gen-eslint": "./dist/bin/gen_eslint.js",
     "gen-tsdown": "./dist/bin/gen_tsdown.js",
     "gen-vitest": "./dist/bin/gen_vitest.js",
+    "update-catalog": "./dist/bin/update_catalog.js",
     "gen-oxlint": "./dist/bin/gen_oxlint.js"
   },
   "scripts": {

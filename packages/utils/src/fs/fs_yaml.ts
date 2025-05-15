@@ -112,6 +112,11 @@ export interface UpdatePnpmCatalogOpts {
 
 export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
   const { exclude, include, add, noMainCatalog } = opts;
+
+  if (exclude && include) {
+    throw new Error("Can only choose one between exclude and include.");
+  }
+
   const fsInstance = opts.fs || fs;
   const filePath = resolve(opts.filePath);
 
