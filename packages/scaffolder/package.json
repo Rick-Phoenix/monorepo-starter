@@ -37,28 +37,28 @@
     "@monorepo-starter/utils": "workspace:*",
     "arktype": "^2.1.20",
     "commander": "^13.1.0",
-    "dedent": "^1.5.3",
+    "dedent": "^1.6.0",
     "download": "^8.0.0",
     "fast-glob": "^3.3.3",
     "nunjucks": "^3.2.4",
-    "radashi": "^12.4.0",
-    "yaml": "^2.7.1"
+    "radashi": "^12.5.0",
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
-    "@types/download": "^8.0.5",
     "@arethetypeswrong/cli": "^0.18.1",
     "@eslint/config-inspector": "^1.0.2",
     "@monorepo-starter/linting-config": "workspace:*",
-    "@types/bun": "^1.2.10",
-    "@types/node": "^22.15.3",
+    "@types/bun": "^1.2.13",
+    "@types/download": "^8.0.5",
+    "@types/node": "^22.15.18",
     "@types/nunjucks": "^3.2.6",
-    "eslint": "^9.23.0",
-    "lint-staged": "^12.3.2",
+    "eslint": "^9.26.0",
+    "lint-staged": "^12.5.0",
     "memfs": "^4.17.1",
     "oxlint": "catalog:",
     "rollup-plugin-copy": "^3.5.0",
     "tsdown": "0.11.0-beta.4",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "vitest": "^3.1.3"
   }
 }

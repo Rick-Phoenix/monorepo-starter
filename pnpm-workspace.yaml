@@ -3,7 +3,7 @@ packages:
   - packages/*
 
 catalog:
-  oxlint: ^0.16.9
+  oxlint: ^0.16.10
 
 onlyBuiltDependencies:
   - esbuild
