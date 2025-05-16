@@ -157,7 +157,7 @@ export async function initRepo(args?: string[]) {
 
   const lintConfigName = cliArgs.lintName;
 
-  const lintCommands: string[] = ["eslint_d ."];
+  const lintCommands: string[] = ["eslint"];
   if (oxlint) lintCommands.unshift("oxlint -c ../../.oxlintrc.json");
 
   const lintCommand = lintCommands.join(" &&");

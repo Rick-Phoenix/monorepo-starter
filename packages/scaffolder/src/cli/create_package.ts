@@ -299,7 +299,7 @@ export async function initializePackage(args?: string[]) {
   if (oxlintCommand) lintCommands.push(oxlintCommand);
   if (eslintConfigSourceType) {
     lintCommands.push(
-      selectedPackages.has("eslint_d") ? "eslint_d ." : "eslint",
+      "eslint",
     );
   }
 
@@ -414,6 +414,8 @@ export async function initializePackage(args?: string[]) {
       await genTsdownConfig([
         "-d",
         outputDir,
+        "--build-tsconfig",
+        cliArgs.srcTsconfig,
       ]);
     }
   }

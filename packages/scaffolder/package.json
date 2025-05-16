@@ -17,13 +17,13 @@
     "gen-oxlint": "./dist/bin/gen_oxlint.js"
   },
   "scripts": {
-    "lint": "oxlint -c '../../.oxlintrc.json' && eslint_d .",
+    "lint": "oxlint -c '../../.oxlintrc.json' && eslint",
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": [
       "oxlint --config '../../.oxlintrc.json'",
-      "eslint_d ."
+      "eslint"
     ]
   },
   "files": [
@@ -57,7 +57,6 @@
     "@types/node": "^22.15.18",
     "@types/nunjucks": "^3.2.6",
     "eslint": "catalog:",
-    "eslint_d": "catalog:",
     "lint-staged": "catalog:",
     "memfs": "catalog:",
     "oxlint": "catalog:",

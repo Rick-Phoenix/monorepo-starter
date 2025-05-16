@@ -29,14 +29,6 @@ const packages: Package[] = [
     presets: ["base"],
   },
   {
-    name: "eslint_d",
-    hint: "Runs eslint as a service, makes it 3-5 times faster",
-    isDev: true,
-    catalog: true,
-    preSelected: true,
-    presets: ["base"],
-  },
-  {
     name: "@eslint/config-inspector",
     label: "Eslint-config-inspector",
     isDev: true,
@@ -176,7 +168,6 @@ export async function getLintPackageDeps(
     "@antfu/eslint-config",
     "typescript-eslint",
     "lint-staged",
-    "eslint_d",
   ];
 
   if (options.oxlint) catalogDeps.push("eslint-plugin-oxlint", "oxlint");

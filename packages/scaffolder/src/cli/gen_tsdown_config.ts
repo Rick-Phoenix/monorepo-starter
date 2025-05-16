@@ -34,6 +34,11 @@ export async function genTsdownConfig(injectedArgs?: string[]) {
         "The package manager to install tsdown with",
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
+    .option(
+      "--build-tsconfig <path>",
+      "The path to the tsconfig to use with tsdown",
+      "tsconfig.json",
+    )
     .showHelpAfterError();
 
   const isRunningAsCli = !injectedArgs;

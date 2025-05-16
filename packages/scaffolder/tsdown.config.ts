@@ -11,4 +11,5 @@ export default defineConfig([{
       dest: "dist",
     }],
   })],
+  tsconfig: "tsconfig.src.json",
 }]);

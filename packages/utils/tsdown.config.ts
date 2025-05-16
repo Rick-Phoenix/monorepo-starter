@@ -5,4 +5,5 @@ export default defineConfig([{
   dts: {
     sourcemap: false,
   },
+  tsconfig: "tsconfig.src.json",
 }]);
