@@ -1,13 +1,14 @@
 // eslint-disable no-useless-spread
 // eslint-disable no-console
 
-import { cancel, intro, outro } from "@clack/prompts";
+import { intro, outro } from "@clack/prompts";
 import {
   assertReadableWritableFile,
   confirm,
   isNonEmptyArray,
   multiselect,
   objectIsEmpty,
+  printError,
   promptIfDirNotEmpty,
   readPkgJson,
   recursiveRender,
@@ -57,7 +58,7 @@ export async function initializePackage(args?: string[]) {
     message: `Enter the package's name:`,
     validate: (input) => {
       if (!input || !input.length) {
-        cancel("The package name cannot be empty.");
+        printError("The package name cannot be empty.");
         process.exit(1);
       }
 

@@ -1,10 +1,9 @@
-import { cancel } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
 import fs, { constants, rm } from "node:fs/promises";
 import { basename, relative, resolve } from "node:path";
 import { stringType } from "../arktype.js";
 import { throwErr, tryCatch } from "../error_handling/error_handling.js";
-import { confirm, select } from "../prompts.js";
+import { confirm, printExit, select } from "../prompts.js";
 import {
   isENOENTError,
   isENOTDIRError,
@@ -321,7 +320,7 @@ export async function promptIfDirNotEmpty(path: string) {
         await rm(path, { recursive: true, force: true });
         return true;
       } else {
-        cancel("Operation aborted.");
+        printExit();
         return false;
       }
     } else {
@@ -354,7 +353,7 @@ export async function promptIfFileExists(path: string) {
         return true;
       }
     } else {
-      cancel("Operation aborted.");
+      printExit();
       process.exit(0);
     }
     //
@@ -379,7 +378,7 @@ export async function promptIfPathIsAboveCwd(path: string) {
     });
 
     if (!confirmation) {
-      cancel("Operation aborted.");
+      printExit();
       process.exit(0);
     }
   }

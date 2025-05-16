@@ -1,6 +1,6 @@
 // eslint-disable no-console
-import { cancel, confirm, intro, outro, text } from "@clack/prompts";
-import { readPkgJson } from "@monorepo-starter/utils";
+import { confirm, intro, outro, text } from "@clack/prompts";
+import { printError, readPkgJson } from "@monorepo-starter/utils";
 import { type } from "arktype";
 import { file } from "bun";
 import { spawnSync } from "node:child_process";
@@ -40,12 +40,12 @@ async function scaffoldSvelte() {
     initialValue: "svelte-app",
     validate: (input) => {
       if (!input || !input.length) {
-        cancel("The project name cannot be empty.");
+        printError("The project name cannot be empty.");
         process.exit(1);
       }
 
       if (input.match(/[,./:\\]/)) {
-        cancel("The name contains invalid characters.");
+        printError("The name contains invalid characters.");
         process.exit(1);
       }
       return undefined;
@@ -54,7 +54,7 @@ async function scaffoldSvelte() {
 
   const appDir = res(monorepoRoot, "apps", appName);
   if (existsSync(appDir)) {
-    cancel("A folder with this name already exists.");
+    printError("A folder with this name already exists.");
     process.exit(1);
   }
 

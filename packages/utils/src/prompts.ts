@@ -6,7 +6,7 @@ export async function text(options: TextOptions, exitMessage?: string) {
   const prompt = await p.text(options);
 
   if (p.isCancel(prompt)) {
-    p.cancel(exitMessage || "Operation canceled.");
+    printExit(exitMessage);
     process.exit(0);
   }
 
@@ -17,7 +17,7 @@ export async function confirm(options: p.ConfirmOptions, exitMessage?: string) {
   const prompt = await p.confirm(options);
 
   if (p.isCancel(prompt)) {
-    p.cancel(exitMessage || "Operation canceled.");
+    printExit(exitMessage);
     process.exit(0);
   }
 
@@ -31,7 +31,7 @@ export async function select<T>(
   const prompt = await p.select(options);
 
   if (p.isCancel(prompt)) {
-    p.cancel(exitMessage || "Operation canceled.");
+    printExit(exitMessage);
     process.exit(0);
   }
 
@@ -45,7 +45,7 @@ export async function multiselect<T>(
   const prompt = await p.multiselect(options);
 
   if (p.isCancel(prompt)) {
-    p.cancel(exitMessage || "Operation canceled.");
+    printExit(exitMessage);
     process.exit(0);
   }
 
@@ -56,7 +56,7 @@ export async function confirmOrQuit(message: string, initialValue: boolean) {
   const confirmation = await confirm({ message, initialValue });
 
   if (!confirmation) {
-    p.cancel("Operation canceled.");
+    printExit();
     process.exit(0);
   }
   return true;
@@ -104,4 +104,8 @@ export function printDebug(message: string) {
 export function printError(message: string) {
   // eslint-disable-next-line no-console
   console.log(`${pico.bgRed(pico.black(`  DEBUG  `))}  ${message}`);
+}
+
+export function printExit(message?: string) {
+  printInfo(message || "Operation canceled by the user.");
 }
