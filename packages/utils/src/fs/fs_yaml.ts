@@ -131,6 +131,7 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
 
   const checkedPackages = new Map<string, string>();
   let updatedPackages = 0;
+  let addedPackages = 0;
 
   async function updateVersions(catalog: Record<string, string>) {
     const entries = Object.keys(
@@ -152,21 +153,22 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
       }
     }
 
-    if (add) {
-      for (const newPkg of add) {
-        if (!checkedPackages.get(newPkg)) {
-          const latestVersion = await getLatestVersionRange(newPkg);
-          checkedPackages.set(newPkg, latestVersion);
-        }
-        catalog[newPkg] = checkedPackages.get(newPkg)!;
-      }
-    }
-
     return catalog;
   }
 
   if (!noMainCatalog) {
     pnpmWorkspace.catalog = await updateVersions(pnpmWorkspace.catalog);
+  }
+
+  if (add) {
+    for (const newPkg of add) {
+      if (pnpmWorkspace.catalog[newPkg]) {
+        log.warn(`Skipping ${newPkg} as it is already in the catalog.`);
+        continue;
+      }
+      pnpmWorkspace.catalog[newPkg] = await getLatestVersionRange(newPkg);
+      addedPackages++;
+    }
   }
 
   if (opts.catalogs) {
@@ -182,12 +184,14 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
 
   log.success(
     `Updated ${updatedPackages} entr${
-      updatedPackages > 1 ? "ies" : "y"
+      updatedPackages !== 1 ? "ies" : "y"
     } in the catalog.`,
   );
   if (add) {
     log.success(
-      `Added ${add.length} entr${add.length > 1 ? "ies" : "y"} to the catalog.`,
+      `Added ${addedPackages} entr${
+        addedPackages !== 1 ? "ies" : "y"
+      } to the catalog.`,
     );
   }
 }

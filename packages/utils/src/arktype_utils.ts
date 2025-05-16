@@ -7,4 +7,6 @@ export function namedType(schema: Type, name: string) {
   });
 }
 
-export const stringType = type("string");
+// Necessary to avoid strange tsdown error
+// eslint-disable-next-line ts/no-unnecessary-type-assertion
+export const stringType = type("string") as Type<string>;
