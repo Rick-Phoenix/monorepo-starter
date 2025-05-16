@@ -5,6 +5,7 @@ import { intro, outro } from "@clack/prompts";
 import {
   assertReadableWritableFile,
   confirm,
+  consoleSuccess,
   isNonEmptyArray,
   multiselect,
   objectIsEmpty,
@@ -28,7 +29,6 @@ import {
   generalOptionalPackages,
   getPackagesWithLatestVersions,
   packagesMap,
-  presetPackages,
 } from "../lib/packages_list.js";
 import { createPackageCli } from "./create_package_cli.js";
 import { genEslintConfig } from "./gen_eslint_config.js";
@@ -91,17 +91,9 @@ export async function initializePackage(args?: string[]) {
     defaultValue: "",
   });
 
-  if (cliArgs.presets) {
-    cliArgs.presets.forEach((p) =>
-      // eslint-disable-next-line no-console
-      console.log(`✅ Preset ${p} added to the list of dependencies.`)
-    );
-  }
-
   if (cliArgs.add) {
-    // eslint-disable-next-line no-console
-    console.log(
-      `✅ Added ${cliArgs.add.length} extra packages to the list of dependencies.`,
+    consoleSuccess(
+      `Added ${cliArgs.add.length} extra packages to the list of dependencies.`,
     );
   }
 
@@ -124,22 +116,6 @@ export async function initializePackage(args?: string[]) {
     : [];
 
   const selectedPackages = new Set(additionalPackages.map((p) => p.name));
-
-  if (cliArgs.presets) {
-    const presetChoices = new Set(cliArgs.presets);
-    presetPackages.forEach((pac) => {
-      if (pac.presets) {
-        pac.presets.forEach((pr) => {
-          if (presetChoices.has(pr)) {
-            if (!selectedPackages.has(pac.name)) {
-              selectedPackages.add(pac.name);
-              additionalPackages.push(pac);
-            }
-          }
-        });
-      }
-    });
-  }
 
   if (cliArgs.add) {
     cliArgs.add.forEach((p) => {

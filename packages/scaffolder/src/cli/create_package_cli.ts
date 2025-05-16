@@ -1,6 +1,5 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { packageManagers } from "../lib/install_package.js";
-import { packagesPresetChoices } from "../lib/packages_list.js";
 import { scriptsPresets } from "./gen_scripts.js";
 
 export function createPackageCli(injectedArgs?: string[]) {
@@ -42,12 +41,6 @@ export function createPackageCli(injectedArgs?: string[]) {
       "--default-configs",
       "Accept all defaults for config files generation",
     ).implies({ skipConfigs: false }))
-    .addOption(
-      new Option(
-        "-p, --presets <presets...>",
-        "Add a preset of packages to the dependencies",
-      ).choices(packagesPresetChoices),
-    )
     .option(
       "-a, --add <package...>",
       "Add a specific package (or multiple) to the dependencies",
