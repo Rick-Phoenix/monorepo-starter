@@ -1,6 +1,6 @@
-import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
+  consoleSuccess,
   promptIfFileExists,
   tryAction,
   writeRender,
@@ -94,5 +94,5 @@ export async function genScripts(injectedArgs?: string[]) {
     );
   }
 
-  if (isOk) log.success("✅ Scripts setup completed");
+  if (isOk) consoleSuccess("Scripts setup completed");
 }

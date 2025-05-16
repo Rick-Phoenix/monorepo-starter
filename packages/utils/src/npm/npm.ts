@@ -1,4 +1,3 @@
-import { log } from "@clack/prompts";
 import fs from "node:fs/promises";
 import { resolve } from "node:path";
 import pacote from "pacote";
@@ -9,6 +8,7 @@ import {
   writeJsonFile,
 } from "../fs/fs_json.js";
 import { readPnpmWorkspace, writeYamlFile } from "../fs/fs_yaml.js";
+import { consoleInfo, consoleWarn } from "../prompts.js";
 
 export async function getLatestVersionRange(pkgName: string) {
   const manifest = await tryThrow(
@@ -59,8 +59,9 @@ export async function installCatalogPackages(opts: InstallCatalogPackagesOpts) {
   await writeYamlFile(pnpmWorkspacePath, pnpmWorkspace, { fs: fsInstance });
   await writeJsonFile(packageJsonPath, packageJson, { fs: fsInstance });
 
-  log.success(
-    `Added ${packages.length} package${
+  // eslint-disable-next-line no-console
+  console.log(
+    `✅ Added ${packages.length} package${
       packages.length !== 1 ? "s" : ""
     } to package.json and to the pnpm catalog.`,
   );
@@ -127,7 +128,10 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
   if (add) {
     for (const newPkg of add) {
       if (pnpmWorkspace.catalog[newPkg]) {
-        log.warn(`Skipping ${newPkg} as it is already in the catalog.`);
+        consoleWarn(
+          `Skipping ${newPkg} as it is already in the catalog.`,
+          true,
+        );
         continue;
       }
       pnpmWorkspace.catalog[newPkg] = await getLatestVersionRange(newPkg);
@@ -146,13 +150,13 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
 
   await writeYamlFile(filePath, pnpmWorkspace, { fs: fsInstance });
 
-  log.success(
+  consoleInfo(
     `Updated ${updatedPackages} entr${
       updatedPackages !== 1 ? "ies" : "y"
     } in the catalog.`,
   );
   if (add) {
-    log.success(
+    consoleInfo(
       `Added ${addedPackages} entr${
         addedPackages !== 1 ? "ies" : "y"
       } to the catalog.`,

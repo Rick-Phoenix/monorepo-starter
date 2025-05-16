@@ -1,6 +1,7 @@
-import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
+  consoleSuccess,
+  consoleWarn,
   isDir,
   promptIfFileExists,
   recursiveRender,
@@ -56,7 +57,7 @@ export async function genMoonConfig(injectedArgs?: string[]) {
 
   if (args.install) {
     isOk = installPackages("@moonrepo/cli", args.packageManager, true);
-    if (!isOk) log.warn("Could not install moonrepo as a package.");
+    if (!isOk) consoleWarn("Could not install moonrepo as a package.");
   }
 
   const outputDir = resolve(args.dir || process.cwd(), ".moon");
@@ -93,5 +94,5 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     { fatal },
   );
 
-  if (isOk) log.success("✅ Moon setup completed.");
+  if (isOk) consoleSuccess("Moon setup completed.");
 }

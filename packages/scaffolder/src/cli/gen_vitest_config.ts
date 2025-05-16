@@ -1,4 +1,3 @@
-import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
   confirm,
@@ -201,10 +200,12 @@ export async function genVitestConfig(injectedArgs?: string[]) {
           { fatal },
         );
       } else {
-        log.info("Skipped writing the tests script.");
+        // eslint-disable-next-line no-console
+        console.log("ℹ️ Skipped writing the tests script.");
       }
     }
   }
 
-  if (isOk) log.success("✅ Vitest config generated.");
+  // eslint-disable-next-line no-console
+  if (isOk) console.log("✅ Vitest config generated.");
 }

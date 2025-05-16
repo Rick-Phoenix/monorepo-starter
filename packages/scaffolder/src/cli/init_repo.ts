@@ -1,7 +1,8 @@
 // eslint-disable no-console
-import { intro, log, outro } from "@clack/prompts";
+import { intro, outro } from "@clack/prompts";
 import {
   confirm,
+  consoleSuccess,
   multiselect,
   promptIfDirNotEmpty,
   recursiveRender,
@@ -71,8 +72,8 @@ export async function initRepo(args?: string[]) {
   const defaultPackages = optionalRootPackages.filter((p) => p.preSelected);
 
   if (cliArgs.add) {
-    log.success(
-      `✅ Added ${cliArgs.add.length} extra packages to the list of dependencies.`,
+    consoleSuccess(
+      `Added ${cliArgs.add.length} extra packages to the list of dependencies.`,
     );
   }
 

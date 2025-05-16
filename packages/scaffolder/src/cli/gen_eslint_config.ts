@@ -1,6 +1,6 @@
-import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
+  consoleSuccess,
   promptIfFileExists,
   tryAction,
   writeRender,
@@ -140,5 +140,5 @@ export async function genEslintConfig(injectedArgs?: string[]) {
     fatal,
   });
 
-  if (isOk) log.success("✅ Eslint config generated");
+  if (isOk) consoleSuccess("Eslint config generated");
 }

@@ -30,10 +30,12 @@
     "fast-glob": "^3.3.3",
     "nunjucks": "^3.2.4",
     "pacote": "^21.0.0",
+    "picocolors": "^1.1.1",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
+    "@eslint/config-inspector": "^1.0.2",
     "@monorepo-starter/linting-config": "workspace:*",
     "@types/node": "^22.15.18",
     "@types/nunjucks": "^3.2.6",

@@ -1,7 +1,7 @@
 // eslint-disable no-useless-spread
 // eslint-disable no-console
 
-import { cancel, intro, log, outro } from "@clack/prompts";
+import { cancel, intro, outro } from "@clack/prompts";
 import {
   assertReadableWritableFile,
   confirm,
@@ -92,12 +92,14 @@ export async function initializePackage(args?: string[]) {
 
   if (cliArgs.presets) {
     cliArgs.presets.forEach((p) =>
-      log.success(`✅ Preset ${p} added to the list of dependencies.`)
+      // eslint-disable-next-line no-console
+      console.log(`✅ Preset ${p} added to the list of dependencies.`)
     );
   }
 
   if (cliArgs.add) {
-    log.success(
+    // eslint-disable-next-line no-console
+    console.log(
       `✅ Added ${cliArgs.add.length} extra packages to the list of dependencies.`,
     );
   }

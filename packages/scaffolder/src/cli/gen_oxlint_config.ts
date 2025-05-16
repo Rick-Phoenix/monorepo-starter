@@ -1,6 +1,6 @@
-import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
+  consoleSuccess,
   promptIfFileExists,
   tryAction,
   writeRender,
@@ -101,5 +101,5 @@ export async function genOxlintConfig(injectedArgs?: string[]) {
     fatal,
   });
 
-  if (isOk) log.success("✅ Oxlint config generated.");
+  if (isOk) consoleSuccess("Oxlint config generated.");
 }

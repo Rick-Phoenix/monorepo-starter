@@ -1,6 +1,6 @@
-import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
+  consoleSuccess,
   promptIfFileExists,
   tryAction,
   writeRender,
@@ -114,6 +114,6 @@ export async function genTsdownConfig(injectedArgs?: string[]) {
   });
 
   if (isOk) {
-    log.success("✅ Tsdown config generated.");
+    consoleSuccess("Tsdown config generated.");
   }
 }

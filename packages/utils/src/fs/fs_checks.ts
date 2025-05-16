@@ -2,7 +2,7 @@ import { cancel } from "@clack/prompts";
 import fg, { type Options } from "fast-glob";
 import fs, { constants, rm } from "node:fs/promises";
 import { basename, relative, resolve } from "node:path";
-import { stringType } from "../arktype_utils.js";
+import { stringType } from "../arktype.js";
 import { throwErr, tryCatch } from "../error_handling/error_handling.js";
 import { confirm, select } from "../prompts.js";
 import {

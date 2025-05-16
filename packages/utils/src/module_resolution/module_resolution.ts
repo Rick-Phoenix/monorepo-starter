@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
-import { log } from "@clack/prompts";
 import fg from "fast-glob";
 import fs from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { FsInstance } from "../fs/fs_json.js";
+import { consoleSuccess } from "../prompts.js";
 
 export function isMainModule(importMetaUrl: string) {
   if (importMetaUrl && importMetaUrl?.startsWith("file:")) {
@@ -53,5 +53,5 @@ export async function createBarrelFile(opts?: CreateBarrelFileOpts) {
 
   fsInstance.writeFileSync(outputFilePath, fileContent);
 
-  if (!opts?.silent) log.success(`✅ Barrel file written to ${outputFilePath}`);
+  if (!opts?.silent) consoleSuccess(`Barrel file written to ${outputFilePath}`);
 }
