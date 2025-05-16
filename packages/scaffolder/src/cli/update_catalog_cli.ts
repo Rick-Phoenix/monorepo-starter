@@ -29,6 +29,10 @@ export async function updateCatalogCli(injectedArgs?: string[]) {
       "Update the selected packages and exclude others by default (incompatible with exclude)",
     )
     .option(
+      "--add-only",
+      "Only add new entries to the catalog, do not update other entries",
+    )
+    .option(
       "-a, --add <package...>",
       "Add the selected packages to the catalog",
     );
@@ -41,12 +45,12 @@ export async function updateCatalogCli(injectedArgs?: string[]) {
 
   const args = program.opts();
 
-  const { path, exclude, include, add, catalog, mainCatalog } = args;
+  const { path, exclude, include, add, catalog, mainCatalog, addOnly } = args;
 
   await updatePnpmCatalog({
     filePath: path,
     exclude,
-    include,
+    include: addOnly ? [] : include,
     add,
     catalogs: catalog,
     noMainCatalog: !mainCatalog,
