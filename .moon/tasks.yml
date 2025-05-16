@@ -54,6 +54,18 @@ tasks:
     deps:
       - "pack"
 
+  lint:
+    command: "oxlint -c '../../.oxlintrc.json' && eslint"
+    inputs:
+      - "/.oxlintrc.json"
+      - "eslint.config.js"
+      - "src/**/*"
+
+  lint-staged:
+    command: "lint-staged"
+    options:
+      cache: false
+
   clean-cache:
     command: "rm -rf ./.cache"
     options:

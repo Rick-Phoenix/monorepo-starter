@@ -10,8 +10,6 @@ import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { installPackages, packageManagers } from "../lib/install_package.js";
 
-export const moonTaskPresets = ["test", "build", "clean"];
-
 export async function genMoonConfig(injectedArgs?: string[]) {
   const program = new Command()
     .option(
@@ -21,15 +19,9 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     .option("-i, --install", "Install moon as a local package")
     .addOption(
       new Option(
-        "-t, --task <task...>",
-        "A list of global tasks to add to .moon/tasks.yml",
-      ).choices(moonTaskPresets).default(moonTaskPresets),
-    )
-    .addOption(
-      new Option(
-        "--no-tasks",
-        "Do not add any global tasks",
-      ).implies({ task: [] }),
+        "--tasks",
+        "Add global tasks to tasks.yml",
+      ),
     )
     .addOption(
       new Option(
@@ -83,12 +75,6 @@ export async function genMoonConfig(injectedArgs?: string[]) {
     { fatal },
   );
 
-  const tasks: Record<string, boolean> = {};
-
-  for (const task of args.task || []) {
-    tasks[task] = true;
-  }
-
   const { rootOptionsTsconfig, projectTsconfig, packageManager } = args;
 
   isOk = await tryAction(
@@ -97,7 +83,7 @@ export async function genMoonConfig(injectedArgs?: string[]) {
       outputDir,
       templatesDir: "dot_moon",
       ctx: {
-        tasks,
+        tasks: args.tasks,
         rootOptionsTsconfig,
         projectTsconfig,
         packageManager,

@@ -1,9 +1,9 @@
 import { log } from "@clack/prompts";
 import { Command, Option } from "@commander-js/extra-typings";
 import {
-    promptIfFileExists,
-    tryAction,
-    writeRender,
+  promptIfFileExists,
+  tryAction,
+  writeRender,
 } from "@monorepo-starter/utils";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -73,7 +73,6 @@ export async function genScripts(injectedArgs?: string[]) {
     const nunjucksRoot = resolve(import.meta.dirname, "../templates/moon");
     const outputFile = "moon.yml";
     const outputDir = args.root;
-    await promptIfFileExists(join(outputDir, outputFile));
     const templateFile = `${outputFile}.j2`;
     const tasks: Record<string, boolean> = {};
 
@@ -81,7 +80,7 @@ export async function genScripts(injectedArgs?: string[]) {
       args.preset.forEach((p) => {
         tasks[p] = true;
       });
-    } 
+    }
 
     isOk = await tryAction(
       writeRender({

@@ -225,7 +225,7 @@ export async function initializePackage(args?: string[]) {
         },
         {
           label: "Make a new one (extensive)",
-          value: "opinionated",
+          value: "extensive",
         },
         {
           label: "Make a new one (minimal)",
@@ -283,14 +283,18 @@ export async function initializePackage(args?: string[]) {
     );
   }
 
+  const lintCommands: string[] = [];
+
   const oxlintCommand = !oxlint
     ? ""
     : oxlintConfigType === "root"
     ? "oxlint -c ../../.oxlintrc.json"
     : "oxlint";
-  const separator = oxlint && eslintConfigSourceType ? " && " : "";
-  const eslintCommand = eslintConfigSourceType ? "eslint" : "";
-  const lintCommand = oxlintCommand.concat(separator).concat(eslintCommand);
+
+  if (oxlintCommand) lintCommands.push(oxlintCommand);
+  if (eslintConfigSourceType) lintCommands.push("eslint");
+
+  const lintCommand = lintCommands.join(" &&");
 
   const { rootTsconfig, devTsconfig, srcTsconfig } = cliArgs;
 
@@ -302,6 +306,7 @@ export async function initializePackage(args?: string[]) {
     packageDescription,
     eslintConfigSourceName,
     lintCommand,
+    lintCommands,
     rootTsconfig,
     devTsconfig,
     srcTsconfig,
@@ -360,8 +365,6 @@ export async function initializePackage(args?: string[]) {
       await genEslintConfig([
         "-d",
         outputDir,
-        "-k",
-        "base",
         ...oxlintArgs,
       ]);
     } else {
@@ -412,6 +415,8 @@ export async function initializePackage(args?: string[]) {
       extraArgs = [
         "-e",
         oxlintExtendPath,
+        "-k",
+        "minimal",
       ];
     } else {
       extraArgs = [

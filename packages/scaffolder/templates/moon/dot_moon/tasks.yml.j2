@@ -1,8 +1,91 @@
 $schema: "https://moonrepo.dev/schemas/tasks.json"
 
-{{  "# Global tasks"  }}
+fileGroups:
+  build:
+    - "src/**/*"
+    - "tsconfig.json"
+    - "tsconfig.src.json"
+    - "package.json"
+    - "/{{ rootOptionsTsconfig | default("tsconfig.options.json") }}"
+
+{% if tasks %}
+{{  "# ----- Global tasks ------------------------------------------------------------"  }}
 tasks:
-{% for task, _ in tasks %}
-{% include "tasks/" + task + ".yml.j2" %}
-{% endfor %}
+  typecheck:
+    command: "tsc --noEmit"
+    inputs:
+      - "@group(build)"
+  build:
+    command: "tsc --build"
+    inputs:
+      - "@group(build)"
+    outputs:
+      - ".cache/tsc"
+
+  test:
+    command: "vitest --config ./tests/_vitest.config.ts run"
+    inputs:
+      - "@group(build)"
+      - "tests/**/*"
+      - "tsconfig.dev.json"
+    deps:
+      - "^:tsdown"
+
+  tsdown:
+    command: "tsdown"
+    inputs:
+      - "@group(build)"
+      - "tsdown.config.ts"
+    outputs:
+      - "dist"
+    deps:
+      - "^:tsdown"
+      - "typecheck"
+
+  pack:
+    command: "pnpm pack --out '.cache/pack.tgz'"
+    outputs:
+      - ".cache/pack.tgz"
+    deps:
+      - "tsdown"
+
+  attw:
+    command: "attw .cache/pack.tgz --quiet --profile esm-only"
+    deps:
+      - "pack"
+
+  lint:
+    command: "oxlint -c '../../.oxlintrc.json' && eslint"
+    inputs:
+      - "/.oxlintrc.json"
+      - "eslint.config.js"
+      - "src/**/*"
+
+  lint-staged:
+    command: "lint-staged"
+    options:
+      cache: false
+
+  clean-cache:
+    command: "rm -rf ./.cache"
+    options:
+      cache: false
+
+  clean-tsc:
+    command: "rm -rf ./.cache/tsc"
+    options:
+      cache: false
+
+  clean-dist:
+    command: "rm -rf ./dist"
+    options:
+      cache: false
+
+  clean-all:
+    command: "rm -rf ./dist && rm -rf ./.cache"
+    options:
+      cache: false
+
+{% endif %}
+
 

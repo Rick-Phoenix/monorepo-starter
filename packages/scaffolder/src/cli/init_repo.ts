@@ -128,23 +128,9 @@ export async function initRepo(args?: string[]) {
     initialValue: true,
   });
 
-  const oxlint = cliArgs.oxlint ?? await select({
+  const oxlint = cliArgs.oxlint ?? await confirm({
     message: "Do you want to add an oxlint config?",
-    options: [
-      {
-        label: "Yes, with opinionated defaults",
-        value: "opinionated",
-      },
-      {
-        label: "Yes, with minimal defaults",
-        value: "minimal",
-      },
-      {
-        label: "No, thank you.",
-        value: "",
-      },
-    ],
-    initialValue: "opinionated",
+    initialValue: true,
   });
 
   const rootDirs = {
@@ -171,8 +157,10 @@ export async function initRepo(args?: string[]) {
 
   const lintConfigName = cliArgs.lintName;
 
-  const oxlintCommand = oxlint ? "oxlint -c ../../.oxlintrc.json && " : "";
-  const lintCommand = oxlintCommand.concat("eslint");
+  const lintCommands: string[] = ["eslint"];
+  if (oxlint) lintCommands.unshift("oxlint -c ../../.oxlintrc.json");
+
+  const lintCommand = lintCommands.join(" &&");
 
   const templatesCtx = {
     catalog: cliArgs.catalog,
@@ -187,8 +175,11 @@ export async function initRepo(args?: string[]) {
     lintConfig,
     lintConfigName,
     lintCommand,
+    lintCommands,
     packageJsonWorkspaces: packageManager !== "pnpm",
     packageManager,
+    moon: cliArgs.moon,
+    tasks: cliArgs.moonTasks,
   };
 
   await tryThrow(
@@ -207,16 +198,14 @@ export async function initRepo(args?: string[]) {
       installPath,
       "-p",
       packageManager,
+      ...(cliArgs.moonTasks ? ["--tasks"] : []),
     ]);
   }
 
   if (oxlint) {
     await genOxlintConfig([
-      "--no-extend",
       "-d",
       installPath,
-      "-k",
-      oxlint,
     ]);
   }
 
@@ -229,7 +218,7 @@ export async function initRepo(args?: string[]) {
     );
 
     const { lintConfigDeps, lintCatalogEntries } = await getLintPackageDeps({
-      oxlint: !!oxlint,
+      oxlint,
       catalog: cliArgs.catalog,
     });
 

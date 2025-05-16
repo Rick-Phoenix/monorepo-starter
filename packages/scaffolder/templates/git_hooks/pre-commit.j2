@@ -8,5 +8,11 @@ infisical scan git-changes --staged --verbose
 {%- endif %}
 
 {% if hooks.lintStaged -%}
-{{ packageManager }} run lint-staged
+{% if moon and tasks %}
+moon run :lint-staged
+{% elif packageManager === 'pnpm' %}
+pnpm run lint-staged
+{% else %}
+lint-staged
+{% endif %}
 {%- endif %}

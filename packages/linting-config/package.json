@@ -8,7 +8,10 @@
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint --config '../../.oxlintrc.json' && eslint"
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": [
+      "oxlint --config '../../.oxlintrc.json'",
+      "eslint"
+    ]
   },
   "exports": {
     ".": {
@@ -20,15 +23,15 @@
     "dist"
   ],
   "dependencies": {
-    "@antfu/eslint-config": "^4.11.0",
+    "@antfu/eslint-config": "catalog:",
     "@eslint/config-inspector": "^1.0.2",
     "@types/node": "^22.15.3",
-    "eslint": "^9.23.0",
+    "eslint": "catalog:",
     "eslint-config-prettier": "^10.1.2",
     "eslint-flat-config-utils": "^2.0.1",
     "eslint-plugin-oxlint": "^0.16.8",
     "eslint-plugin-svelte": "^3.5.1",
-    "lint-staged": "^12.3.2",
+    "lint-staged": "catalog:",
     "oxlint": "catalog:",
     "typescript-eslint": "^8.31.1"
   }

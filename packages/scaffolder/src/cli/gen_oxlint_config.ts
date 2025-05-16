@@ -33,10 +33,10 @@ export async function genOxlintConfig(injectedArgs?: string[]) {
       new Option("-k, --kind <kind>", "The kind of config file to generate")
         .choices([
           "minimal",
-          "opinionated",
+          "extensive",
           "from-url",
         ])
-        .default("opinionated"),
+        .default("extensive"),
     )
     .addOption(
       new Option("-u, --url <url>", "The url for the config file to download")
@@ -62,7 +62,7 @@ export async function genOxlintConfig(injectedArgs?: string[]) {
     if (!isOk) process.exit(1);
   }
 
-  if (args.kind === "opinionated") {
+  if (args.kind === "extensive") {
     args.extend = false;
   }
 

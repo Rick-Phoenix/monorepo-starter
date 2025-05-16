@@ -7,11 +7,13 @@
   "workspaces": [
     "packages/*",
     "apps/*"
-  ]
+  ],
   {% endif %}
   "scripts": {
+  {% if packageManager === 'pnpm' %}
     "lint-staged": "pnpm -r lint-staged",
     "lint": "pnpm -r lint"
+  {% endif %}
   },
   "dependencies": {
     {% if dependencies | length > 0 %}

@@ -17,7 +17,11 @@
   },
   {% if devDependencies['lint-staged'] %}
   "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "{{ lintCommand }}"
+    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": [
+      {% for command in lintStagedCommands %}
+      "{{ command }}"{{ "," if loop.last !== true }}  
+      {% endfor %}
+    ]
   },
   {% endif %}
   "files": [

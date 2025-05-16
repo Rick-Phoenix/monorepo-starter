@@ -28,27 +28,39 @@ export function createPackageCli(injectedArgs?: string[]) {
       new Option("--lint-source <name>", "The type of lint config source")
         .choices(["workspace", "external", "new", "none"]),
     )
-    .addOption(new Option("--no-lint").implies({ lintSource: "none" }))
-    .option(
+    .addOption(
+      new Option("--no-lint", "Do not use a linting config").implies({
+        lintSource: "none",
+      }),
+    )
+    .addOption(new Option(
       "-c, --catalog",
       "Use the pnpm catalog for key packages (recommended)",
-    )
+    ).implies({ packageManager: "pnpm" }))
     .option("--skip-configs", "Skip prompt for config files generation")
     .addOption(new Option(
       "--default-configs",
       "Accept all defaults for config files generation",
     ).implies({ skipConfigs: false }))
     .addOption(
-      new Option("-p, --preset <preset...>").choices(packagesPresetChoices),
+      new Option(
+        "-p, --preset <preset...>",
+        "Add a preset of packages to the dependencies",
+      ).choices(packagesPresetChoices),
     )
     .option(
       "-a, --add <package...>",
-      "Extra packages to include as dependencies",
+      "Add a specific package (or multiple) to the dependencies",
     )
-    .addOption(new Option("-s, --scripts [scripts...]").choices(scriptsPresets))
+    .addOption(
+      new Option(
+        "-s, --scripts [scripts...]",
+        "Add a scripts directory (with the selected presets, if there are any)",
+      ).choices(scriptsPresets),
+    )
     .option(
       "--moon",
-      "Include a moon.yml file (with tasks for the scripts, if any are selected)",
+      "Include a moon.yml file (with tasks for the selected scripts presets, if there are any)",
     )
     .addOption(
       new Option(

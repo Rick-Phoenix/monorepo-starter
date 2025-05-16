@@ -1,6 +1,5 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { packageManagers } from "../lib/install_package.js";
-import { eslintConfigChoices } from "./gen_eslint_config.js";
 
 export function initRepoCli(injectedArgs?: string[]) {
   const program = new Command()
@@ -10,32 +9,26 @@ export function initRepoCli(injectedArgs?: string[]) {
       "The directory where the monorepo will be created",
     )
     .option(
-      "--lint-name <name>",
-      "The name of the linting config package",
-      "linting-config",
+      "-l, --lint",
+      "Create a local package for linting configuration",
     )
     .addOption(
       new Option(
-        "-l, --lint",
-        "Create a local package for linting configuration",
-      )
-        .choices(eslintConfigChoices).default("base"),
+        "--lint-name <name>",
+        "The name of the linting config package",
+      ).default("linting-config").implies({ lint: true }),
     )
-    .addOption(
-      new Option(
-        "--no-lint",
-        "Do not create an internal linting config package",
-      ),
+    .option(
+      "--no-lint",
+      "Do not create an internal linting config package",
     )
-    .addOption(
-      new Option("-o, --oxlint <config_type>").choices([
-        "minimal",
-        "opinionated",
-        "",
-      ]).default("minimal"),
+    .option(
+      "-o, --oxlint",
+      "Create an oxlint config file",
     )
-    .addOption(
-      new Option("--no-oxlint", "Do not create a config file for oxlint"),
+    .option(
+      "--no-oxlint",
+      "Do not create a config file for oxlint",
     )
     .option("-i, --install", "Install dependencies at the end of the script")
     .option(
@@ -65,7 +58,8 @@ export function initRepoCli(injectedArgs?: string[]) {
       "-a, --add <package...>",
       "Extra packages to include as dependencies",
     )
-    .option("--moon", "Add a full moonrepo config")
+    .option("--moon", "Generate moonrepo config files")
+    .option("--moon-tasks", "Add global tasks to .moon/tasks.yml")
     .showHelpAfterError();
 
   if (injectedArgs) {

@@ -3,6 +3,7 @@
   {% if extend %}
   "extends": ["{{ extend }}"],
   {% endif %}
+  {% if kind === "extensive" %}
   "plugins": ["node", "jsdoc", "import", "unicorn", "promise"],
   "categories": {
     "correctness": "error",
@@ -270,4 +271,5 @@
     "**/auto-import?(s).d.ts",
     "**/components.d.ts"
   ]
+  {% endif %}
 }
