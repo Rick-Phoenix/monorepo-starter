@@ -236,11 +236,11 @@ export function createFsTestSuite(
     checkOutput,
     checkJsonOutput(opts: YamlOrJsonCheckOpts) {
       const outputPath = resolve(opts.outputFile);
-      const outputFile = vol.toJSON(outputPath)[outputPath]!;
-      const outputData = JSON.parse(outputFile) as Record<string, unknown>;
+      const rawJsonOutput = vol.toJSON(outputPath)[outputPath]!;
+      const outputData = JSON.parse(rawJsonOutput) as Record<string, unknown>;
       if (opts.log) {
         // eslint-disable-next-line no-console
-        console.log(`🔍🔍 output for '${outputPath}':🔍🔍`, outputData);
+        console.log(`🔍🔍 output for '${outputPath}':🔍🔍`, rawJsonOutput);
       }
       if (opts.checks) {
         for (const check of opts.checks) {

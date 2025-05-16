@@ -63,8 +63,9 @@ export interface PnpmWorkspace {
 export async function readPnpmWorkspace<T = Record<string, unknown>>(
   opts?: ReadPnpmWorkspaceOpts,
 ) {
-  const filePath = opts?.filePath ||
-    resolve(opts?.cwd || process.cwd(), "pnpm-workspace.yaml");
+  const filePath = opts?.filePath
+    ? resolve(opts.filePath)
+    : resolve(opts?.cwd || process.cwd(), "pnpm-workspace.yaml");
   const fsInstance = opts?.fs || fs;
   const pnpmWorkspace = await readYamlFile<PnpmWorkspace & T>({
     filePath,

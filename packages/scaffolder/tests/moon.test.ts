@@ -20,8 +20,7 @@ describe("testing the init-moon cli", async () => {
   it("generates the config files", async () => {
     await genMoonConfig([
       "-i",
-      "-t",
-      "build",
+      "--tasks",
       "--package-manager",
       "bun",
       "--project-tsconfig",

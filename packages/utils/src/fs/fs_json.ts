@@ -16,8 +16,9 @@ export interface ReadPkgJsonOpts {
 export async function readPkgJson<T = Record<string, unknown>>(
   opts?: ReadPkgJsonOpts,
 ) {
-  const filePath = opts?.filePath ||
-    resolve(opts?.cwd || process.cwd(), "package.json");
+  const filePath = opts?.filePath
+    ? resolve(opts.filePath)
+    : resolve(opts?.cwd || process.cwd(), "package.json");
   const fsInstance = opts?.fs || fs;
   const packageJson = await readJsonFile<PackageJson & T>({
     filePath,

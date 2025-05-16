@@ -19,6 +19,7 @@ const baseFlags = [
   "--git-hook",
   "-a",
   "vitest",
+  "-o",
 ];
 
 describe("testing the init-repo cli", async () => {

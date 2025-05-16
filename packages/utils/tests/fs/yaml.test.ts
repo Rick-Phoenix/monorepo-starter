@@ -3,7 +3,11 @@ import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   createMemfsHandlers,
+  findPnpmWorkspace as findPnpmWorkspaceOriginal,
+  type FindPnpmWorkspaceOpts,
   type FsPromisesInstance,
+  readPnpmWorkspace as readPnpmWorkspaceOriginal,
+  type ReadPnpmWorkspaceOpts,
   updatePnpmCatalog as updatePnpmCatalogOriginal,
   type UpdatePnpmCatalogOpts,
 } from "../../src/index.js";
@@ -38,13 +42,28 @@ beforeEach(() => {
   });
 });
 
-const { writeYamlFile, readYamlFile, findPnpmWorkspace, readPnpmWorkspace } =
-  createMemfsHandlers(vol);
+const { writeYamlFile, readYamlFile } = createMemfsHandlers(vol);
+
+const fs = createFsFromVolume(vol).promises as unknown as FsPromisesInstance;
 
 const updatePnpmCatalog = async (opts: UpdatePnpmCatalogOpts) => {
   return updatePnpmCatalogOriginal({
     ...opts,
-    fs: createFsFromVolume(vol).promises as unknown as FsPromisesInstance,
+    fs,
+  });
+};
+
+const findPnpmWorkspace = async (opts: FindPnpmWorkspaceOpts) => {
+  return findPnpmWorkspaceOriginal({
+    ...opts,
+    fs,
+  });
+};
+
+const readPnpmWorkspace = async (opts?: ReadPnpmWorkspaceOpts) => {
+  return readPnpmWorkspaceOriginal({
+    ...opts,
+    fs,
   });
 };
 

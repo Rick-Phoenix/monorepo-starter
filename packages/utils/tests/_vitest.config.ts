@@ -15,6 +15,6 @@ export default defineConfig({
     ],
     globals: true,
     environment: "node",
-    // silent: "passed-only",
+    silent: "passed-only",
   },
 });

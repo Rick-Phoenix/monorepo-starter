@@ -1,8 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  {% if extend %}
-  "extends": ["{{ extend }}"],
-  {% endif %}
+  "extends": ["{{ extend if extend }}"]{{ "," if kind === "extensive" }}
   {% if kind === "extensive" %}
   "plugins": ["node", "jsdoc", "import", "unicorn", "promise"],
   "categories": {
