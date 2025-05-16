@@ -60,7 +60,9 @@ export async function installCatalogPackages(opts: InstallCatalogPackagesOpts) {
   await writeJsonFile(packageJsonPath, packageJson, { fs: fsInstance });
 
   log.success(
-    `Added ${packages.length} to package.json and to the pnpm catalog.`,
+    `Added ${packages.length} package${
+      packages.length !== 1 ? "s" : ""
+    } to package.json and to the pnpm catalog.`,
   );
 }
 export interface UpdatePnpmCatalogOpts {
