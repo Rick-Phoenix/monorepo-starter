@@ -355,7 +355,7 @@ export function newErr(message: string) {
   return error;
 }
 
-export function throwErr(message: string) {
+export function throwErr(message: string): never {
   const error = new Error(message);
   Error.captureStackTrace(error, throwErr);
   throw error;
