@@ -13,15 +13,15 @@
     // Declaration Emitting
     "declaration": true,
     "declarationMap": true,
-    "noEmitOnError": true,
     "composite": true,
     // Compiler Behavior
-    "strict": true,
-    "strictNullChecks": true,
-    "skipLibCheck": true,
+    "noEmitOnError": true,
     "incremental": true,
     "sourceMap": true,
     // Type Checking Strictness
+    "strict": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noUncheckedSideEffectImports": true,
     "noUncheckedIndexedAccess": true,
