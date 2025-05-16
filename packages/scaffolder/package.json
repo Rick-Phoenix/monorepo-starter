@@ -39,7 +39,7 @@
     "@clack/prompts": "catalog:",
     "@commander-js/extra-typings": "^13.1.0",
     "@monorepo-starter/utils": "workspace:*",
-    "arktype": "^2.1.20",
+    "arktype": "catalog:",
     "commander": "^13.1.0",
     "dedent": "^1.6.0",
     "download": "^8.0.0",
