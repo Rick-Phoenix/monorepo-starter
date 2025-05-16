@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getValue } from "../../src/index.js";
+import {
+  ensureArrayProperty,
+  ensureObjectProperty,
+  getValue,
+} from "../../src/index.js";
 
 describe("testing getValue", async () => {
   it("gets nested fields", async () => {
@@ -55,5 +59,25 @@ describe("testing getValue", async () => {
     const check = getValue(testObject, "prop1[0].prop2.prop3.0.prop4");
 
     expect(check).toBe("target");
+  });
+
+  it("generates a missing object property", async () => {
+    const testObj = {};
+
+    const result = ensureObjectProperty(testObj, "objProp");
+
+    expect(result).toBeTypeOf("object");
+    //@ts-expect-error Testing
+    expect(testObj.objProp).toBeTypeOf("object");
+  });
+
+  it("generates a missing array property", async () => {
+    const testObj = {};
+
+    const result = ensureArrayProperty(testObj, "objProp");
+
+    expect(result).toBeInstanceOf(Array);
+    //@ts-expect-error Testing
+    expect(testObj.objProp).toBeInstanceOf(Array);
   });
 });

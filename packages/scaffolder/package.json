@@ -8,6 +8,7 @@
   "bin": {
     "init-repo": "./dist/bin/init_repo.js",
     "create-package": "./dist/bin/create_package.js",
+    "create-barrel": "./dist/bin/create_barrel.js",
     "init-moon": "./dist/bin/init_moon.js",
     "gen-scripts": "./dist/bin/gen_scripts.js",
     "gen-eslint": "./dist/bin/gen_eslint.js",

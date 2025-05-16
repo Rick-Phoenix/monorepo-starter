@@ -34,3 +34,17 @@ export function getValue<T = unknown>(source: unknown, field: string) {
 
   return targetField as T;
 }
+
+export function ensureObjectProperty<T extends Record<string, unknown>>(
+  object: Record<string, T | null | undefined>,
+  property: string,
+): T {
+  object[property] = ensureObject(object[property]);
+  return object[property];
+}
+
+export function ensureObject<T extends Record<string, unknown>>(
+  maybeObject: T | null | undefined,
+): T {
+  return (maybeObject || {}) as T;
+}

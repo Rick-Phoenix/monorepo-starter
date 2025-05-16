@@ -2,14 +2,18 @@ import { createFsFromVolume, vol } from "memfs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  createBarrelFile as createBarrelFileOriginal,
+  type CreateBarrelFileOpts,
   createMemfsHandlers,
+  type FsInstance,
   type FsPromisesInstance,
   installCatalogPackages as installCatalogPackagesOriginal,
   type InstallCatalogPackagesOpts,
   semVerRegexp,
 } from "../../src/index.js";
 
-const fs = createFsFromVolume(vol).promises as unknown as FsPromisesInstance;
+const fs = createFsFromVolume(vol) as unknown as FsInstance;
+const fsPromises = fs.promises as unknown as FsPromisesInstance;
 
 const r = resolve;
 const pnpmWorkspaceContent = `
@@ -33,7 +37,11 @@ beforeEach(() => {
 });
 
 const installCatalogPackages = async (opts: InstallCatalogPackagesOpts) => {
-  return installCatalogPackagesOriginal({ ...opts, fs });
+  return installCatalogPackagesOriginal({ ...opts, fs: fsPromises });
+};
+
+const createBarrelFile = async (opts: CreateBarrelFileOpts) => {
+  return createBarrelFileOriginal({ ...opts, fs });
 };
 
 const { readPnpmWorkspace, readPkgJson } = createMemfsHandlers(vol);
