@@ -65,45 +65,58 @@ export async function confirmOrQuit(message: string, initialValue: boolean) {
 export function consoleSuccess(message: string, dot?: boolean) {
   const symbol = dot ? pico.green("") : "✅";
   // eslint-disable-next-line no-console
-  console.log(`  ${symbol}  ${message}`);
+  console.log(`  ${symbol}  ${pico.green(message)}`);
 }
 
 export function consoleInfo(message: string, dot?: boolean) {
   const symbol = dot ? pico.blue("") : "ℹ️";
   // eslint-disable-next-line no-console
-  console.log(`  ${symbol}  ${message}`);
+  console.log(`  ${symbol}  ${pico.blue(message)}`);
 }
 
 export function consoleWarn(message: string, dot?: boolean) {
   const symbol = dot ? pico.yellow("") : "⚠️";
   // eslint-disable-next-line no-console
-  console.log(`  ${symbol}  ${message}`);
+  console.log(`  ${symbol}  ${pico.yellow(message)}`);
 }
 
 export function consoleError(message: string, dot?: boolean) {
   const symbol = dot ? pico.red("") : "❌";
   // eslint-disable-next-line no-console
-  console.log(`  ${symbol}  ${message}`);
+  console.log(`  ${symbol}  ${pico.red(message)}`);
 }
 
 export function printWarn(message: string) {
   // eslint-disable-next-line no-console
-  console.log(`${pico.bgYellow(pico.black(`  WARN  `))}  ${message}`);
+  console.log(
+    `${pico.bgYellow(pico.black(`  WARN  `))}  ${pico.yellow(message)}`,
+  );
 }
 
 export function printInfo(message: string) {
   // eslint-disable-next-line no-console
-  console.log(`${pico.bgBlue(pico.black(`  INFO  `))}  ${message}`);
+  console.log(`${pico.bgBlue(pico.black(`  INFO  `))}  ${pico.blue(message)}`);
+}
+
+export function printSuccess(message: string) {
+  // eslint-disable-next-line no-console
+  console.log(
+    `${pico.bgGreen(pico.black(`  SUCCESS  `))}  ${pico.green(message)}`,
+  );
 }
 
 export function printDebug(message: string) {
   // eslint-disable-next-line no-console
-  console.log(`${pico.bgMagentaBright(pico.black(`  DEBUG  `))}  ${message}`);
+  console.log(
+    `${pico.bgMagentaBright(pico.black(`  DEBUG  `))}  ${
+      pico.magentaBright(message)
+    }`,
+  );
 }
 
 export function printError(message: string) {
   // eslint-disable-next-line no-console
-  console.log(`${pico.bgRed(pico.black(`  DEBUG  `))}  ${message}`);
+  console.log(`${pico.bgRed(pico.black(`  ERROR  `))}  ${pico.red(message)}`);
 }
 
 export function printExit(message?: string) {
