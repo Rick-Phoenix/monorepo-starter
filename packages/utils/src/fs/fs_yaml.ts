@@ -1,3 +1,4 @@
+import { log } from "@clack/prompts";
 import fs from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import YAML from "yaml";
@@ -128,7 +129,8 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
     );
   }
 
-  const updatedPackages = new Map<string, string>();
+  const checkedPackages = new Map<string, string>();
+  let updatedPackages = 0;
 
   async function updateVersions(catalog: Record<string, string>) {
     const entries = Object.keys(
@@ -141,21 +143,22 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
         (exclude && !exclude.includes(entry)) ||
         (include && include.includes(entry))
       ) {
-        if (!updatedPackages.get(entry)) {
-          const updatedVersion = await getLatestVersionRange(entry);
-          updatedPackages.set(entry, updatedVersion);
+        if (!checkedPackages.get(entry)) {
+          const latestVersion = await getLatestVersionRange(entry);
+          checkedPackages.set(entry, latestVersion);
+          if (latestVersion !== catalog[entry]) updatedPackages++;
         }
-        catalog[entry] = updatedPackages.get(entry)!;
+        catalog[entry] = checkedPackages.get(entry)!;
       }
     }
 
     if (add) {
       for (const newPkg of add) {
-        if (!updatedPackages.get(newPkg)) {
-          const updatedVersion = await getLatestVersionRange(newPkg);
-          updatedPackages.set(newPkg, updatedVersion);
+        if (!checkedPackages.get(newPkg)) {
+          const latestVersion = await getLatestVersionRange(newPkg);
+          checkedPackages.set(newPkg, latestVersion);
         }
-        catalog[newPkg] = updatedPackages.get(newPkg)!;
+        catalog[newPkg] = checkedPackages.get(newPkg)!;
       }
     }
 
@@ -176,4 +179,15 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
   }
 
   await writeYamlFile(filePath, pnpmWorkspace, { fs: fsInstance });
+
+  log.success(
+    `Updated ${updatedPackages} entr${
+      updatedPackages > 1 ? "ies" : "y"
+    } in the catalog.`,
+  );
+  if (add) {
+    log.success(
+      `Added ${add.length} entr${add.length > 1 ? "ies" : "y"} to the catalog.`,
+    );
+  }
 }
