@@ -15,5 +15,5 @@ export * from './fs/fs_checks.js';
 export * from './fs/find.js';
 export * from './fs/fs_yaml.js';
 export * from './npm/npm.js';
-export * from './type_checking/type_checking.js';
 export * from './types/utils.js';
+export * from './type_checking/type_checking.js';

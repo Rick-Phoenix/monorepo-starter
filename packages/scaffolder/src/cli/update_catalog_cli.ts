@@ -11,7 +11,10 @@ export async function updateCatalogCli(injectedArgs?: string[]) {
     )
     .option("--no-main-catalog", "Do not update the main catalog")
     .option("-c, --catalog <named_catalog...>", "The named catalogs to update")
-    .option("--install", "Run 'pnpm install' after updating the catalog", true)
+    .option(
+      "--no-install",
+      "Do not run 'pnpm install' after updating the catalog",
+    )
     .option(
       "-e, --exclude <package...>",
       "Do not update the version for specific packages (cannot be used with include)",

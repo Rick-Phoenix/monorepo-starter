@@ -128,6 +128,8 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
     );
   }
 
+  const updatedPackages = new Map<string, string>();
+
   async function updateVersions(catalog: Record<string, string>) {
     const entries = Object.keys(
       catalog,
@@ -139,15 +141,21 @@ export async function updatePnpmCatalog(opts: UpdatePnpmCatalogOpts) {
         (exclude && !exclude.includes(entry)) ||
         (include && include.includes(entry))
       ) {
-        const updatedVersion = await getLatestVersionRange(entry);
-        catalog[entry] = updatedVersion;
+        if (!updatedPackages.get(entry)) {
+          const updatedVersion = await getLatestVersionRange(entry);
+          updatedPackages.set(entry, updatedVersion);
+        }
+        catalog[entry] = updatedPackages.get(entry)!;
       }
     }
 
     if (add) {
       for (const newPkg of add) {
-        const updatedVersion = await getLatestVersionRange(newPkg);
-        catalog[newPkg] = updatedVersion;
+        if (!updatedPackages.get(newPkg)) {
+          const updatedVersion = await getLatestVersionRange(newPkg);
+          updatedPackages.set(newPkg, updatedVersion);
+        }
+        catalog[newPkg] = updatedPackages.get(newPkg)!;
       }
     }
 
