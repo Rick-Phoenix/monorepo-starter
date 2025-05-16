@@ -20,7 +20,7 @@ export async function genTsdownConfig(injectedArgs?: string[]) {
       "-d, --dir <directory>",
       "The directory for the generated file (default is cwd)",
     )
-    .addOption(new Option("-p, --plugin <plugin...>"))
+    .addOption(new Option("-p, --plugins <plugins...>"))
     .addOption(
       new Option("-u, --url <url>", "The url for the config file to download")
         .implies({
@@ -66,8 +66,8 @@ export async function genTsdownConfig(injectedArgs?: string[]) {
 
   await promptIfFileExists(outputFile);
 
-  const plugins = args.plugin
-    ? args.plugin.map((plugin) => {
+  const plugins = args.plugins
+    ? args.plugins.map((plugin) => {
       for (const preset of pluginPresets) {
         if (plugin === preset.name) {
           return { name: plugin, packageName: preset.packageName };

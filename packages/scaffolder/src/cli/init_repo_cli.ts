@@ -55,7 +55,7 @@ export function initRepoCli(injectedArgs?: string[]) {
         .implies({ git: true }),
     )
     .option(
-      "-a, --add <package...>",
+      "-a, --add <packages...>",
       "Extra packages to include as dependencies",
     )
     .option("--moon", "Generate moonrepo config files")

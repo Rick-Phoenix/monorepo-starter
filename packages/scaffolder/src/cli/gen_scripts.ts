@@ -19,7 +19,7 @@ export async function genScripts(injectedArgs?: string[]) {
     )
     .addOption(
       new Option(
-        "-p, --preset <preset...>",
+        "-p, --presets <presets...>",
         "Include these presets into the scripts folder",
       ).choices(scriptsPresets),
     )
@@ -53,8 +53,8 @@ export async function genScripts(injectedArgs?: string[]) {
     { fatal },
   );
 
-  if (args.preset) {
-    for (const preset of args.preset) {
+  if (args.presets) {
+    for (const preset of args.presets) {
       const outputFile = `${preset}.ts`;
       const templateFile = resolve(
         import.meta.dirname,
@@ -76,8 +76,8 @@ export async function genScripts(injectedArgs?: string[]) {
     const templateFile = `${outputFile}.j2`;
     const tasks: Record<string, boolean> = {};
 
-    if (args.preset) {
-      args.preset.forEach((p) => {
+    if (args.presets) {
+      args.presets.forEach((p) => {
         tasks[p] = true;
       });
     }

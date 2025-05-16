@@ -10,13 +10,16 @@ export async function updateCatalogCli(injectedArgs?: string[]) {
       "pnpm-workspace.yaml",
     )
     .option("--no-main-catalog", "Do not update the main catalog")
-    .option("-c, --catalog <named_catalog...>", "The named catalogs to update")
+    .option(
+      "-c, --catalogs <named_catalogs...>",
+      "The named catalogs to update",
+    )
     .option(
       "--no-install",
       "Do not run 'pnpm install' after updating the catalog",
     )
     .option(
-      "-e, --exclude <package...>",
+      "-e, --exclude <packages...>",
       "Do not update the version for specific packages (cannot be used with include)",
     )
     .addOption(
@@ -25,7 +28,7 @@ export async function updateCatalogCli(injectedArgs?: string[]) {
       }),
     )
     .option(
-      "-i, --include <package...>",
+      "-i, --include <packages...>",
       "Update the selected packages and exclude others by default (incompatible with exclude)",
     )
     .option(
@@ -33,7 +36,7 @@ export async function updateCatalogCli(injectedArgs?: string[]) {
       "Only add new entries to the catalog, do not update other entries",
     )
     .option(
-      "-a, --add <package...>",
+      "-a, --add <packages...>",
       "Add the selected packages to the catalog",
     );
 
@@ -45,14 +48,14 @@ export async function updateCatalogCli(injectedArgs?: string[]) {
 
   const args = program.opts();
 
-  const { path, exclude, include, add, catalog, mainCatalog, addOnly } = args;
+  const { path, exclude, include, add, catalogs, mainCatalog, addOnly } = args;
 
   await updatePnpmCatalog({
     filePath: path,
     exclude,
     include: addOnly ? [] : include,
     add,
-    catalogs: catalog,
+    catalogs,
     noMainCatalog: !mainCatalog,
   });
 

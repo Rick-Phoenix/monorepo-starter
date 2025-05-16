@@ -46,7 +46,7 @@ export async function genVitestConfig(injectedArgs?: string[]) {
       "_setup/_tests_setup.ts",
     )
     .addOption(new Option("--preset <preset...>").choices(setupPresets))
-    .addOption(new Option("-p, --plugin <plugin...>"))
+    .addOption(new Option("-p, --plugins <plugins...>"))
     .addOption(
       new Option("-u, --url <url>", "The url for the config file to download")
         .implies({
@@ -75,8 +75,8 @@ export async function genVitestConfig(injectedArgs?: string[]) {
 
   let isOk: boolean | undefined;
 
-  const plugins = args.plugin
-    ? args.plugin.map((plugin) => {
+  const plugins = args.plugins
+    ? args.plugins.map((plugin) => {
       for (const preset of pluginPresets) {
         if (plugin === preset.name) {
           return { name: plugin, packageName: preset.packageName };

@@ -90,8 +90,8 @@ export async function initializePackage(args?: string[]) {
     defaultValue: "",
   });
 
-  if (cliArgs.preset) {
-    cliArgs.preset.forEach((p) =>
+  if (cliArgs.presets) {
+    cliArgs.presets.forEach((p) =>
       log.success(`✅ Preset ${p} added to the list of dependencies.`)
     );
   }
@@ -122,8 +122,8 @@ export async function initializePackage(args?: string[]) {
 
   const selectedPackages = new Set(additionalPackages.map((p) => p.name));
 
-  if (cliArgs.preset) {
-    const presetChoices = new Set(cliArgs.preset);
+  if (cliArgs.presets) {
+    const presetChoices = new Set(cliArgs.presets);
     presetPackages.forEach((pac) => {
       if (pac.presets) {
         pac.presets.forEach((pr) => {
@@ -355,7 +355,7 @@ export async function initializePackage(args?: string[]) {
     if (cliArgs.moon) flags.push("--moon");
     if (isNonEmptyArray(cliArgs.scripts)) {
       cliArgs.scripts.forEach((s) => {
-        flags.push("--preset", s);
+        flags.push("--presets", s);
       });
     }
 

@@ -15,6 +15,10 @@ import {
   writeJsonFile,
 } from "../fs/fs_json.js";
 import {
+  findPnpmWorkspace,
+  type FindPnpmWorkspaceOpts,
+  readPnpmWorkspace,
+  type ReadPnpmWorkspaceOpts,
   readYamlFile,
   type ReadYamlFileOpts,
   writeYamlFile,
@@ -117,6 +121,18 @@ export function createMemfsHandlers(vol: Volume) {
     return readYamlFile<T>({ ...opts, fs: volFsPromises });
   };
 
+  const readPnpmWorkspaceWrapper = async <T = Record<string, unknown>>(
+    opts?: Omit<ReadPnpmWorkspaceOpts, "fs">,
+  ) => {
+    return readPnpmWorkspace<T>({ ...opts, fs: volFsPromises });
+  };
+
+  const findPnpmWorkspaceWrapper = async <T = Record<string, unknown>>(
+    opts?: Omit<FindPnpmWorkspaceOpts, "fs">,
+  ) => {
+    return findPnpmWorkspace<T>({ ...opts, fs: volFsPromises });
+  };
+
   return {
     findPkgJson: findPkgJsonWrapper,
     readPkgJson: readPkgJsonWrapper,
@@ -125,6 +141,8 @@ export function createMemfsHandlers(vol: Volume) {
     readJsonFile: readJsonFileWrapper,
     writeYamlFile: writeYamlFileWrapper,
     readYamlFile: readYamlFileWrapper,
+    readPnpmWorkspace: readPnpmWorkspaceWrapper,
+    findPnpmWorkspace: findPnpmWorkspaceWrapper,
   };
 }
 

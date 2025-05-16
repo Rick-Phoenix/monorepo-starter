@@ -52,7 +52,7 @@ export async function genEslintConfig(injectedArgs?: string[]) {
         "The package manager to use in the installation",
       ).choices(packageManagers).default("pnpm").implies({ install: true }),
     )
-    .addOption(new Option("-p, --plugin <plugin...>"))
+    .addOption(new Option("-p, --plugins <plugins...>"))
     .showHelpAfterError();
 
   const isRunningAsCli = !injectedArgs;
@@ -80,7 +80,7 @@ export async function genEslintConfig(injectedArgs?: string[]) {
   await promptIfFileExists(outputFile);
 
   if (args.install) {
-    const plugins: string[] = args.plugin ?? [];
+    const plugins: string[] = args.plugins ?? [];
     if (args.oxlint) {
       plugins.push("eslint-plugin-oxlint");
     } else if (args.prettier) {

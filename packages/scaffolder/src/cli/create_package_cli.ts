@@ -44,7 +44,7 @@ export function createPackageCli(injectedArgs?: string[]) {
     ).implies({ skipConfigs: false }))
     .addOption(
       new Option(
-        "-p, --preset <preset...>",
+        "-p, --presets <presets...>",
         "Add a preset of packages to the dependencies",
       ).choices(packagesPresetChoices),
     )
