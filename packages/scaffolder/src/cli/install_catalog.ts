@@ -4,7 +4,6 @@ import { spawnSync } from "node:child_process";
 
 export async function installCatalogPackagesCli(injectedArgs?: string[]) {
   const program = new Command()
-    .requiredOption("-p, --packages <packages...>", "The packages to install")
     .requiredOption(
       "-w, --workspace-file <path>",
       "The path to the pnpm-workspace file",
@@ -18,7 +17,8 @@ export async function installCatalogPackagesCli(injectedArgs?: string[]) {
       "-i, --install",
       "Run 'pnpm install' after adding the packages",
       true,
-    );
+    ).option("-D, --dev", "Install the packages as devDependencies")
+    .argument("<packages...>", "The packages to install");
 
   if (injectedArgs) {
     program.parse(injectedArgs, { from: "user" });
@@ -28,13 +28,20 @@ export async function installCatalogPackagesCli(injectedArgs?: string[]) {
 
   const args = program.opts();
 
-  const { packageJson, workspaceFile: pnpmWorkspacePath, packages, install } =
-    args;
+  const packages = program.args;
+
+  const {
+    packageJson,
+    workspaceFile: pnpmWorkspacePath,
+    install,
+    dev,
+  } = args;
 
   await installCatalogPackages({
     pnpmWorkspacePath,
     packageJson,
     packages,
+    dev,
   });
 
   if (install) {
