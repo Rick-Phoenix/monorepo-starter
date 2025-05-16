@@ -1,27 +1,35 @@
-import { log } from "@clack/prompts";
 import type { SpawnSyncReturns } from "node:child_process";
 
 // eslint-disable no-redeclare
 type Success<T> = [T, null];
 type Failure<E> = [null, E];
-type Result<T, E = Error> = Success<T> | Failure<E>;
+type Result<T, E = ProcessedError> = Success<T> | Failure<E>;
+
+const original_message = Symbol("original_error_message");
+
+interface CustomError extends Error {
+  [original_message]?: string;
+}
+
+interface ProcessedError extends Error {
+  [original_message]: string;
+}
 
 export function showWarning(
-  error: Error,
+  error: CustomError,
   description?: string,
   full?: boolean,
 ) {
   //
   Error.captureStackTrace(error, showWarning);
   const descriptionText = description ? ` while ${description}` : "";
-  error.message =
-    `⚠️ A non-fatal error occurred${descriptionText}:\n${error.message}}`;
+  console.warn(
+    `⚠️ A non-fatal error occurred${descriptionText}:\n${
+      error[original_message] || error.message
+    }}`,
+  );
   if (full) {
     console.warn(error);
-  } else {
-    log.warn(
-      error.message,
-    );
   }
 }
 
@@ -48,13 +56,11 @@ export async function tryAction(
   description: string,
   opts: TryActionOptions,
 ) {
-  const [_, error] = await tryCatch(action);
+  const [_, error] = await tryCatch(action, description);
 
   if (error) {
     Error.captureStackTrace(error, tryAction);
     if (opts.fatal) {
-      error.message =
-        `❌ A fatal error occurred while ${description}:\n${error.message}`;
       throw error;
     } else {
       showWarning(error, description, opts.fullError);
@@ -90,20 +96,26 @@ export function tryWarnChildProcess(
 export async function tryCatch<T>(
   action: Promise<T>,
   description?: string,
-): Promise<Result<T, Error>> {
+): Promise<Result<T, ProcessedError>> {
   try {
     const result = await action;
     return [result, null];
   } catch (rawError: unknown) {
-    const processedError = rawError instanceof Error
-      ? rawError
-      : new Error(String(rawError));
-    if (description) {
-      processedError.message =
-        `❌ An error occurred while ${description}:\n${processedError.message}`;
+    const processedError = handleUnknownError(
+      rawError,
+      description,
+    ) as CustomError;
+    const originalMessage = processedError[original_message];
+    if (!originalMessage) {
+      processedError[original_message] = processedError.message;
+      if (description) {
+        processedError.message =
+          `❌ An error occurred while ${description}:\n${processedError.message}`;
+      }
     }
+
     Error.captureStackTrace(processedError, tryCatch);
-    return [null, processedError];
+    return [null, processedError as ProcessedError];
   }
 }
 
@@ -117,20 +129,26 @@ export async function tryCatch<T>(
 export function tryCatchSync<T>(
   action: () => T,
   description?: string,
-): Result<T, Error> {
+): Result<T, ProcessedError> {
   try {
     const result = action();
     return [result, null];
   } catch (rawError: unknown) {
-    const processedError = rawError instanceof Error
-      ? rawError
-      : new Error(String(rawError));
-    if (description) {
-      processedError.message =
-        `❌ An error occurred while ${description}:\n${processedError.message}`;
+    const processedError = handleUnknownError(
+      rawError,
+      description,
+    ) as CustomError;
+    const originalMessage = processedError[original_message];
+    if (!originalMessage) {
+      processedError[original_message] = processedError.message;
+      if (description) {
+        processedError.message =
+          `❌ An error occurred while ${description}:\n${processedError.message}`;
+      }
     }
+
     Error.captureStackTrace(processedError, tryCatchSync);
-    return [null, processedError];
+    return [null, processedError as ProcessedError];
   }
 }
 
@@ -315,13 +333,20 @@ export function handleUnknownError(
   description?: string,
   rethrow?: boolean,
 ) {
-  const descriptionText = description ? ` while ${description}` : "";
-  const unknownError = error instanceof Error ? error : new Error(
-    `❓ Unknown error${descriptionText}:\n${String(error)}`,
-  );
-  Error.captureStackTrace(unknownError, handleUnknownError);
-  if (rethrow) throw unknownError;
-  else return unknownError;
+  if (error instanceof Error) {
+    Error.captureStackTrace(error, handleUnknownError);
+    if (rethrow) throw error;
+    return error;
+  }
+  const errorMessage = `❓ An unknown error occurred while ${description}:\n${
+    String(error)
+  }`;
+  const processedError = new Error(
+    errorMessage,
+  ) as CustomError;
+  processedError[original_message] = errorMessage;
+  Error.captureStackTrace(processedError, handleUnknownError);
+  return processedError;
 }
 
 export function newErr(message: string) {
