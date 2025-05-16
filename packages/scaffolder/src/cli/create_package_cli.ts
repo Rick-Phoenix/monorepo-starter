@@ -73,6 +73,10 @@ export function createPackageCli(injectedArgs?: string[]) {
       "Skip the prompt for selecting additional packages",
     )
     .option(
+      "--default-packages",
+      "Install the default packages and skip the prompt to select more",
+    )
+    .option(
       "--root-tsconfig <tsconfig_name>",
       "The name of the tsconfig file at the root to be extended",
       "tsconfig.options.json",

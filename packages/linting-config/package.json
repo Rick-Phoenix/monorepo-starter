@@ -4,13 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lint": "oxlint --config '../../.oxlintrc.json' && eslint",
+    "lint": "oxlint --config '../../.oxlintrc.json' && eslint_d .",
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": [
       "oxlint --config '../../.oxlintrc.json'",
-      "eslint"
+      "eslint_d ."
     ]
   },
   "exports": {
@@ -33,6 +33,7 @@
     "eslint-plugin-svelte": "^3.5.1",
     "lint-staged": "catalog:",
     "oxlint": "catalog:",
+    "eslint_d": "catalog:",
     "typescript-eslint": "^8.31.1"
   }
 }

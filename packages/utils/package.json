@@ -6,13 +6,13 @@
   "author": "Rick-Phoenix",
   "description": "General purpose utility functions.",
   "scripts": {
-    "lint": "oxlint --config '../../.oxlintrc.json' && eslint",
+    "lint": "oxlint --config '../../.oxlintrc.json' && eslint_d .",
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": [
       "oxlint --config '../../.oxlintrc.json'",
-      "eslint"
+      "eslint_d ."
     ]
   },
   "files": [
@@ -39,6 +39,7 @@
     "@types/nunjucks": "^3.2.6",
     "@types/pacote": "^11.1.8",
     "eslint": "catalog:",
+    "eslint_d": "catalog:",
     "lint-staged": "catalog:",
     "memfs": "catalog:",
     "oxlint": "catalog:",

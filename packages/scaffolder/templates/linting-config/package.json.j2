@@ -10,15 +10,19 @@
   },
   "scripts": {
     "lint": "{{ lintCommand }}",
+    {% if lintStaged %}
     "lint-staged": "lint-staged"
+    {% endif %}
   },
+  {% if lintStaged %}
   "lint-staged": {
     "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": [
       {% for command in lintStagedCommands %}
       "{{ command }}"{{ "," if loop.last !== true }}  
       {% endfor %}
     ]
-  },
+  },    
+  {% endif %}
   "dependencies": {
   {% for name, version in lintConfigDeps %}
     "{{ name }}": "{{ version }}"{{ "," if loop.last !== true }}  

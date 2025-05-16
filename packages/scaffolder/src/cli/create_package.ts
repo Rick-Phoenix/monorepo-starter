@@ -102,15 +102,20 @@ export async function initializePackage(args?: string[]) {
     );
   }
 
-  const additionalPackages = cliArgs.additionalPackages
+  const defaultPackages = generalOptionalPackages.filter((p) => p.preSelected);
+
+  const additionalPackages = cliArgs.defaultPackages
+    ? defaultPackages
+    : cliArgs.additionalPackages
     ? await multiselect({
       message:
         "Do you want to install additional packages? (Select with spacebar)",
       options: generalOptionalPackages.map((pac) => ({
         label: pac.label || pac.name[0]!.toUpperCase() + pac.name.slice(1),
         value: pac,
+        hint: pac.hint,
       })),
-      initialValues: generalOptionalPackages.filter((p) => p.preSelected),
+      initialValues: defaultPackages,
       required: false,
     })
     : [];
@@ -292,7 +297,11 @@ export async function initializePackage(args?: string[]) {
     : "oxlint";
 
   if (oxlintCommand) lintCommands.push(oxlintCommand);
-  if (eslintConfigSourceType) lintCommands.push("eslint");
+  if (eslintConfigSourceType) {
+    lintCommands.push(
+      selectedPackages.has("eslint_d") ? "eslint_d ." : "eslint",
+    );
+  }
 
   const lintCommand = lintCommands.join(" &&");
 

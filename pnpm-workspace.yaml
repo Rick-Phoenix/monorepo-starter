@@ -2,7 +2,7 @@ packages:
   - apps/*
   - packages/*
 catalog:
-  oxlint: ^0.16.10
+  oxlint: ^0.16.11
   eslint: ^9.26.0
   lint-staged: ^16.0.0
   "@antfu/eslint-config": ^4.13.1
@@ -11,6 +11,7 @@ catalog:
   typescript: ^5.8.3
   "@clack/prompts": ^0.10.1
   memfs: ^4.17.2
+  eslint_d: ^14.3.0
 onlyBuiltDependencies:
   - esbuild
   - rolldown
