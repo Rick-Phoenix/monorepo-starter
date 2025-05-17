@@ -152,7 +152,7 @@
     "prefer-exponentiation-operator": "error",
     "promise/prefer-catch": "error",
     "promise/no-return-in-finally": "error",
-    "promise/param-names": "error",
+    "promise/param-names": "off",
     "promise/no-return-wrap": "error",
     "promise/no-nesting": "error",
     "promise/catch-or-return": "warn",

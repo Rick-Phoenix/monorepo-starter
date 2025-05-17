@@ -20,7 +20,7 @@ function createEslintConfig(options, ...overrides) {
         "**/.cache/**",
       ],
       typescript: {
-        tsconfigPath: "tsconfig.json",
+        tsconfigPath: "tsconfig.dev.json",
         overridesTypeAware: {
           "ts/consistent-type-definitions": "off",
         },

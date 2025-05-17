@@ -9,8 +9,8 @@ import {
   checkJsonOutput,
   checkYamlOutput,
 } from "./lib/memfs.js";
-
 const packageName = "testPackage";
+
 const outputDir = join(process.cwd(), "packages", packageName);
 const packageJson = join(outputDir, "package.json");
 
