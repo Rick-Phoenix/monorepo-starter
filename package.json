@@ -10,7 +10,6 @@
   "devDependencies": {
     "@monorepo-starter/utils": "workspace:*",
     "@types/node": "^22.15.18",
-    "husky": "^9.1.7",
     "typescript": "catalog:"
   }
 }

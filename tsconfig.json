@@ -3,9 +3,6 @@
   "files": [],
   "references": [
     {
-      "path": "packages/hono-starter/tsconfig.src.json"
-    },
-    {
       "path": "packages/scaffolder/tsconfig.src.json"
     },
     {

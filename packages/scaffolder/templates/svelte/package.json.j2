@@ -10,11 +10,7 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "lint": "oxlint && eslint",
-    "lint-staged": "lint-staged"
-  },
-  "lint-staged": {
-    "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue,astro,svelte}": "oxlint && eslint"
+    "lint": "oxlint && eslint"
   },
   "dependencies": {
   "@{{ monorepoName }}/utils": "workspace:*"
